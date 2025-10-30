@@ -61,14 +61,7 @@ const Sidebar = () => {
     },
   ];
 
-  // Role-based access
-  // const roleAccess = {
-  //   admin: allMenu.map((m) => m.name),
-  //   employee: ["Dashboard", "Inventory", "Production"],
-  //   gateman: ["Dashboard", "Gateman"],
-  //   qc: ["Dashboard", "Quality Check"],
-  //   inventory:[]
-  // };
+
   const userPermissions = user?.isSuper
     ? allMenu.map((m) => m.name.toLowerCase())
     : user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
