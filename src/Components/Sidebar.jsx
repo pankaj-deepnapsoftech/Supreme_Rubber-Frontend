@@ -69,28 +69,26 @@ const Sidebar = () => {
   //   qc: ["Dashboard", "Quality Check"],
   //   inventory:[]
   // };
-  const userPermissions =
-    user?.isSuper
-      ? allMenu.map((m) => m.name.toLowerCase())
-      : user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
+  const userPermissions = user?.isSuper
+    ? allMenu.map((m) => m.name.toLowerCase())
+    : user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
 
-  // Filter allowed menu items
-  const allowedMenu = allMenu.filter((menu) => {
-    const menuName = menu.name.toLowerCase();
-    if (menu.submenus) {
-      // show main menu if at least one submenu is allowed
-      const allowedSubs = menu.submenus.filter((sub) =>
-        userPermissions.includes(sub.name.toLowerCase())
-      );
-      if (allowedSubs.length > 0) menu.submenus = allowedSubs;
-      return allowedSubs.length > 0;
-    }
-    return userPermissions.includes(menuName);
-  });
-  const userRole =
-    typeof user?.role === "string"
-      ? user?.role.toLowerCase()
-      : user?.role?.role?.toLowerCase();
+
+  const allowedMenu = user?.isSuper
+    ? allMenu
+    : allMenu.filter((menu) => {
+      const menuName = menu.name.toLowerCase();
+      if (menu.submenus) {
+        // Show main menu if at least one submenu is allowed
+        const allowedSubs = menu.submenus.filter((sub) =>
+          userPermissions.includes(sub.name.toLowerCase())
+        );
+        if (allowedSubs.length > 0) menu.submenus = allowedSubs;
+        return allowedSubs.length > 0;
+      }
+      return userPermissions.includes(menuName);
+    });
+
 
 
 

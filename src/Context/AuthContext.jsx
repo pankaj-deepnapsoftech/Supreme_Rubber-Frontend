@@ -120,7 +120,6 @@ const getAllUsers = async () => {
     let users = res?.data?.users || [];
     users = users.filter((u) => !u.isSuper);
     setAllUsers(users);
-
     return users;
   } catch (error) {
     toast.error(error.response?.data?.message || "Failed to fetch users");
