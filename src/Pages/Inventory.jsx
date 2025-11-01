@@ -37,7 +37,7 @@ const Inventory = () => {
 
   const formik = useFormik({
     initialValues: {
-      _id: "",
+     
       inventory_category: "",
       name: "",
       uom: "",
@@ -202,68 +202,99 @@ const Inventory = () => {
 
       </div>
 
-     
-      <div className="border rounded-lg overflow-hidden shadow-sm">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100 text-gray-700">
-            <tr>
-              <th className="px-6 py-3 font-medium">Product Id</th>
-              <th className="px-6 py-3 font-medium">Category</th>
-              <th className="px-6 py-3 font-medium">Name</th>
-              <th className="px-6 py-3 font-medium">Stock</th>
-              <th className="px-6 py-3 font-medium">UOM</th>
-              <th className="px-6 py-3 font-medium text-center">Action</th>
+      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
+        <table className="min-w-full border-collapse text-sm text-left">
+          <thead>
+            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+              {["Product ID", "Category", "Name", "Stock", "UOM", "Actions"].map(
+                (header, i) => (
+                  <th
+                    key={i}
+                    className={`py-3 px-4 text-center font-semibold ${i === 0 ? "rounded-tl-2xl" : ""
+                      } ${i === 5 ? "rounded-tr-2xl" : ""}`}
+                  >
+                    {header}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
+
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
+                <td
+                  colSpan="6"
+                  className="text-center py-6 text-gray-500 italic bg-gray-50 rounded-b-2xl"
+                >
                   Loading products...
                 </td>
               </tr>
             ) : products?.length > 0 ? (
-                (filteredProducts.length ? filteredProducts : products)
-                  .filter((item) => {
-                    const q = searchQuery.toLowerCase();
-                    return (
-                      item.name.toLowerCase().includes(q) ||
-                      item.category.toLowerCase().includes(q) ||
-                      item.product_id.toLowerCase().includes(q)
-                    );
-                  })
-                  .map((item, index) => ( 
- 
+              (filteredProducts.length ? filteredProducts : products)
+                .filter((item) => {
+                  const q = searchQuery.toLowerCase();
+                  return (
+                    item.name.toLowerCase().includes(q) ||
+                    item.category.toLowerCase().includes(q) ||
+                    item.product_id.toLowerCase().includes(q)
+                  );
+                })
+                .map((item, i) => (
+                  <tr
+                    key={item._id || i}
+                    className={`transition-all duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-blue-50`}
+                  >
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.product_id}
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.category}
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.name}
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.current_stock}
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.uom}
+                    </td>
 
-                <tr
-                  key={index}
-                  className={`border-t ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
-                > 
-                  <td className="px-6 py-3">{item.product_id}</td>
-                  <td className="px-6 py-3">{item.category}</td>
-                  <td className="px-6 py-3">{item.name}</td>
-                  <td className="px-6 py-3">{item.current_stock}</td>
-                  <td className="px-6 py-3">{item.uom}</td>
-                  <td className="px-6 py-3 flex space-x-3 justify-center">
-                    <Edit
-                      className="h-4 w-4 text-blue-500 cursor-pointer"
-                      onClick={() => handleEdit(item._id)}
-                    />
-                    <Trash2
-                      className="h-4 w-4 text-red-500 cursor-pointer"
-                      onClick={() => handleDelete(item._id)}
-                    />
-                    <Eye
-                      onClick={() => handleView(item._id)}
-                      className="h-4 w-4 text-gray-600 cursor-pointer"
-                    />
-                  </td>
-                </tr>
-              ))
+                    <td className="py-3 px-4 text-center border-b">
+                      <div className="flex items-center justify-center space-x-3">
+                        <button
+                          className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          title="View"
+                          onClick={() => handleView(item._id)}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                          title="Edit"
+                          onClick={() => handleEdit(item._id)}
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                          title="Delete"
+                          onClick={() => handleDelete(item._id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
+                <td
+                  colSpan="6"
+                  className="text-center py-6 text-gray-400 italic bg-gray-50 rounded-b-2xl"
+                >
                   No products found.
                 </td>
               </tr>
@@ -271,6 +302,8 @@ const Inventory = () => {
           </tbody>
         </table>
       </div>
+
+
 
 
       <AnimatePresence>
@@ -303,39 +336,75 @@ const Inventory = () => {
                   <X />
                 </button>
               </div>
-
               <form onSubmit={formik.handleSubmit} className="space-y-4">
                 {Object.keys(formik.initialValues)
                   .filter((key) => key !== "_id")
-                  .map((key) => (
-                    <div key={key}>
-                      <label className="block text-sm font-medium capitalize">
-                        {key.replaceAll("_", " ")}
-                      </label>
-                      <input
-                        type={key === "price" || key === "current_stock" ? "number" : "text"}
-                        name={key}
-                        value={formik.values[key]}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        readOnly={viewMode}
-                        className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched[key] && formik.errors[key]
-                          ? "border-red-500 focus:ring-red-200"
-                          : "focus:ring-blue-200"
-                          } ${viewMode ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                      />
+                  .map((key) => {
+                    const label = key.replaceAll("_", " ");
+                    const isNumber = key === "price" || key === "current_stock";
 
-                      {formik.touched[key] && formik.errors[key] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formik.errors[key]}
-                        </p>
-                      )}
+                    // Dropdown options for specific fields
+                    const dropdownOptions = {
+                      category: ["Finished Goods", "Raw Material"],
+                      uom: ["Kg", "Litre", "Meter", "Piece", "Box", "Dozen", "Pack"],
+                      product_service: ["Product", "Service"], 
+                    };
 
-                    </div>
-                  ))}
+                    const isSelect = Object.keys(dropdownOptions).includes(key);
 
+                    return (
+                      <div key={key}>
+                        <label className="block text-sm font-medium capitalize mb-1">
+                          {label}
+                        </label>
 
+                        {/* Dropdown Field */}
+                        {isSelect ? (
+                          <select
+                            name={key}
+                            value={formik.values[key]}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            disabled={viewMode}
+                            className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched[key] && formik.errors[key]
+                                ? "border-red-500 focus:ring-red-200"
+                                : "focus:ring-blue-200"
+                              } ${viewMode ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                          >
+                            <option value="">Select {label}</option>
+                            {dropdownOptions[key].map((opt) => (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          // Normal input
+                          <input
+                            type={isNumber ? "number" : "text"}
+                            name={key}
+                            value={formik.values[key]}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            readOnly={viewMode}
+                            className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched[key] && formik.errors[key]
+                                ? "border-red-500 focus:ring-red-200"
+                                : "focus:ring-blue-200"
+                              } ${viewMode ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                          />
+                        )}
 
+                        {/* Validation Message */}
+                        {formik.touched[key] && formik.errors[key] && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {formik.errors[key]}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                {/* Buttons */}
                 <div className="flex justify-end space-x-3 pt-3">
                   <Button
                     type="button"
@@ -344,6 +413,7 @@ const Inventory = () => {
                   >
                     {viewMode ? "Close" : "Cancel"}
                   </Button>
+
                   {!viewMode && (
                     <Button
                       type="submit"
@@ -352,10 +422,9 @@ const Inventory = () => {
                       {editMode ? "Update" : "Save"}
                     </Button>
                   )}
-
-
                 </div>
               </form>
+
             </motion.div>
           </>
         )}

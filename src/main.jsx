@@ -6,7 +6,8 @@ import { AuthProvider } from "./Context/authcontext.jsx";
 import { ToastContainer } from "react-toastify";
 import { UserRoleProvider } from "./Context/UserRoleContext.jsx";
 import { InventoryProvider } from "./Context/InventoryContext.jsx";
-import { SuplierProvider } from "./Context/SuplierContext.jsx";
+import { SupplierProvider } from "./Context/SuplierContext.jsx";
+import { PurchanseOrderProvider } from "./Context/PurchaseOrderContext.jsx";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -15,9 +16,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <UserRoleProvider>
         <InventoryProvider>
-          <SuplierProvider>
-            <App />
-          </SuplierProvider>
+          <SupplierProvider>
+            <PurchanseOrderProvider>
+              <App />
+            </PurchanseOrderProvider>
+          </SupplierProvider>
         </InventoryProvider>
       </UserRoleProvider>
     </AuthProvider>

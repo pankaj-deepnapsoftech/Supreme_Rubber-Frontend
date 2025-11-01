@@ -101,52 +101,63 @@ const handleUpdateRole = async () => {
         </div>
       </div>
 
-      {/* Employee Table */}
-      <div className="overflow-x-auto">
+      
+      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-gray-50 text-gray-600 text-sm text-left">
-              <th className="py-3 px-4">Name</th>
-              <th className="py-3 px-4">Employee ID</th>
-              <th className="py-3 px-4">Email</th>
-              <th className="py-3 px-4">Phone</th>
-              <th className="py-3 px-4">Verified</th>
-              <th className="py-3 px-4">Action</th>
+            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-sm uppercase tracking-wide">
+              <th className="py-3 px-4 text-left rounded-tl-2xl">Name</th>
+              <th className="py-3 px-4 text-left">Employee ID</th>
+              <th className="py-3 px-4 text-left">Email</th>
+              <th className="py-3 px-4 text-left">Phone</th>
+              <th className="py-3 px-4 text-left">Verified</th>
+              <th className="py-3 px-4 text-left rounded-tr-2xl">Action</th>
             </tr>
           </thead>
           <tbody>
             {filteredEmployees.length > 0 ? (
-              filteredEmployees.map((emp) => (
-                <tr key={emp._id} className="border-b hover:bg-gray-50 text-sm">
-                  <td className="py-3 px-4">
+              filteredEmployees.map((emp, index) => (
+                <tr
+                  key={emp._id}
+                  className={`text-sm transition-all duration-200 ${index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
+                >
+                  <td className="py-3 px-4 font-medium text-gray-800">
                     {emp.first_name} {emp.last_name}
                   </td>
-                  <td className="py-3 px-4">{emp.employeeId}</td>
-                  <td className="py-3 px-4">{emp.email}</td>
-                  <td className="py-3 px-4">{emp.phone || "—"}</td>
+                  <td className="py-3 px-4 text-gray-600">{emp.employeeId}</td>
+                  <td className="py-3 px-4 text-gray-600">{emp.email}</td>
+                  <td className="py-3 px-4 text-gray-600">{emp.phone || "—"}</td>
                   <td className="py-3 px-4">
                     {emp.isVerified ? (
-                      <span className="text-green-600 font-medium">Yes</span>
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+                        Yes
+                      </span>
                     ) : (
-                      <span className="text-red-500 font-medium">No</span>
+                      <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-semibold">
+                        No
+                      </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 flex space-x-3">
+                  <td className="py-3 px-4 flex items-center space-x-3">
                     <Edit
                       size={16}
-                      className="text-blue-500 cursor-pointer hover:text-blue-700"
+                      className="text-blue-500 cursor-pointer hover:text-blue-700 transition-colors"
                       onClick={() => handleEdit(emp._id)}
                     />
                     <Trash2
                       size={16}
-                      className="text-red-500 cursor-pointer hover:text-red-700"
+                      className="text-red-500 cursor-pointer hover:text-red-700 transition-colors"
                     />
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center py-3 px-4 text-gray-400">
+                <td
+                  colSpan="6"
+                  className="text-center py-6 px-4 text-gray-400 bg-gray-50 rounded-b-2xl"
+                >
                   No employees found
                 </td>
               </tr>
@@ -154,6 +165,7 @@ const handleUpdateRole = async () => {
           </tbody>
         </table>
       </div>
+
 
       {/* Drawer */}
       <AnimatePresence>
