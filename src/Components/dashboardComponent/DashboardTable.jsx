@@ -85,13 +85,13 @@ export default function DashboardTable() {
             Quality Check
           </h2>
           <div className="flex space-x-2">
-            <select className="border border-gray-200 text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-200">
-              <option>CMB</option>
-              <option>ABC</option>
+            <select className="border text-gray-500 border-gray-200 hover:bg-[#cd9cf2] text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+              <option className="text-gray-500 hover:bg-[#cd9cf2]">CMB</option>
+              <option className="text-gray-500 hover:bg-[#cd9cf2]">ABC</option>
             </select>
-            <select className="border border-gray-200 text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-200">
-              <option>Weekly</option>
-              <option>Monthly</option>
+            <select className="border text-gray-500 hover:bg-[#cd9cf2] border-gray-200 text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-200">
+              <option className="text-gray-500 hover:bg-[#cd9cf2]">Weekly</option>
+              <option className="text-gray-500 hover:bg-[#cd9cf2]">Monthly</option>
             </select>
           </div>
         </div>

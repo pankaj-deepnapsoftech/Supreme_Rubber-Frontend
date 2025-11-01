@@ -209,22 +209,19 @@ export default function DashboardTop() {
 
               {/* Inventory */}
               <div className="w-full lg:w-[400px] h-[400px] bg-white rounded-2xl p-5 shadow-sm">
-                {/* <div className="flex justify-between items-center mb-4">
-                  <h2 className="font-semibold text-gray-700">Inventory</h2>
-                  <div className="flex justify-between items-center mb-3"> */}
-                  <div className="flex justify-between">
-          <h2 className="font-semibold text-gray-800 text-[15px]">
-            Inventory
-          </h2>
-          <div className="flex">
-            <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
-              <option className="text-gray-500 hover:bg-[#cd9cf2]">Weekly</option>
-              <option className=" hover:bg-[#cd9cf2]">Monthly</option>
-              <option className=" hover:bg-[#cd9cf2]">Yearly</option>
-            </select>
-            
-            </div>
-          
+                <div className="flex justify-between">
+                  <h2 className="font-semibold text-gray-800 text-[15px]">
+                    Inventory
+                  </h2>
+                  <div className="flex">
+                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                      <option className="text-gray-500 hover:bg-[#cd9cf2]">
+                        Weekly
+                      </option>
+                      <option className=" text-gray-500 hover:bg-[#cd9cf2]">Monthly</option>
+                      <option className=" text-gray-500 hover:bg-[#cd9cf2]">Yearly</option>
+                    </select>
+                  </div>
                 </div>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -249,11 +246,19 @@ export default function DashboardTop() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-4">
               {/* Production Status */}
               <div className="flex-1 min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="font-semibold text-gray-700">
+                 <div className="flex justify-between">
+                  <h2 className="font-semibold text-gray-800 text-[15px]">
                     Production Status
                   </h2>
-                  <span className="text-sm text-gray-500">{period}</span>
+                  <div className="flex">
+                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                      <option className="text-gray-500 hover:bg-[#cd9cf2]">
+                        Weekly
+                      </option>
+                      <option className=" hover:bg-[#cd9cf2]">Monthly</option>
+                      <option className=" hover:bg-[#cd9cf2]">Yearly</option>
+                    </select>
+                  </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -275,9 +280,19 @@ export default function DashboardTop() {
               {/* Production */}
 
               <div className="bg-white rounded-2xl p-5 h-[300px] shadow-sm w-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="font-semibold text-gray-700">Production</h2>
-                  <span className="text-sm text-gray-500">{period}</span>
+                <div className="flex justify-between">
+                  <h2 className="font-semibold text-gray-800 text-[15px]">
+                    Production
+                  </h2>
+                  <div className="flex">
+                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                      <option className="text-gray-500 hover:bg-[#cd9cf2]">
+                        Weekly
+                      </option>
+                      <option className=" text-gray-500 hover:bg-[#cd9cf2]">Monthly</option>
+                      <option className=" text-gray-500 hover:bg-[#cd9cf2]">Yearly</option>
+                    </select>
+                  </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={barData}>
@@ -293,9 +308,19 @@ export default function DashboardTop() {
 
               {/* Gate Entry */}
               <div className="bg-white rounded-2xl h-[300px] p-5 shadow-sm w-full">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="font-semibold text-gray-700">Gate Entry</h2>
-                  <span className="text-sm text-gray-500">{period}</span>
+ <div className="flex justify-between">
+                  <h2 className="font-semibold text-gray-800 text-[15px]">
+                    Gate Entry
+                  </h2>
+                  <div className="flex">
+                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                      <option className="text-gray-500 hover:bg-[#cd9cf2]">
+                        Weekly
+                      </option>
+                      <option className="text-gray-500 hover:bg-[#cd9cf2]">Monthly</option>
+                      <option className=" text-gray-500 hover:bg-[#cd9cf2]">Yearly</option>
+                    </select>
+                  </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -320,11 +345,10 @@ export default function DashboardTop() {
             </div>
 
             {/* TABLE */}
-            <DashboardTable/>
+            <DashboardTable />
 
             {/* Supplier Table */}
-            <DashboardSupplier/>
-            
+            <DashboardSupplier />
           </div>
         </div>
       </div>
