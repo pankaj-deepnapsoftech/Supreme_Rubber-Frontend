@@ -8,6 +8,7 @@ import { UserRoleProvider } from "./Context/UserRoleContext.jsx";
 import { InventoryProvider } from "./Context/InventoryContext.jsx";
 import { SupplierProvider } from "./Context/SuplierContext.jsx";
 import { PurchanseOrderProvider } from "./Context/PurchaseOrderContext.jsx";
+import { GatemenContextProvider } from "./Context/GatemenContext.jsx";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <InventoryProvider>
           <SupplierProvider>
             <PurchanseOrderProvider>
-              <App />
+              <GatemenContextProvider>
+                <App />
+              </GatemenContextProvider>
             </PurchanseOrderProvider>
           </SupplierProvider>
         </InventoryProvider>
