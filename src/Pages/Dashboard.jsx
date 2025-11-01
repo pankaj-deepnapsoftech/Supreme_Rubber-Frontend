@@ -1,8 +1,12 @@
+import DashboardTop from '@/Components/dashboardComponent/DashboardTop'
 import React from 'react'
+
 
 const Dashboard = () => {
   return (
-    <div>Dashboard</div>
+   <div className='pt-4 '>
+    <DashboardTop/>
+   </div>
   )
 }
 
