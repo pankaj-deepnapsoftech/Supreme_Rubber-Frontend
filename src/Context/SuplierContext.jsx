@@ -1,82 +1,108 @@
-import { createContext, useContext } from "react";
+import axiosHandler from "@/config/axiosconfig";
+import { createContext, useContext, useState } from "react";
+import { toast } from "react-toastify";
 
+export const SupplierContext = createContext();
 
+export const SupplierProvider = ({ children }) => {
+    const [loading, setLoading] = useState(false);
 
-
-export const SuplierContext = createContext()
-
-export const SuplierProvider = ({ children }) => {
-
-//   const [products, setProducts] = useState([]);
-//     const [loading, setLoading] = useState(false);
-
-    // ==================== 📦 PRODUCT API CALLS ====================
-
+  
     const createSupplier = async (data) => {
         try {
+            setLoading(true);
             const res = await axiosHandler.post("/supplier", data);
-            // await getAllProducts(); // Refresh list
+            toast.success(res?.data?.message || "Supplier created successfully!");
+            await getAllSupplier();
             return res.data;
         } catch (error) {
-            console.error("❌ Error creating product:", error);
+            console.error("❌ Error creating supplier:", error);
+            toast.error(error?.response?.data?.message || "Failed to create supplier");
             throw error;
+        } finally {
+            setLoading(false);
         }
     };
-    
 
-    // const updateSupplier = async (data) => {
-    //     try {
-    //         const res = await axiosHandler.put("/product", data);
-    //         await getAllProducts();
-    //         return res.data;
-    //     } catch (error) {
-    //         console.error("❌ Error updating product:", error);
-    //         throw error;
-    //     }
-    // };
+  
+    const updateSupplier = async (_id, updates) => {
+        try {
+            setLoading(true);
+            const res = await axiosHandler.put("/supplier", { _id, ...updates });
+            toast.success(res?.data?.message || "Supplier updated successfully!");
+            await getAllSupplier();
+            return res.data;
+        } catch (error) {
+            console.error("❌ Error updating supplier:", error);
+            toast.error(error?.response?.data?.message || "Failed to update supplier");
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // const deleteSupplier = async (id) => {
-    //     try {
-    //         const res = await axiosHandler.delete("/product", { data: { id } });
-    //         await getAllProducts();
-    //         return res.data;
-    //     } catch (error) {
-    //         console.error("❌ Error deleting product:", error);
-    //         throw error;
-    //     }
-    // };
+    const deleteSupplier = async (id) => {
+        try {
+            setLoading(true);
+            const res = await axiosHandler.delete("/supplier", { data: { id } });
+            toast.success(res?.data?.message || "Supplier deleted successfully!");
+            await getAllSupplier();
+            return res.data;
+        } catch (error) {
+            console.error("❌ Error deleting supplier:", error);
+            toast.error(error?.response?.data?.message || "Failed to delete supplier");
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // const getAllSuplier = async () => {
-    //     try {
-    //         setLoading(true);
-    //         const res = await axiosHandler.get("/product/all");
-    //         setProducts(res?.data?.products || []);
-    //         return res.data;
-    //     } catch (error) {
-    //         console.error("❌ Error fetching all products:", error);
-    //         throw error;
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
-    // const getSupplierDetails = async (id) => {
-    //     try {
-    //         const res = await axiosHandler.get(`/product/${id}`);
+  
+    const getAllSupplier = async () => {
+        try {
+            setLoading(true);
+            const res = await axiosHandler.get("/supplier/all");
             
-    //         return res.data?.product;
-    //     } catch (error) {
-    //         console.error("❌ Error fetching product details:", error);
-    //         throw error;
-    //     }
-    // };
+            return res.data?.suppliers;
+        } catch (error) {
+            console.error("❌ Error fetching all suppliers:", error);
+            toast.error(error?.response?.data?.message || "Failed to fetch suppliers");
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
 
+   
+    const getSupplierDetails = async (id) => {
+        try {
+            setLoading(true);
+            const res = await axiosHandler.get(`/supplier/${id}`);
+            return res.data?.supplier;
+        } catch (error) {
+            console.error("❌ Error fetching supplier details:", error);
+            toast.error(error?.response?.data?.message || "Failed to fetch supplier details");
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    };
 
-
+  
     return (
-        <SuplierContext.Provider value={createSupplier}> {children} </SuplierContext.Provider>
-    )
-}
+        <SupplierContext.Provider
+            value={{
+                createSupplier,
+                updateSupplier,
+                deleteSupplier,
+                getAllSupplier,
+                getSupplierDetails,
+                loading,
+            }}
+        >
+            {children}
+        </SupplierContext.Provider>
+    );
+};
 
-
-export const useSuplierContext = ()=> useContext(SuplierContext)
+export const useSupplierContext = () => useContext(SupplierContext);

@@ -2,6 +2,7 @@
 import { useUserRole } from "@/Context/UserRoleContext";
 import { useState } from "react";
 import { useFormik } from "formik";
+import { Edit, Trash2 } from "lucide-react";
 
 export default function UserRolesManagement() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -20,7 +21,8 @@ export default function UserRolesManagement() {
     "production",
     "bom",
     "gateman",
-    "supplier"
+    "supplier",
+    "purchase order"
   ];
 
   // --- Formik setup ---
@@ -81,51 +83,60 @@ export default function UserRolesManagement() {
       </div>
 
      
-      <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-        <table className="min-w-full text-sm text-left text-gray-700">
-          <thead className="bg-gray-200 text-gray-600 uppercase text-xs font-semibold">
-            <tr>
-              <th className="px-6 py-3 border-b">Role</th>
-              <th className="px-6 py-3 border-b">Description</th>
-              <th className="px-6 py-3 border-b">Permissions</th>
-              <th className="px-6 py-3 border-b text-center">Action</th>
+      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
+        <table className="min-w-full border-collapse text-sm text-left text-gray-700">
+          <thead>
+            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
+              <th className="py-3 px-4 text-left rounded-tl-2xl">Role</th>
+              <th className="py-3 px-4 text-left">Description</th>
+              <th className="py-3 px-4 text-left">Permissions</th>
+              <th className="py-3 px-4 text-center rounded-tr-2xl">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+
+          <tbody>
             {roles.length === 0 ? (
               <tr>
                 <td
                   colSpan="4"
-                  className="text-center py-6 text-gray-500 italic bg-gray-50"
+                  className="text-center py-6 text-gray-400 italic bg-gray-50 rounded-b-2xl"
                 >
                   No roles found.
                 </td>
               </tr>
             ) : (
-              roles.map((r) => (
+              roles.map((r, i) => (
                 <tr
-                  key={r._id}
-                  className="hover:bg-blue-50 transition-colors duration-150"
+                  key={r._id || i}
+                  className={`transition-all duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
                 >
-                  <td className="px-6 py-3 border-b">{r.role}</td>
-                  <td className="px-6 py-3 border-b">{r.description}</td>
-                  <td className="px-6 py-3 border-b">
-                    {r.permissions.join(", ")}
+                  <td className="py-3 px-4 font-medium text-gray-800 border-b">
+                    {r.role}
                   </td>
-                  <td className="px-6 py-3 border-b text-center">
-                    <div className="flex justify-center gap-3">
+                  <td className="py-3 px-4 text-gray-700 border-b">
+                    {r.description || "—"}
+                  </td>
+                  <td className="py-3 px-4 text-gray-700 border-b">
+                    {r.permissions && r.permissions.length > 0
+                      ? r.permissions.join(", ")
+                      : "No permissions"}
+                  </td>
+                  <td className="py-3 px-4 border-b text-center">
+                    <div className="flex justify-center space-x-3">
                       <button
-                        className="text-blue-500 hover:text-blue-600"
+                        className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 transition"
+                        title="Edit"
                         onClick={() => handleEdit(r)}
                       >
-                        ✏️
+                        <Edit size={16} />
                       </button>
-
                       <button
-                        className="text-red-500 hover:text-red-600"
+                        className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition"
+                        title="Delete"
                         onClick={() => handleDelete(r._id)}
                       >
-                        🗑️
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

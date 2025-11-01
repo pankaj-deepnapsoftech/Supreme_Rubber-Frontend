@@ -16,6 +16,7 @@ import Register from "./Pages/RegisterPage";
 import ForgotPassword from "./Pages/ForgotPasswordPage";
 import OTPVerification from "./Pages/OTPVerificationPage";
 import VerifyEmail from "./Pages/verifyEmail";
+import PurchaseOrder from "./Pages/PurchaseOrder";
 
 const App = () => {
   return (
@@ -74,7 +75,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="purchase-order"
+            element={
+              <ProtectedRoute path="/purchase-order">
+                <PurchaseOrder />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="gateman"
