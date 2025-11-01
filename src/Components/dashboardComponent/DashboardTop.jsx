@@ -23,7 +23,7 @@ import {
 } from "recharts";
 
 export default function DashboardTop() {
-  const [period, setPeriod] = useState("Weekly");
+  const [period, setPeriod] = useState(" ");
 
   const lineData = [
     { month: "Jan", a: 12, b: 8 },
@@ -33,6 +33,12 @@ export default function DashboardTop() {
     { month: "May", a: 35, b: 26 },
     { month: "Jun", a: 18, b: 10 },
     { month: "Jul", a: 28, b: 32 },
+    { month: "Aug", a: 22, b: 8 },
+    { month: "Sep", a: 16, b: 12 },
+    { month: "Oct", a: 25, b: 20 },
+    { month: "Nov", a: 22, b: 30 },
+    { month: "Dec", a: 35, b: 26 },
+    
   ];
 
   const pieDataInventory = [
@@ -68,10 +74,10 @@ export default function DashboardTop() {
         </p>
         <div>
           {/* CARDS */}
-          <div className=" flex flex-row justify-evenly pr-[20px]">
+          <div className=" flex flex-row justify-evenly pr-[5px]">
             {/* CARD - Purchase Order*/}
 
-            <div className="border-1 border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
+            <div className="border border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
                 <p className="text-[24px] text-gray-700 font-semibold">24</p>
@@ -90,7 +96,7 @@ export default function DashboardTop() {
 
             {/* CARD - Total Production */}
 
-            <div className="border-1 border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
+            <div className="border border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
                 <p className="text-[24px] text-gray-700 font-semibold">15</p>
@@ -109,7 +115,7 @@ export default function DashboardTop() {
 
             {/* CARD - Total BOM */}
 
-            <div className="border-1 border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
+            <div className="border border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BMO</p>
                 <p className="text-[24px] text-gray-700 font-semibold">3</p>
@@ -126,11 +132,11 @@ export default function DashboardTop() {
               </div>
             </div>
 
-            {/* CARD Total Suplliers */}
+            {/* CARD Total suppliers */}
 
-            <div className="border-1 border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
+            <div className="border border-gray-200 rounded-[10px] p-[10px] flex justify-between flex-row h-[6.5rem] w-[13rem] mt-4">
               <div className="flex flex-col">
-                <p className="text-[16px] text-gray-700">Total Suplliers</p>
+                <p className="text-[16px] text-gray-700">Total Suppliers</p>
                 <p className="text-[24px] text-gray-700 font-semibold">9</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-gray-400 ]">
@@ -148,12 +154,12 @@ export default function DashboardTop() {
 
           {/* Sales Overview */}
 
-          <div className="p-6 grid grid-cols-1 xl:grid-cols-3 gap-6 bg-gray-50 min-h-screen">
+          <div className="p-6 flex flex-wrap  bg-gray-50 min-h-screen">
             {/* Production Graph */}
             {/* Row: Production Graph + Inventory */}
             <div className="flex flex-col lg:flex-row gap-6 w-full">
               {/* Production Graph */}
-              <div className="flex-1 bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex-1 bg-white h-[400px]  rounded-2xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="font-semibold text-gray-700">
                     Production Graph
@@ -174,7 +180,11 @@ export default function DashboardTop() {
                     ))}
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={250}
+                  className="mt-[50px]"
+                >
                   <LineChart data={lineData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                     <XAxis dataKey="month" stroke="#6B7280" />
@@ -197,12 +207,12 @@ export default function DashboardTop() {
               </div>
 
               {/* Inventory */}
-              <div className="w-full lg:w-[400px] bg-white rounded-2xl p-5 shadow-sm">
+              <div className="w-full lg:w-[400px] h-[400px] bg-white rounded-2xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="font-semibold text-gray-700">Inventory</h2>
                   <span className="text-sm text-gray-500">{period}</span>
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={pieDataInventory}
@@ -221,74 +231,78 @@ export default function DashboardTop() {
             </div>
 
             {/* Production Status */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-gray-700">
-                  Production Status
-                </h2>
-                <span className="text-sm text-gray-500">{period}</span>
+            {/* Row: Production Status + Production + Gate Entry */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-6">
+              {/* Production Status */}
+              <div className="flex-1 min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-semibold text-gray-700">
+                    Production Status
+                  </h2>
+                  <span className="text-sm text-gray-500">{period}</span>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={pieDataStatus}
+                      dataKey="value"
+                      outerRadius={80}
+                      label
+                    >
+                      {pieDataStatus.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={pieDataStatus}
-                    dataKey="value"
-                    innerRadius={40}
-                    outerRadius={80}
-                    label
-                  >
-                    {pieDataStatus.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
 
-            {/* Production */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-gray-700">Production</h2>
-                <span className="text-sm text-gray-500">{period}</span>
-              </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={barData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="day" stroke="#6B7280" />
-                  <YAxis stroke="#6B7280" />
-                  <Tooltip />
-                  <Bar dataKey="completed" fill="#3B82F6" />
-                  <Bar dataKey="notCompleted" fill="#EC4899" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+              {/* Production */}
 
-            {/* Gate Entry */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-gray-700">Gate Entry</h2>
-                <span className="text-sm text-gray-500">{period}</span>
+              <div className="bg-white rounded-2xl p-5 h-[300px] shadow-sm w-full">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-semibold text-gray-700">Production</h2>
+                  <span className="text-sm text-gray-500">{period}</span>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={barData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="day" stroke="#6B7280" />
+                    <YAxis stroke="#6B7280" />
+                    <Tooltip />
+                    <Bar dataKey="completed" fill="#3B82F6" />
+                    <Bar dataKey="notCompleted" fill="#EC4899" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={donutData}
-                    dataKey="value"
-                    innerRadius={60}
-                    outerRadius={80}
-                    startAngle={90}
-                    endAngle={-270}
-                  >
-                    <Cell fill="#3B82F6" />
-                    <Cell fill="#E5E7EB" />
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <p className="text-center text-sm text-gray-600 mt-2">
-                <b>Order ID:</b> 100 kg received
-              </p>
+
+              {/* Gate Entry */}
+              <div className="bg-white rounded-2xl h-[300px] p-5 shadow-sm w-full">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-semibold text-gray-700">Gate Entry</h2>
+                  <span className="text-sm text-gray-500">{period}</span>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      dataKey="value"
+                      innerRadius={60}
+                      outerRadius={80}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      <Cell fill="#3B82F6" />
+                      <Cell fill="#E5E7EB" />
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <p className="text-center text-sm text-gray-600 mt-2">
+                  <b>Order ID:</b> 100 kg received
+                </p>
+              </div>
             </div>
           </div>
         </div>
