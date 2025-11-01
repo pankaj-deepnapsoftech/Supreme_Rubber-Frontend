@@ -18,9 +18,16 @@ const QualityCheck = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [showGtModal, setShowGtModal] = useState(false);
+  const [pendingData,setPendingData] = useState()
 
-  const { products, deleteProduct, getProductDetails, loading, getAllProducts } =
-    useInventory();
+  const {
+    products,
+    deleteProduct,
+    getProductDetails,
+    loading,
+    getAllProducts,
+  } = useInventory();
 
   useEffect(() => {
     getAllProducts();
@@ -80,7 +87,15 @@ const QualityCheck = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-8 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-1 focus:ring-gray-300"
           />
+
+          <Button
+            onClick={() => setShowGtModal(true)}
+            className="bg-blue-600 ml-[10px] hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm transition-all duration-150"
+          >
+            Gateman
+          </Button>
         </div>
+
         <div className="flex items-center space-x-4 text-gray-600">
           <div className="relative group">
             <Filter className="cursor-pointer hover:text-gray-800" />
@@ -315,6 +330,130 @@ const QualityCheck = () => {
           </>
         )}
       </AnimatePresence>
+
+      {showGtModal && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 animate-fadeIn"
+          onClick={() => setShowGtModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+           
+            <div className="flex justify-between items-center border-b pb-3 mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Purchase Order List</h2>
+              <button
+                onClick={() => setShowGtModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+          
+            <div className="overflow-x-auto border rounded-lg shadow-inner">
+              <table className="min-w-full text-sm text-left">
+                <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
+                  <tr>
+                    <th className="px-4 py-3 text-left">PO Number</th>
+                    <th className="px-4 py-3 text-left">Invoice No.</th>
+                    <th className="px-4 py-3 text-left">Company Name</th>
+                    <th className="px-4 py-3 text-left">Items</th>
+                    <th className="px-4 py-3 text-left">Quantity</th>
+                    <th className="px-4 py-3 text-left">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingData && pendingData.length > 0 ? (
+                    pendingData.map((po, i) => (
+                      <tr
+                        key={i}
+                        className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                      >
+                        <td className="px-4 py-3 font-semibold text-gray-800">
+                          {po.po_number}
+                        </td>
+                        <td className="px-4 py-3 text-gray-700">
+                          {po.supplier?.company_name || "—"}
+                          <div className="text-xs text-gray-500">
+                            {po.supplier?.name} ({po.supplier?.email})
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {new Date(po.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
+                                ? "bg-blue-100 text-blue-700"
+                                : po.status === "Approved"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                              }`}
+                          >
+                            {po.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {po.products?.map((p, idx) => (
+                            <div key={idx} className="border-b last:border-0 py-1">
+                              <span className="font-medium text-gray-800">
+                                {p.item_name}
+                              </span>{" "}
+                              - {p.est_quantity} {p.uom}
+                              <div className="text-xs text-gray-500">
+                                Remain: {p.remain_quantity}, Produced: {p.produce_quantity}
+                              </div>
+                            </div>
+                          ))}
+                        </td>
+                    <td className="py-3 px-4 text-center border-b">
+                      <div className="flex items-center justify-start space-x-3">
+                        <button
+                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                          title="View"
+                              onClick={() => AcceptPOData(po?._id)}
+                        >
+                         Accept
+                        </button>
+                        
+                      </div>
+                    </td>
+
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="text-center text-gray-500 py-6 italic"
+                      >
+                        No Gateman Record Found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+           
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowGtModal(false)}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
