@@ -136,7 +136,7 @@ const QualityCheck = () => {
       {/* Table Section */}
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full min-w-[800px] text-sm text-left">
-          <thead >
+          <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">Product Type</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Product Name</th>
@@ -312,13 +312,14 @@ const QualityCheck = () => {
       {/* Gateman Modal */}
       {showGtModal && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2 sm:p-4"
           onClick={() => setShowGtModal(false)}
         >
           <div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-6xl p-5 sm:p-6 relative overflow-y-auto max-h-[90vh]"
+            className="bg-white rounded-xl shadow-2xl w-full max-w-6xl p-4 sm:p-6 relative overflow-y-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 mb-6 gap-3">
               <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
                 Purchase Order List
@@ -331,18 +332,22 @@ const QualityCheck = () => {
               </button>
             </div>
 
+            {/* Responsive Table Container */}
             <div className="overflow-x-auto border rounded-lg shadow-inner">
-              <table className="min-w-[800px] text-sm text-left">
-                <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
-                  <tr>
-                    <th className="px-4 py-3 text-left">PO Number</th>
-                    <th className="px-4 py-3 text-left">Invoice No.</th>
-                    <th className="px-4 py-3 text-left">Company Name</th>
-                    <th className="px-4 py-3 text-left">Items</th>
-                    <th className="px-4 py-3 text-left">Quantity</th>
-                    <th className="px-4 py-3 text-left">Action</th>
+              <table className="min-w-[700px] sm:min-w-full text-sm text-left">
+                <thead>
+                  <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white text-xs sm:text-sm uppercase tracking-wide">
+                    <th className="px-3 sm:px-4 py-3 text-left">PO Number</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Invoice No.</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">
+                      Company Name
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Items</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Quantity</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Action</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {pendingData && pendingData.length > 0 ? (
                     pendingData.map((po, i) => (
@@ -352,23 +357,23 @@ const QualityCheck = () => {
                           i % 2 === 0 ? "bg-gray-50" : "bg-white"
                         }`}
                       >
-                        <td className="px-4 py-3 font-semibold text-gray-800">
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                           {po.po_number}
                         </td>
-                        <td className="px-4 py-3 text-gray-700">
+                        <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
                           {po.supplier?.company_name || "—"}
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 truncate">
                             {po.supplier?.name} ({po.supplier?.email})
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">
+                        <td className="px-3 sm:px-4 py-3 text-gray-600 whitespace-nowrap">
                           {new Date(po.createdAt).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "short",
                             day: "2-digit",
                           })}
                         </td>
-                        <td className="px-4 py-3 text-gray-600">
+                        <td className="px-3 sm:px-4 py-3 text-gray-600">
                           {po.products?.map((p, idx) => (
                             <div
                               key={idx}
@@ -381,9 +386,9 @@ const QualityCheck = () => {
                             </div>
                           ))}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3 px-3 sm:px-4 text-center">
                           <button
-                            className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs font-medium"
+                            className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                             onClick={() => AcceptPOData(po?._id)}
                           >
                             Accept
@@ -405,10 +410,11 @@ const QualityCheck = () => {
               </table>
             </div>
 
+            {/* Footer */}
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setShowGtModal(false)}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+                className="w-full sm:w-auto px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
               >
                 Close
               </button>

@@ -17,13 +17,9 @@ const BOM = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [showGtModal, setShowGtModal] = useState(false);
-  const [pendingData, setPendingData] = useState();
 
   const {
     products,
-    deleteProduct,
-    getProductDetails,
     loading,
     getAllProducts,
   } = useInventory();
@@ -54,128 +50,128 @@ const BOM = () => {
 
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
-  {/* Header */}
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-    <h1 className="text-xl sm:text-2xl font-semibold">Bill of Material</h1>
-    <Button
-      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-      onClick={() => setShowModal(true)}
-    >
-      Add New BOM
-    </Button>
-  </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <h1 className="text-xl sm:text-2xl font-semibold">Bill of Material</h1>
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+          onClick={() => setShowModal(true)}
+        >
+          Add New BOM
+        </Button>
+      </div>
 
-  {/* Search & Actions */}
-  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-    {/* Search Box */}
-    <div className="relative w-full sm:w-72">
-      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-      <input
-        type="text"
-        placeholder="Search"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
-      />
-    </div>
+      {/* Search & Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+        {/* Search Box */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
+          />
+        </div>
 
-    {/* Action Icons */}
-    <div className="flex items-center gap-4 text-gray-600">
-      {/* Filter Dropdown */}
-      <div className="relative group">
-        <Filter className="cursor-pointer hover:text-gray-800" />
-        <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
-          <p
-            onClick={() => handleFilter("All")}
-            className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-          >
-            All
-          </p>
-          {[...new Set(products.map((p) => p.category))].map((cat) => (
-            <p
-              key={cat}
-              onClick={() => handleFilter(cat)}
-              className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-            >
-              {cat}
-            </p>
-          ))}
+        {/* Action Icons */}
+        <div className="flex items-center gap-4 text-gray-600">
+          {/* Filter Dropdown */}
+          <div className="relative group">
+            <Filter className="cursor-pointer hover:text-gray-800" />
+            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
+              <p
+                onClick={() => handleFilter("All")}
+                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+              >
+                All
+              </p>
+              {[...new Set(products.map((p) => p.category))].map((cat) => (
+                <p
+                  key={cat}
+                  onClick={() => handleFilter(cat)}
+                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                >
+                  {cat}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* Refresh + Download */}
+          <RefreshCcw
+            className="cursor-pointer hover:text-gray-800"
+            onClick={getAllProducts}
+          />
+          <Download
+            className="cursor-pointer hover:text-gray-800"
+            onClick={handleDownload}
+          />
         </div>
       </div>
 
-      {/* Refresh + Download */}
-      <RefreshCcw
-        className="cursor-pointer hover:text-gray-800"
-        onClick={getAllProducts}
-      />
-      <Download
-        className="cursor-pointer hover:text-gray-800"
-        onClick={handleDownload}
-      />
-    </div>
-  </div>
-
-  {/* Table Section */}
-  <div className="border rounded-lg overflow-x-auto shadow-sm">
-    <table className="w-full min-w-[700px] text-sm text-left">
-      <thead >
-        <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide" >
-          <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
-          <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
-          <th className="px-4 sm:px-6 py-3 font-medium">Part Name</th>
-          <th className="px-4 sm:px-6 py-3 font-medium">Created Date</th>
-          <th className="px-4 sm:px-6 py-3 font-medium text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {loading ? (
-          <tr>
-            <td colSpan="6" className="text-center py-6 text-gray-500">
-              Loading products...
-            </td>
-          </tr>
-        ) : products?.length > 0 ? (
-          (filteredProducts.length ? filteredProducts : products)
-            .filter((item) => {
-              const q = searchQuery.toLowerCase();
-              return (
-                item.name.toLowerCase().includes(q) ||
-                item.category.toLowerCase().includes(q) ||
-                item.product_id.toLowerCase().includes(q)
-              );
-            })
-            .map((item, index) => (
-              <tr
-                key={index}
-                className={`border-t ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                }`}
-              >
-                <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
-                <td className="px-4 sm:px-6 py-3">{item.category}</td>
-                <td className="px-4 sm:px-6 py-3">{item.name}</td>
-                <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
-                <td className="px-4 sm:px-6 py-3 text-center">
-                  <div className="flex justify-center gap-3">
-                    <Edit className="h-4 w-4 text-blue-500 cursor-pointer" />
-                    <Trash2 className="h-4 w-4 text-red-500 cursor-pointer" />
-                    <Eye className="h-4 w-4 text-gray-600 cursor-pointer" />
-                  </div>
+      {/* Table Section */}
+      <div className="border rounded-lg overflow-x-auto shadow-sm">
+        <table className="w-full min-w-[700px] text-sm text-left">
+          <thead>
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+              <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Part Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Created Date</th>
+              <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="text-center py-6 text-gray-500">
+                  Loading products...
                 </td>
               </tr>
-            ))
-        ) : (
-          <tr>
-            <td colSpan="6" className="text-center py-6 text-gray-500">
-              No Bill found.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-
-
+            ) : products?.length > 0 ? (
+              (filteredProducts.length ? filteredProducts : products)
+                .filter((item) => {
+                  const q = searchQuery.toLowerCase();
+                  return (
+                    item.name.toLowerCase().includes(q) ||
+                    item.category.toLowerCase().includes(q) ||
+                    item.product_id.toLowerCase().includes(q)
+                  );
+                })
+                .map((item, index) => (
+                  <tr
+                    key={index}
+                    className={`border-t ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
+                  >
+                    <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.category}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.name}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
+                    <td className="px-4 sm:px-6 py-3 text-center">
+                      <div className="flex justify-center gap-3">
+                        <Edit className="h-4 w-4 text-blue-500 cursor-pointer" />
+                        <Trash2 className="h-4 w-4 text-red-500 cursor-pointer" />
+                        <Eye className="h-4 w-4 text-gray-600 cursor-pointer" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="text-center py-6 text-gray-500">
+                  No Bill found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Add BOM Modal */}
       <AnimatePresence>
