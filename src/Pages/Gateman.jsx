@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { AnimatePresence, motion } from "framer-motion";
+import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import {
   DownloadIcon,
   RefreshCcw,
@@ -15,182 +16,160 @@ import {
 import { useGatemenContext } from "@/Context/GatemenContext";
 import { useFormik } from "formik";
 
-
 const Gateman = () => {
-
-
+  const { PendingGatemenData, AcceptPOData, PostGatemenData, GetAllPOData, UpdatedGatemenData, DetailsGatemenData, DeleteGatemenData } =
+    useGatemenContext();
+  const { GetAllPurchaseOrders } = usePurchanse_Order();
+  const [POData, setPOData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showPOModal, setShowPOModal] = useState(false);
-  const { PendingGatemenData, AcceptPOData } = useGatemenContext()
-  const [pendingData,setPendingData] = useState()
-  const [showModal,setShowModal] = useState()
-  const [mode, setMode] = useState("add"); // add | edit | view
+  const [showModal, setShowModal] = useState(false);
+  const [mode, setMode] = useState("add");
+  const [GatemenData, setGatemenData] = useState([]);
+  const [pendingData, setPendingData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [edittable,setEditTable] = useState(null)
 
-  useEffect(()=>{
-   const fetchPendingData = async()=>{
-     const data = await PendingGatemenData()
-     setPendingData(data)
-    }
-    fetchPendingData()
-  },[])
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const pending = await PendingGatemenData();
+        setPendingData(pending || []);
 
+        const poRes = await GetAllPurchaseOrders();
+        const accepted = poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
+        setPOData(accepted);
 
+        const gateData = await GetAllPOData();
+        setGatemenData(gateData || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const formik = useFormik({
-    initialValues: {
-      po_ref:"",
-      po_number: "",
-      invoice_number: "",
-      company_name: "",
-      items: [{ item_name: "", item_quantity: 1 }],
-      attached_po: null,
-      attached_invoice: null,
-      status: "Entry Created",
-    },
-    onSubmit: (values) => {
-      console.log("Form Submitted", values);
-    },
+  const handleRefresh = async () => {
+    setLoading(true);
+    const gateData = await GetAllPOData();
+    setGatemenData(gateData || []);
+    setLoading(false);
+  };
+
+  // Filter Gatemen data based on search
+  const filteredGatemen = GatemenData?.filter((entry) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      entry?.po_number?.toLowerCase().includes(query) ||
+      entry?.company_name?.toLowerCase().includes(query) ||
+      entry?.items?.some((i) => i.item_name.toLowerCase().includes(query))
+    );
   });
 
-  // const formik = useFormik({
-  //   initialValues: {
-  //     name: "",
-  //     phone: "",
-  //     email: "",
-  //     company_name: "",
-  //     address: "",
-  //     gst_number: "",
-  //   },
-  //   validationSchema: Yup.object({
-  //     name: Yup.string().required("Name is required"),
-  //     phone: Yup.string()
-  //       .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
-  //       .required("Phone is required"),
-  //     email: Yup.string().email("Invalid email").required("Email is required"),
-  //     company_name: Yup.string().required("Company name is required"),
-  //     address: Yup.string().required("Address is required"),
-  //     gst_number: Yup.string().required("GST number is required"),
-  //   }),
-  //   onSubmit: async (values) => {
-  //     try {
-  //       if (mode === "edit" && selectedSupplier) {
-  //         await updateSupplier(selectedSupplier._id, values);
-  //       } else {
-  //         await createSupplier(values);
-  //       }
-  //       fetchSuppliers();
-  //       setShowModal(false);
-  //       formik.resetForm();
-  //       setSelectedSupplier(null);
-  //       setMode("add");
-  //     } catch (error) {
-  //       console.error("Error saving supplier:", error);
-  //     }
-  //   },
-  // });
+   
+  const formik = useFormik({
+    enableReinitialize: true, 
+    initialValues: edittable
+      ? {
+        po_ref: edittable.po_ref || "",
+        po_number: edittable.po_number || "",
+        invoice_number: edittable.invoice_number || "",
+        company_name: edittable.company_name || "",
+        items: edittable.items || [{ item_name: "", item_quantity: 1 }],
+        attached_po: null,
+        attached_invoice: null,
+        status: edittable.status || "Entry Created",
+      }
+      : { 
+        po_ref: "",
+        po_number: "",
+        invoice_number: "",
+        company_name: "",
+        items: [{ item_name: "", item_quantity: 1 }],
+        attached_po: null,
+        attached_invoice: null,
+        status: "Entry Created",
+      },
 
-  // const handleView = (supplier) => {
-  //   setSelectedSupplier(supplier);
-  //   setMode("view");
-  //   formik.setValues({
-  //     name: supplier.name || "",
-  //     phone: supplier.phone || "",
-  //     email: supplier.email || "",
-  //     company_name: supplier.company_name || "",
-  //     address: supplier.address || "",
-  //     gst_number: supplier.gst_number || "",
-  //   });
-  //   setShowModal(true);
-  // };
+    onSubmit: async (values) => {
+      try {
+        if (mode === "edit" && edittable?._id) {
+          // JSON payload for update
+          const payload = {
+            _id: edittable._id,
+            po_ref: values.po_ref,
+            po_number: values.po_number,
+            invoice_number: values.invoice_number,
+            company_name: values.company_name,
+            items: values.items,
+            status: values.status,
+          };
 
-  // const handleEdit = (supplier) => {
-  //   setSelectedSupplier(supplier);
-  //   setMode("edit");
-  //   formik.setValues({
-  //     name: supplier.name || "",
-  //     phone: supplier.phone || "",
-  //     email: supplier.email || "",
-  //     company_name: supplier.company_name || "",
-  //     address: supplier.address || "",
-  //     gst_number: supplier.gst_number || "",
-  //   });
-  //   setShowModal(true);
-  // };
+          await UpdatedGatemenData(payload);
+        } else {
+          // FormData for new entry (with files)
+          const formData = new FormData();
+          formData.append("po_ref", values.po_ref);
+          formData.append("po_number", values.po_number);
+          formData.append("invoice_number", values.invoice_number);
+          formData.append("company_name", values.company_name);
+          formData.append("items", JSON.stringify(values.items));
+          if (values.attached_po) formData.append("attached_po", values.attached_po);
+          if (values.attached_invoice) formData.append("attached_invoice", values.attached_invoice);
 
-  // const handleDelete = async (id) => {
-  //   if (window.confirm("Are you sure you want to delete this supplier?")) {
-  //     try {
-  //       await deleteSupplier(id);
-  //       fetchSuppliers();
-  //     } catch (error) {
-  //       console.error("Error deleting supplier:", error);
-  //     }
-  //   }
-  // };
+          await PostGatemenData(formData);
+        }
 
-  // const filteredSuppliers = suppliers.filter((s) => {
-  //   const q = searchQuery.toLowerCase();
-  //   return (
-  //     s.name?.toLowerCase().includes(q) ||
-  //     s.email?.toLowerCase().includes(q) ||
-  //     s.phone?.includes(q) ||
-  //     s.company_name?.toLowerCase().includes(q)
-  //   );
-  // });
+        setShowModal(false);
+        handleRefresh();
+      } catch (error) {
+        console.error("Error submitting form:", error);
+      }
+    },
+
+  });
+
 
   const handleDownload = () => {
-    const headers = [
-      "Supplier ID",
-      "Name",
-      "Phone",
-      "Email",
-      "GST Number",
-      "Company Name",
-      "Address",
-      "Created At",
-    ];
-    const rows = suppliers.map((s) => [
-      s._id || "",
-      s.name || "",
-      s.phone || "",
-      s.email || "",
-      s.gst_number || "",
-      s.company_name || "",
-      s.address || "",
-      s.createdAt || "",
+    if (!GatemenData.length) return;
+    const headers = ["PO Number", "Invoice", "Company Name", "Items", "Quantity", "Status"];
+    const rows = GatemenData.map((g) => [
+      g.po_number || "",
+      g.invoice_number || "",
+      g.company_name || "",
+      g.items?.map((i) => i.item_name).join("; "),
+      g.items?.map((i) => i.item_quantity).join("; "),
+      g.status || "",
     ]);
     const csvContent =
       "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map((e) => e.join(",")).join("\n");
+      [headers, ...rows].map((r) => r.join(",")).join("\n");
     const link = document.createElement("a");
     link.href = encodeURI(csvContent);
-    link.download = "suppliers.csv";
+    link.download = "gatemen_entries.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-  console.log(showModal)
 
   return (
-    <div className="p-6 relative w-full ">
+    <div className="p-6 relative w-full">
+     
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Gatemen</h1>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => {
-           
-            // setSelectedSupplier(null);
-            // formik.resetForm();
-            setShowModal(true);
-          }}
+          onClick={() => { setShowModal(true); setEditTable(null); setMode("mode")}}
         >
           Add Gatemen
         </Button>
       </div>
 
-     
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-3 sm:space-y-0">
-        
+    
+      <div className="flex flex-col sm:flex-row justify-between mb-6 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -200,29 +179,28 @@ const Gateman = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg w-64 text-sm 
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                   placeholder-gray-400"
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-
-          <Button onClick={() => setShowPOModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm transition-all duration-150">
+          <Button
+            onClick={() => setShowPOModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm"
+          >
             PO Data
           </Button>
         </div>
 
-        
         <div className="flex items-center space-x-3 text-gray-600">
           <button
-            // onClick={fetchSuppliers}
-            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-150"
+            onClick={handleRefresh}
+            className="p-2 hover:bg-gray-100 rounded-full"
             title="Refresh"
           >
             <RefreshCcw className="h-5 w-5" />
           </button>
-
           <button
             onClick={handleDownload}
-            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-150"
+            className="p-2 hover:bg-gray-100 rounded-full"
             title="Download"
           >
             <DownloadIcon className="h-5 w-5" />
@@ -230,120 +208,106 @@ const Gateman = () => {
         </div>
       </div>
 
-
-     
+      {/* Gatemen Table */}
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-auto">
-        <div className="overflow-auto max-h-[70vh] rounded-lg">
-          <table className="min-w-max w-full text-sm text-left text-gray-600">
-            <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
-                {[
-                  "PO Number",
-                  "Invoice",
-                  "Company Name",
-                  "Item",
-                  "Quantity",
-                  
-                  "Actions",
-                ].map((header, i) => (
-                  <th
-                    key={i}
-                    className={`py-3 px-4 text-center font-semibold ${i === 0 ? "rounded-tl-2xl" : ""
-                      } ${i === 7 ? "rounded-tr-2xl" : ""}`}
-                  >
+        <table className="min-w-max w-full text-sm text-left text-gray-600">
+          <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs">
+            <tr>
+              {["PO Number", "Invoice", "Company", "Items", "Qty", "Status", "Action"].map(
+                (header, i) => (
+                  <th key={i} className="py-3 px-4 text-center font-semibold">
                     {header}
                   </th>
-                ))}
-              </tr>
-            </thead>
-
-            {/* <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="text-center py-6 text-gray-500 italic bg-gray-50"
-                  >
-                    Loading suppliers...
-                  </td>
-                </tr>
-              ) : filteredSuppliers.length > 0 ? (
-                filteredSuppliers.map((s, i) => (
-                  <tr
-                    key={s._id || i}
-                    className={`transition-all duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-blue-50`}
-                  >
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {s?.supplier_id}
-                    </td>
-                    <td className="py-3 px-4 font-medium text-gray-800 border-b">
-                      {s.name}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-b">
-                      {s.company_name}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-b">
-                      {s.phone}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-b">
-                      {s.email}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-b">
-                      {s.gst_number}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-b  overflow-hidden whitespace-nowrap">
-                      {s.address.length > 20
-                        ? `${s.address.slice(0, 20)}...`
-                        : s.address}
-                    </td>
-                    <td className="py-3 px-4 text-center border-b">
-                      <div className="flex items-center justify-center space-x-3">
-                        <button
-                          className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
-                          title="View"
-                          onClick={() => handleView(s)}
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                          title="Edit"
-                          onClick={() => handleEdit(s)}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
-                          title="Delete"
-                          onClick={() => handleDelete(s._id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="text-center py-6 text-gray-400 italic bg-gray-50"
-                  >
-                    No suppliers found.
-                  </td>
-                </tr>
+                )
               )}
-            </tbody> */}
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="text-center py-6 text-gray-500 italic bg-gray-50"
+                >
+                  Loading data...
+                </td>
+              </tr>
+            ) : filteredGatemen.length > 0 ? (
+              filteredGatemen.map((g, i) => (
+                <tr
+                  key={g._id || i}
+                  className={`transition-all ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
+                >
+                  <td className="py-3 px-4 text-center">{g.po_number}</td>
+                  <td className="py-3 px-4 text-center">{g.invoice_number}</td>
+                  <td className="py-3 px-4 text-center">{g.company_name}</td>
+                  <td className="py-3 px-4 text-center">
+                    {g.items?.map((i) => i.item_name).join(", ")}
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {g.items?.map((i) => i.item_quantity).join(", ")}
+                  </td>
+                  <td className="py-3 px-4 text-center">{g.status}</td>
+                  <td className="py-3 px-4 text-center border-b">
+                    <div className="flex items-center justify-center space-x-3">
+                      <button
+                        className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
+                        title="View"
+                        onClick={async () => {
+                          const details = await DetailsGatemenData(g?._id);
+                          if (details) {
+                            setEditTable(details); 
+                            setMode("view");
+                            setShowModal(true);
+                          }
+                        }}
+
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                        title="Edit"
+                        onClick={() => {
+                          setEditTable(g);
+                          setMode("edit");
+                          setShowModal(true);
+                        }}
+                      >
+                        <Edit size={16} />
+                      </button>
+
+                      <button
+                        className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                        title="Delete"
+                        onClick={() => DeleteGatemenData(g?._id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="text-center py-6 text-gray-400 italic bg-gray-50"
+                >
+                  No matching entries found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
-     
+
       <AnimatePresence>
         {showModal && (
           <>
-            
+
             <motion.div
               className="fixed inset-0 bg-black/30 z-40"
               initial={{ opacity: 0 }}
@@ -352,7 +316,7 @@ const Gateman = () => {
               onClick={() => setShowModal(false)}
             />
 
-           
+
             <motion.div
               className="fixed top-0 right-0 h-full w-[450px] bg-white shadow-2xl z-50 p-6 overflow-y-auto"
               initial={{ x: "100%" }}
@@ -376,28 +340,45 @@ const Gateman = () => {
                 </button>
               </div>
 
-             
+
               <form onSubmit={formik.handleSubmit} className="space-y-4">
-             
+
                 <div>
                   <label className="block text-sm font-medium">PO Ref.</label>
                   <select
-                    type="text"
-                    name="po_number"
-                    value={formik.values.po_number}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    // disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                    placeholder="Enter PO Number"
-                  >
+                    name="po_ref"
+                    value={formik.values.po_ref}
+                    onChange={(e) => {
+                      const selectedPOId = e.target.value
+                      formik.setFieldValue("po_ref", selectedPOId)
 
+
+                      const selectedPO = POData?.find((po) => po._id === selectedPOId)
+
+                      if (selectedPO) {
+
+                        formik.setFieldValue("po_number", selectedPO.po_number)
+                        formik.setFieldValue(
+                          "items",
+                          selectedPO.products?.map((p) => ({
+                            item_name: p.item_name,
+                            item_quantity: p.est_quantity || 1,
+                          })) || []
+                        )
+                      }
+                    }}
+                    className="w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-200"
+                  >
+                    <option value="">Select PO</option>
+                    {POData?.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.po_number} — {p.products?.[0]?.item_name}
+                      </option>
+                    ))}
                   </select>
+
                 </div>
-                
+
 
                 <div>
                   <label className="block text-sm font-medium">PO Number</label>
@@ -409,14 +390,14 @@ const Gateman = () => {
                     onBlur={formik.handleBlur}
                     // disabled={mode === "view"}
                     className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
-                        ? "border-red-500 focus:ring-red-200"
-                        : "focus:ring-blue-200"
+                      ? "border-red-500 focus:ring-red-200"
+                      : "focus:ring-blue-200"
                       } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
                     placeholder="Enter PO Number"
                   />
                 </div>
 
-                {/* Invoice Number */}
+                
                 <div>
                   <label className="block text-sm font-medium">
                     Invoice Number
@@ -429,14 +410,14 @@ const Gateman = () => {
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
                     className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number && formik.errors.invoice_number
-                        ? "border-red-500 focus:ring-red-200"
-                        : "focus:ring-blue-200"
+                      ? "border-red-500 focus:ring-red-200"
+                      : "focus:ring-blue-200"
                       } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
                     placeholder="Enter Invoice Number"
                   />
                 </div>
 
-                {/* Company Name */}
+               
                 <div>
                   <label className="block text-sm font-medium">
                     Company Name
@@ -449,14 +430,14 @@ const Gateman = () => {
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
                     className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.company_name && formik.errors.company_name
-                        ? "border-red-500 focus:ring-red-200"
-                        : "focus:ring-blue-200"
+                      ? "border-red-500 focus:ring-red-200"
+                      : "focus:ring-blue-200"
                       } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
                     placeholder="Enter Company Name"
                   />
                 </div>
 
-                {/* Items List */}
+               
                 <div>
                   <label className="block text-sm font-medium mb-2">Items</label>
                   {formik.values.items.map((item, index) => (
@@ -542,24 +523,9 @@ const Gateman = () => {
                   />
                 </div>
 
-                {/* Status Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium">Status</label>
-                  <select
-                    name="status"
-                    value={formik.values.status}
-                    onChange={formik.handleChange}
-                    disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
-                  >
-                    <option value="Entry Created">Entry Created</option>
-                    <option value="Verified">Verified</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </div>
+      
 
-                {/* Submit Button */}
+             
                 {mode !== "view" && (
                   <Button
                     type="submit"
@@ -583,7 +549,7 @@ const Gateman = () => {
             className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-           
+
             <div className="flex justify-between items-center border-b pb-3 mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Purchase Order List</h2>
               <button
@@ -594,7 +560,7 @@ const Gateman = () => {
               </button>
             </div>
 
-          
+
             <div className="overflow-x-auto border rounded-lg shadow-inner">
               <table className="min-w-full text-sm text-left">
                 <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
@@ -633,10 +599,10 @@ const Gateman = () => {
                         <td className="px-4 py-3 font-medium">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
-                                ? "bg-blue-100 text-blue-700"
-                                : po.status === "Approved"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
+                              ? "bg-blue-100 text-blue-700"
+                              : po.status === "Approved"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-yellow-100 text-yellow-700"
                               }`}
                           >
                             {po.status}
@@ -655,18 +621,18 @@ const Gateman = () => {
                             </div>
                           ))}
                         </td>
-                    <td className="py-3 px-4 text-center border-b">
-                      <div className="flex items-center justify-start space-x-3">
-                        <button
-                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                          title="View"
+                        <td className="py-3 px-4 text-center border-b">
+                          <div className="flex items-center justify-start space-x-3">
+                            <button
+                              className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                              title="View"
                               onClick={() => AcceptPOData(po?._id)}
-                        >
-                         Accept
-                        </button>
-                        
-                      </div>
-                    </td>
+                            >
+                              Accept
+                            </button>
+
+                          </div>
+                        </td>
 
                       </tr>
                     ))
@@ -684,7 +650,7 @@ const Gateman = () => {
               </table>
             </div>
 
-           
+
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setShowPOModal(false)}
@@ -696,11 +662,10 @@ const Gateman = () => {
           </div>
         </div>
       )}
-
-
-
     </div>
   );
 };
 
 export default Gateman;
+
+
