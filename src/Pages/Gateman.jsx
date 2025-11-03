@@ -228,7 +228,7 @@ const Gateman = () => {
         <div className="overflow-auto max-h-[70vh] rounded-lg">
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
+              <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
                 {[
                   "PO Number",
                   "Invoice",
@@ -601,7 +601,7 @@ const Gateman = () => {
 
             <div className="overflow-x-auto border rounded-lg shadow-inner">
               <table className="min-w-full text-sm text-left">
-                <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
+                <thead className="bg-linear-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
                   <tr>
                     <th className="px-4 py-3 text-left">PO Number</th>
                     <th className="px-4 py-3 text-left">Supplier</th>

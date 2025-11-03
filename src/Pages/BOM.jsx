@@ -53,122 +53,129 @@ const BOM = () => {
   };
 
   return (
-    <div className="p-6 relative overflow-hidden">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Bill of Material</h1>
-        <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => setShowModal(true)}
-        >
-          Add New BOM
-        </Button>
+    <div className="p-4 sm:p-6 relative overflow-hidden">
+  {/* Header */}
+  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+    <h1 className="text-xl sm:text-2xl font-semibold">Bill of Material</h1>
+    <Button
+      className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+      onClick={() => setShowModal(true)}
+    >
+      Add New BOM
+    </Button>
+  </div>
+
+  {/* Search & Actions */}
+  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+    {/* Search Box */}
+    <div className="relative w-full sm:w-72">
+      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+      <input
+        type="text"
+        placeholder="Search"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-9 pr-4 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-gray-300"
+      />
+    </div>
+
+    {/* Action Icons */}
+    <div className="flex items-center gap-4 text-gray-600">
+      {/* Filter Dropdown */}
+      <div className="relative group">
+        <Filter className="cursor-pointer hover:text-gray-800" />
+        <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
+          <p
+            onClick={() => handleFilter("All")}
+            className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+          >
+            All
+          </p>
+          {[...new Set(products.map((p) => p.category))].map((cat) => (
+            <p
+              key={cat}
+              onClick={() => handleFilter(cat)}
+              className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+            >
+              {cat}
+            </p>
+          ))}
+        </div>
       </div>
 
-      {/* Search & Actions */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-1 focus:ring-gray-300"
-          />
-        </div>
+      {/* Refresh + Download */}
+      <RefreshCcw
+        className="cursor-pointer hover:text-gray-800"
+        onClick={getAllProducts}
+      />
+      <Download
+        className="cursor-pointer hover:text-gray-800"
+        onClick={handleDownload}
+      />
+    </div>
+  </div>
 
-        <div className="flex items-center space-x-4 text-gray-600">
-          <div className="relative group">
-            <Filter className="cursor-pointer hover:text-gray-800" />
-            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
-              <p
-                onClick={() => handleFilter("All")}
-                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+  {/* Table Section */}
+  <div className="border rounded-lg overflow-x-auto shadow-sm">
+    <table className="w-full min-w-[700px] text-sm text-left">
+      <thead >
+        <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide" >
+          <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
+          <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
+          <th className="px-4 sm:px-6 py-3 font-medium">Part Name</th>
+          <th className="px-4 sm:px-6 py-3 font-medium">Created Date</th>
+          <th className="px-4 sm:px-6 py-3 font-medium text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {loading ? (
+          <tr>
+            <td colSpan="6" className="text-center py-6 text-gray-500">
+              Loading products...
+            </td>
+          </tr>
+        ) : products?.length > 0 ? (
+          (filteredProducts.length ? filteredProducts : products)
+            .filter((item) => {
+              const q = searchQuery.toLowerCase();
+              return (
+                item.name.toLowerCase().includes(q) ||
+                item.category.toLowerCase().includes(q) ||
+                item.product_id.toLowerCase().includes(q)
+              );
+            })
+            .map((item, index) => (
+              <tr
+                key={index}
+                className={`border-t ${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                }`}
               >
-                All
-              </p>
-              {[...new Set(products.map((p) => p.category))].map((cat) => (
-                <p
-                  key={cat}
-                  onClick={() => handleFilter(cat)}
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                >
-                  {cat}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          <RefreshCcw
-            className="cursor-pointer hover:text-gray-800"
-            onClick={getAllProducts}
-          />
-
-          <Download
-            className="cursor-pointer hover:text-gray-800"
-            onClick={handleDownload}
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden shadow-sm">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-gray-200 text-gray-700">
-            <tr>
-              <th className="px-6 py-3 font-medium">Compound Code</th>
-              <th className="px-6 py-3 font-medium">Compound Name</th>
-              <th className="px-6 py-3 font-medium">Part Name</th>
-              <th className="px-6 py-3 font-medium">Created Date</th>
-              <th className="px-6 py-3 font-medium text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
-                  Loading products...
+                <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
+                <td className="px-4 sm:px-6 py-3">{item.category}</td>
+                <td className="px-4 sm:px-6 py-3">{item.name}</td>
+                <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
+                <td className="px-4 sm:px-6 py-3 text-center">
+                  <div className="flex justify-center gap-3">
+                    <Edit className="h-4 w-4 text-blue-500 cursor-pointer" />
+                    <Trash2 className="h-4 w-4 text-red-500 cursor-pointer" />
+                    <Eye className="h-4 w-4 text-gray-600 cursor-pointer" />
+                  </div>
                 </td>
               </tr>
-            ) : products?.length > 0 ? (
-              (filteredProducts.length ? filteredProducts : products)
-                .filter((item) => {
-                  const q = searchQuery.toLowerCase();
-                  return (
-                    item.name.toLowerCase().includes(q) ||
-                    item.category.toLowerCase().includes(q) ||
-                    item.product_id.toLowerCase().includes(q)
-                  );
-                })
-                .map((item, index) => (
-                  <tr
-                    key={index}
-                    className={`border-t ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
-                  >
-                    <td className="px-6 py-3">{item.product_id}</td>
-                    <td className="px-6 py-3">{item.category}</td>
-                    <td className="px-6 py-3">{item.name}</td>
-                    <td className="px-6 py-3">{item.current_stock}</td>
-                    <td className="px-6 py-3 text-center flex justify-center space-x-3">
-                      <Edit className="h-4 w-4 text-blue-500 cursor-pointer" />
-                      <Trash2 className="h-4 w-4 text-red-500 cursor-pointer" />
-                      <Eye className="h-4 w-4 text-gray-600 cursor-pointer" />
-                    </td>
-                  </tr>
-                ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
-                  No Bill found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+        ) : (
+          <tr>
+            <td colSpan="6" className="text-center py-6 text-gray-500">
+              No Bill found.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+
+
 
       {/* Add BOM Modal */}
       <AnimatePresence>
@@ -184,22 +191,24 @@ const BOM = () => {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="relative bg-white rounded-2xl shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto p-6 sm:p-10"
+              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
+              {/* Close Button */}
               <button
                 onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
+                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
               >
                 ✕
               </button>
 
-              <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+              {/* Title */}
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
                 Bill of Materials (BOM)
               </h1>
               <hr className="border-gray-300 mb-6" />
 
               {/* BOM Id & Name */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     BOM Id
@@ -223,7 +232,7 @@ const BOM = () => {
                 </div>
               </div>
 
-              {/* Compounding Standard */}
+              {/* Sections */}
               <Section
                 title="Compounding Standard"
                 headers={[
@@ -234,7 +243,6 @@ const BOM = () => {
                 ]}
               />
 
-              {/* Raw Material */}
               <Section
                 title="Raw Material"
                 headers={[
@@ -245,7 +253,6 @@ const BOM = () => {
                 ]}
               />
 
-              {/* Processes */}
               <Section
                 title="Processes"
                 headers={["Process 1", "Process 2", "Process 3", "Process 4"]}
@@ -268,25 +275,36 @@ const BOM = () => {
 /* Reusable Section Component */
 const Section = ({ title, headers }) => (
   <section className="mb-8">
-    <h2 className="text-lg font-semibold text-gray-900 mb-3">{title}</h2>
-    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-blue-600 text-white rounded-md px-3 py-2 text-sm font-medium">
+    {/* Section Title */}
+    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+      {title}
+    </h2>
+
+    {/* Header Row */}
+    <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 bg-blue-600 text-white rounded-md px-3 py-2 text-xs sm:text-sm font-medium">
       {headers.map((h, i) => (
-        <span key={i}>{h}</span>
+        <span key={i} className="truncate text-center">
+          {h}
+        </span>
       ))}
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mt-3">
-      {headers.map((_, i) => (
+
+    {/* Input Row(s) */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+      {headers.map((h, i) => (
         <input
           key={i}
-          placeholder={`Enter ${headers[i]}`}
-          className="border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+          placeholder={`Enter ${h}`}
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
         />
       ))}
-      <div className="flex gap-3 col-span-1 sm:col-span-4 justify-end">
-        <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium">
-          Add More
-        </button>
-      </div>
+    </div>
+
+    {/* Add More Button */}
+    <div className="flex justify-end mt-4">
+      <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium">
+        Add More
+      </button>
     </div>
   </section>
 );

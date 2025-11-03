@@ -195,7 +195,7 @@ const Inventory = () => {
       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Product ID",
                 "Category",
