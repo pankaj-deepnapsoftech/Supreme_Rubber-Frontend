@@ -18,6 +18,8 @@ import OTPVerification from "./Pages/OTPVerificationPage";
 import VerifyEmail from "./Pages/verifyEmail";
 import PurchaseOrder from "./Pages/PurchaseOrder";
 
+import { QualityCheckProvider } from "./Context/QualityCheckContext";
+
 const App = () => {
   return (
     <Router>
@@ -103,11 +105,21 @@ const App = () => {
           />
 
 
-          <Route
+          {/* <Route
             path="quality-check"
             element={
               <ProtectedRoute path="/quality-check">
                 <QualityCheck />
+              </ProtectedRoute>
+            }
+          /> */}
+          <Route
+            path="quality-check"
+            element={
+              <ProtectedRoute path="/quality-check">
+                <QualityCheckProvider>
+                  <QualityCheck />
+                </QualityCheckProvider>
               </ProtectedRoute>
             }
           />
