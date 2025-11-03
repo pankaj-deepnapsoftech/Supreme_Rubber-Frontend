@@ -80,7 +80,7 @@ const QualityCheck = () => {
     link.download = "inventory.csv";
     link.click();
   };
-console.log("hii",getData)
+
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
       {/* Header */}
