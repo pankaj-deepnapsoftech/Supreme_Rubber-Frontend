@@ -12,6 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInventory } from "@/Context/InventoryContext";
+import { useGatemenContext } from "@/Context/GatemenContext";
+
+
+
 
 const QualityCheck = () => {
   const [showModal, setShowModal] = useState(false);
@@ -20,6 +24,10 @@ const QualityCheck = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showGtModal, setShowGtModal] = useState(false);
   const [pendingData, setPendingData] = useState();
+  const [getData, setGetData] = useState();
+
+  const {GetAllPOData} = useGatemenContext();
+
 
   const {
     products,
@@ -29,8 +37,18 @@ const QualityCheck = () => {
     getAllProducts,
   } = useInventory();
 
+  
+
   useEffect(() => {
+    const getGateman = async()=>{
+      const data = await GetAllPOData();
+      console.log(data)
+      setGetData(data)
+    
+    }
+    getGateman();
     getAllProducts();
+  
   }, []);
 
   const handleClose = () => {
@@ -62,7 +80,7 @@ const QualityCheck = () => {
     link.download = "inventory.csv";
     link.click();
   };
-
+console.log("hii",getData)
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
       {/* Header */}
@@ -322,7 +340,7 @@ const QualityCheck = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 mb-6 gap-3">
               <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
-                Purchase Order List
+                Gateway Order List
               </h2>
               <button
                 onClick={() => setShowGtModal(false)}
@@ -344,13 +362,13 @@ const QualityCheck = () => {
                     </th>
                     <th className="px-3 sm:px-4 py-3 text-left">Items</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Quantity</th>
-                    <th className="px-3 sm:px-4 py-3 text-left">Action</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Status</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {pendingData && pendingData.length > 0 ? (
-                    pendingData.map((po, i) => (
+                  {getData && getData.length > 0 ? (
+                    getData.map((po, i) => (
                       <tr
                         key={i}
                         className={`border-b hover:bg-gray-50 transition ${
@@ -358,22 +376,35 @@ const QualityCheck = () => {
                         }`}
                       >
                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po.po_number}
+                          {po?.po_number}
                         </td>
                         <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
-                          {po.supplier?.company_name || "—"}
-                          <div className="text-xs text-gray-500 truncate">
+                          {po?.invoice_number || "—"}
+                          {/* <div className="text-xs text-gray-500 truncate">
                             {po.supplier?.name} ({po.supplier?.email})
-                          </div>
+                          </div> */}
                         </td>
-                        <td className="px-3 sm:px-4 py-3 text-gray-600 whitespace-nowrap">
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                          {po?.company_name}
+                        </td>
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                          {po?.items.map((i) => i.item_name).join(', ')}
+                        </td>
+                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                          {po?.items.map((i)=> i.item_quantity).join(", ")}
+                        </td> 
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                          {po?.status}
+                        </td>
+
+                        {/* <td className="px-3 sm:px-4 py-3 text-gray-600 whitespace-nowrap">
                           {new Date(po.createdAt).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "short",
                             day: "2-digit",
                           })}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 text-gray-600">
+                        </td> */}
+                        {/* <td className="px-3 sm:px-4 py-3 text-gray-600">
                           {po.products?.map((p, idx) => (
                             <div
                               key={idx}
@@ -385,15 +416,15 @@ const QualityCheck = () => {
                               - {p.est_quantity} {p.uom}
                             </div>
                           ))}
-                        </td>
-                        <td className="py-3 px-3 sm:px-4 text-center">
+                        </td> */}
+                        {/* <td className="py-3 px-3 sm:px-4 text-center">
                           <button
                             className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                             onClick={() => AcceptPOData(po?._id)}
                           >
                             Accept
                           </button>
-                        </td>
+                        </td> */}
                       </tr>
                     ))
                   ) : (
