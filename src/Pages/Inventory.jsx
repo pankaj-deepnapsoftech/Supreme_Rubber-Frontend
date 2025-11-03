@@ -352,7 +352,9 @@ const Inventory = () => {
                         "Dozen",
                         "Pack",
                       ],
-                      product_service: ["Product", "Service"],
+                      product_or_service: ["Product", "Service"],
+                      item_type: ["Buy","Sell"],
+                      inventory_category:["Direct"]
                     };
 
                     const isSelect = Object.keys(dropdownOptions).includes(key);
