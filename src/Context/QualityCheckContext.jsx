@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axiosHandler from "../config/axiosconfig";
+import { toast } from "react-toastify";
 
 const QualityCheckContext = createContext();
 
@@ -24,6 +25,7 @@ export const QualityCheckProvider = ({ children }) => {
     }
   };
 
+  // console.log(qualityReports)
   // Get one
   const getReportById = async (id) => {
     try {
@@ -93,6 +95,16 @@ export const QualityCheckProvider = ({ children }) => {
     }
   };
 
+
+   const ChangesStatus = async(_id) =>{
+    try {
+      const res = await axiosHandler.patch(`/gateman/change-status/${_id}`)
+      toast.success(res?.data?.message)
+    } catch (error) {
+       console.log(error)
+    }
+   }
+
   useEffect(() => {
     getAllReports();
   }, []);
@@ -109,6 +121,7 @@ export const QualityCheckProvider = ({ children }) => {
         updateReport,
         deleteReport,
         setSelectedReport,
+        ChangesStatus
       }}
     >
       {children}

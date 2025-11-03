@@ -44,12 +44,14 @@ const QualityCheck = () => {
     selectedReport,
     setSelectedReport,
     loading,
+    ChangesStatus
   } = useQualityCheck();
 
   useEffect(() => {
     const getGateman = async () => {
       const data = await GetAllPOData();
-      setGetData(data);
+      const filter = data.filter((i) => i?.status === "Entry Created")
+      setGetData(filter);
     };
     getGateman();
     getAllReports();
@@ -597,6 +599,7 @@ const QualityCheck = () => {
                     <th className="px-3 sm:px-4 py-3 text-left">Items</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Quantity</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Status</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Action</th>
                   </tr>
                 </thead>
 
@@ -629,6 +632,18 @@ const QualityCheck = () => {
                         </td>
                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                           {po?.status}
+                        </td>
+                        <td className="py-3 px-4 text-center border-b">
+                          <div className="flex items-center justify-start space-x-3">
+                            <button
+                              className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                              title="View"
+                              onClick={() => ChangesStatus(po?._id)}
+                            >
+                              Verified
+                            </button>
+
+                          </div>
                         </td>
                       </tr>
                     ))
