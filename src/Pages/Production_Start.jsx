@@ -17,8 +17,6 @@ const Production_Start = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [showGtModal, setShowGtModal] = useState(false);
-  const [pendingData, setPendingData] = useState();
 
   const {
     products,
@@ -116,7 +114,7 @@ const Production_Start = () => {
       {/* Table */}
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left min-w-[600px]">
-          <thead >
+          <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
