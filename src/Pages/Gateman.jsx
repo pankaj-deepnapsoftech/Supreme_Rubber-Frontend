@@ -316,7 +316,6 @@ const Gateman = () => {
               onClick={() => setShowModal(false)}
             />
 
-
             <motion.div
               className="fixed top-0 right-0 h-full w-[450px] bg-white shadow-2xl z-50 p-6 overflow-y-auto"
               initial={{ x: "100%" }}
@@ -329,8 +328,8 @@ const Gateman = () => {
                   {mode === "add"
                     ? "Add Gate Entry"
                     : mode === "edit"
-                      ? "Edit Gate Entry"
-                      : "Gate Entry Details"}
+                    ? "Edit Gate Entry"
+                    : "Gate Entry Details"}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -439,7 +438,9 @@ const Gateman = () => {
 
                
                 <div>
-                  <label className="block text-sm font-medium mb-2">Items</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Items
+                  </label>
                   {formik.values.items.map((item, index) => (
                     <div
                       key={index}
@@ -516,7 +517,10 @@ const Gateman = () => {
                     type="file"
                     name="attached_invoice"
                     onChange={(e) =>
-                      formik.setFieldValue("attached_invoice", e.target.files[0])
+                      formik.setFieldValue(
+                        "attached_invoice",
+                        e.target.files[0]
+                      )
                     }
                     disabled={mode === "view"}
                     className="w-full border rounded-md px-3 py-2 mt-1"
@@ -549,9 +553,10 @@ const Gateman = () => {
             className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-
             <div className="flex justify-between items-center border-b pb-3 mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Purchase Order List</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Purchase Order List
+              </h2>
               <button
                 onClick={() => setShowPOModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -560,10 +565,9 @@ const Gateman = () => {
               </button>
             </div>
 
-
             <div className="overflow-x-auto border rounded-lg shadow-inner">
               <table className="min-w-full text-sm text-left">
-                <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
+                <thead className="bg-linear-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
                   <tr>
                     <th className="px-4 py-3 text-left">PO Number</th>
                     <th className="px-4 py-3 text-left">Supplier</th>
@@ -578,7 +582,9 @@ const Gateman = () => {
                     pendingData.map((po, i) => (
                       <tr
                         key={i}
-                        className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                        className={`border-b hover:bg-gray-50 transition ${
+                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                        }`}
                       >
                         <td className="px-4 py-3 font-semibold text-gray-800">
                           {po.po_number}
@@ -610,13 +616,17 @@ const Gateman = () => {
                         </td>
                         <td className="px-4 py-3 text-gray-600">
                           {po.products?.map((p, idx) => (
-                            <div key={idx} className="border-b last:border-0 py-1">
+                            <div
+                              key={idx}
+                              className="border-b last:border-0 py-1"
+                            >
                               <span className="font-medium text-gray-800">
                                 {p.item_name}
                               </span>{" "}
                               - {p.est_quantity} {p.uom}
                               <div className="text-xs text-gray-500">
-                                Remain: {p.remain_quantity}, Produced: {p.produce_quantity}
+                                Remain: {p.remain_quantity}, Produced:{" "}
+                                {p.produce_quantity}
                               </div>
                             </div>
                           ))}
@@ -649,7 +659,6 @@ const Gateman = () => {
                 </tbody>
               </table>
             </div>
-
 
             <div className="mt-6 flex justify-end">
               <button

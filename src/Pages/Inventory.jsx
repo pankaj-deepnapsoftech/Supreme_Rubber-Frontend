@@ -34,10 +34,8 @@ const Inventory = () => {
     getAllProducts,
   } = useInventory();
 
-
   const formik = useFormik({
     initialValues: {
-     
       inventory_category: "",
       name: "",
       uom: "",
@@ -50,7 +48,9 @@ const Inventory = () => {
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Product name is required"),
-      inventory_category: Yup.string().required("Inventory category is required"),
+      inventory_category: Yup.string().required(
+        "Inventory category is required"
+      ),
       current_stock: Yup.number()
         .typeError("Stock must be a number")
         .required("Stock is required"),
@@ -69,7 +69,6 @@ const Inventory = () => {
       setEditMode(false);
     },
   });
-
 
   const handleEdit = async (id) => {
     const product = await getProductDetails(id);
@@ -95,7 +94,7 @@ const Inventory = () => {
 
   const handleView = async (id) => {
     const product = await getProductDetails(id);
-    console.log(product)
+    console.log(product);
     formik.setValues(product);
     setSelectedProduct(product);
     setViewMode(true);
@@ -117,13 +116,9 @@ const Inventory = () => {
 
   const handleDownload = () => {
     const headers = ["Product Id", "Category", "Name", "Stock", "UOM"];
-    const rows = (filteredProducts.length ? filteredProducts : products).map((p) => [
-      p.product_id,
-      p.category,
-      p.name,
-      p.current_stock,
-      p.uom,
-    ]);
+    const rows = (filteredProducts.length ? filteredProducts : products).map(
+      (p) => [p.product_id, p.category, p.name, p.current_stock, p.uom]
+    );
 
     const csvContent =
       "data:text/csv;charset=utf-8," +
@@ -134,7 +129,6 @@ const Inventory = () => {
     link.download = "inventory.csv";
     link.click();
   };
-
 
   useEffect(() => {
     getAllProducts();
@@ -162,7 +156,6 @@ const Inventory = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-8 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-1 focus:ring-gray-300"
           />
-
         </div>
         <div className="flex items-center space-x-4 text-gray-600">
           {/* Filter dropdown */}
@@ -187,36 +180,39 @@ const Inventory = () => {
             </div>
           </div>
 
-       
           <RefreshCcw
             className="cursor-pointer hover:text-gray-800"
             onClick={handleRefresh}
           />
 
-         
           <Download
             className="cursor-pointer hover:text-gray-800"
             onClick={handleDownload}
           />
         </div>
-
       </div>
 
       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
-              {["Product ID", "Category", "Name", "Stock", "UOM", "Actions"].map(
-                (header, i) => (
-                  <th
-                    key={i}
-                    className={`py-3 px-4 text-center font-semibold ${i === 0 ? "rounded-tl-2xl" : ""
-                      } ${i === 5 ? "rounded-tr-2xl" : ""}`}
-                  >
-                    {header}
-                  </th>
-                )
-              )}
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+              {[
+                "Product ID",
+                "Category",
+                "Name",
+                "Stock",
+                "UOM",
+                "Actions",
+              ].map((header, i) => (
+                <th
+                  key={i}
+                  className={`py-3 px-4 text-center font-semibold ${
+                    i === 0 ? "rounded-tl-2xl" : ""
+                  } ${i === 5 ? "rounded-tr-2xl" : ""}`}
+                >
+                  {header}
+                </th>
+              ))}
             </tr>
           </thead>
 
@@ -243,8 +239,9 @@ const Inventory = () => {
                 .map((item, i) => (
                   <tr
                     key={item._id || i}
-                    className={`transition-all duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-blue-50`}
+                    className={`transition-all duration-200 ${
+                      i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
                   >
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.product_id}
@@ -303,9 +300,6 @@ const Inventory = () => {
         </table>
       </div>
 
-
-
-
       <AnimatePresence>
         {showModal && (
           <>
@@ -326,8 +320,11 @@ const Inventory = () => {
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">
-                  {viewMode ? "Product Details" : editMode ? "Edit Product" : "Add Inventory"}
-
+                  {viewMode
+                    ? "Product Details"
+                    : editMode
+                    ? "Edit Product"
+                    : "Add Inventory"}
                 </h2>
                 <button
                   onClick={handleClose}
@@ -346,8 +343,16 @@ const Inventory = () => {
                     // Dropdown options for specific fields
                     const dropdownOptions = {
                       category: ["Finished Goods", "Raw Material"],
-                      uom: ["Kg", "Litre", "Meter", "Piece", "Box", "Dozen", "Pack"],
-                      product_service: ["Product", "Service"], 
+                      uom: [
+                        "Kg",
+                        "Litre",
+                        "Meter",
+                        "Piece",
+                        "Box",
+                        "Dozen",
+                        "Pack",
+                      ],
+                      product_service: ["Product", "Service"],
                     };
 
                     const isSelect = Object.keys(dropdownOptions).includes(key);
@@ -366,10 +371,13 @@ const Inventory = () => {
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             disabled={viewMode}
-                            className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched[key] && formik.errors[key]
+                            className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                              formik.touched[key] && formik.errors[key]
                                 ? "border-red-500 focus:ring-red-200"
                                 : "focus:ring-blue-200"
-                              } ${viewMode ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                            } ${
+                              viewMode ? "bg-gray-100 cursor-not-allowed" : ""
+                            }`}
                           >
                             <option value="">Select {label}</option>
                             {dropdownOptions[key].map((opt) => (
@@ -387,10 +395,13 @@ const Inventory = () => {
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             readOnly={viewMode}
-                            className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched[key] && formik.errors[key]
+                            className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                              formik.touched[key] && formik.errors[key]
                                 ? "border-red-500 focus:ring-red-200"
                                 : "focus:ring-blue-200"
-                              } ${viewMode ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                            } ${
+                              viewMode ? "bg-gray-100 cursor-not-allowed" : ""
+                            }`}
                           />
                         )}
 
@@ -424,7 +435,6 @@ const Inventory = () => {
                   )}
                 </div>
               </form>
-
             </motion.div>
           </>
         )}
