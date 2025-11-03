@@ -70,20 +70,20 @@ export default function DashboardMain() {
   return (
     <>
       <div>
-        <p className="text-[20px] font-semibold text-gray-500 ml-[24px]">
+        <p className="text-[20px] font-semibold text-gray-500 ml-6">
           Dashboard
         </p>
         <div>
           {/* CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 mt-4">
             {/* CARD - Purchase Order */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-[10px] flex justify-between items-center h-[6.5rem] shadow-sm">
+            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
                 <p className="text-[24px] text-gray-700 font-semibold">24</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
-                    5 <ArrowDropUpIcon className="mt-[2px]" />
+                    5 <ArrowDropUpIcon className="mt-0.5" />
                   </span>
                   v/s last month
                 </p>
@@ -94,13 +94,13 @@ export default function DashboardMain() {
             </div>
 
             {/* CARD - Total Production */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-[10px] flex justify-between items-center h-[6.5rem] shadow-sm">
+            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
                 <p className="text-[24px] text-gray-700 font-semibold">15</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-red-400 flex items-center">
-                    2 <ArrowDropDown className="mb-[2px]" />
+                    2 <ArrowDropDown className="mb-0.5" />
                   </span>
                   v/s last month
                 </p>
@@ -111,13 +111,13 @@ export default function DashboardMain() {
             </div>
 
             {/* CARD - Total BOM */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-[10px] flex justify-between items-center h-[6.5rem] shadow-sm">
+            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
                 <p className="text-[24px] text-gray-700 font-semibold">3</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
-                    1 <ArrowDropUpIcon className="mb-[2px]" />
+                    1 <ArrowDropUpIcon className="mb-0.5" />
                   </span>
                   v/s last month
                 </p>
@@ -128,13 +128,13 @@ export default function DashboardMain() {
             </div>
 
             {/* CARD - Total Suppliers */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-[10px] flex justify-between items-center h-[6.5rem] shadow-sm">
+            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Suppliers</p>
                 <p className="text-[24px] text-gray-700 font-semibold">9</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-gray-400 flex items-center">
-                    0 <ArrowDropUpIcon className="mb-[2px]" />
+                    0 <ArrowDropUpIcon className="mb-0.5" />
                   </span>
                   v/s last month
                 </p>

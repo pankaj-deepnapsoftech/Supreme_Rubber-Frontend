@@ -211,7 +211,7 @@ const Gateman = () => {
       {/* Gatemen Table */}
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-auto">
         <table className="min-w-max w-full text-sm text-left text-gray-600">
-          <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs">
+          <thead className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs">
             <tr>
               {["PO Number", "Invoice", "Company", "Items", "Qty", "Status", "Action"].map(
                 (header, i) => (

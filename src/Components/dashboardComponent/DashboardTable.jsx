@@ -116,7 +116,7 @@ export default function DashboardTable() {
             </PieChart>
           </ResponsiveContainer>
 
-          <div className="text-xs text-gray-500 mt-[-10px]">50 kg rubber</div>
+          <div className="text-xs text-gray-500 -mt-2.5">50 kg rubber</div>
 
           <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500 mt-2">
             <div className="flex items-center space-x-1">
