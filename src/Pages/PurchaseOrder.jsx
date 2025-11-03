@@ -115,6 +115,7 @@ const PurchaseOrder = () => {
 
    
     const handleView = async (id) => {
+       
         const res = await GetPurchaseOrderDetails(id);
         const po = res?.po || res;
 
@@ -155,6 +156,7 @@ const PurchaseOrder = () => {
     
 
     const handleEdit = async (id) => {
+       
         const res = await GetPurchaseOrderDetails(id);
         const po = res?.po || res;
 
