@@ -12,8 +12,10 @@ export const QualityCheckProvider = ({ children }) => {
   const getAllReports = async () => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get("/quality-check", { withCredentials: true });
-      console.log(res)
+      const res = await axiosHandler.get("/quality-check", {
+        withCredentials: true,
+      });
+      console.log(res);
       setQualityReports(res.data?.data || []);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -25,51 +27,69 @@ export const QualityCheckProvider = ({ children }) => {
   // Get one
   const getReportById = async (id) => {
     try {
-      const res = await axiosHandler.get(`/quality-check/${id}`, { withCredentials: true });
-      setSelectedReport(res.data.entry);
-      return res.data.entry;
+      setLoading(true);
+      const res = await axiosHandler.get(`/quality-check/${id}`, {
+        withCredentials: true,
+      });
+      setSelectedReport(res.data.data);
+      return res.data.data;
     } catch (err) {
       console.error("Detail fetch error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Create
   const createReport = async (formData) => {
     try {
+      setLoading(true);
       const res = await axiosHandler.post("/quality-check", formData, {
         withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "application/json" },
       });
       await getAllReports();
-      return res.data.entry;
+      return res.data.data;
     } catch (err) {
       console.error("Create error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Update
-  const updateReport = async (updatedData) => {
+  const updateReport = async (id, updatedData) => {
     try {
-      const res = await axiosHandler.put("/quality-check", updatedData, {
+      setLoading(true);
+      const res = await axiosHandler.put(`/quality-check/${id}`, updatedData, {
         withCredentials: true,
+        headers: { "Content-Type": "application/json" },
       });
       await getAllReports();
-      return res.data.entry;
+      return res.data.data;
     } catch (err) {
       console.error("Update error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Delete
   const deleteReport = async (_id) => {
     try {
-      await axiosHandler.delete("/quality-check", {
-        data: { _id },
+      setLoading(true);
+      await axiosHandler.delete(`/quality-check/${_id}`, {
         withCredentials: true,
       });
       setQualityReports((prev) => prev.filter((r) => r._id !== _id));
     } catch (err) {
       console.error("Delete error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
