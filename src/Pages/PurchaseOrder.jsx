@@ -20,7 +20,7 @@ const PurchaseOrder = () => {
         GetPurchaseOrderDetails,
         UpdatePurchaseOrder,
         DeletePurchaseOrder,
-    } = usePurchanse_Order(); 
+    } = usePurchanse_Order();
 
     const { getAllSupplier } = useSupplierContext();
     const { getAllProducts } = useInventory();
@@ -39,7 +39,7 @@ const PurchaseOrder = () => {
         },
     ]);
 
-    
+
     const formik = useFormik({
         initialValues: { supplier: "" },
         validationSchema: Yup.object({
@@ -69,7 +69,7 @@ const PurchaseOrder = () => {
             const inv = await getAllProducts();
             setSupplierData(sup || []);
             setInventoryData(inv?.products || []);
-           const data =  await GetAllPurchaseOrders();
+            const data = await GetAllPurchaseOrders();
             setPOData(data)
         };
         fetchData();
@@ -96,7 +96,7 @@ const PurchaseOrder = () => {
         setProducts(updated);
     };
 
-  
+
     const handleItemChange = (index, e) => {
         const { name, value } = e.target;
         const updated = [...products];
@@ -113,9 +113,9 @@ const PurchaseOrder = () => {
         setProducts(updated);
     };
 
-   
+
     const handleView = async (id) => {
-       
+
         const res = await GetPurchaseOrderDetails(id);
         const po = res?.po || res;
 
@@ -128,7 +128,7 @@ const PurchaseOrder = () => {
                 supplier: po.supplier?._id || "",
             });
 
-        
+
             const formattedProducts = po.products.map((p) => ({
                 item_name:
                     p.item_name?._id ||
@@ -157,17 +157,17 @@ const PurchaseOrder = () => {
     };
 
 
-    
+
 
     const handleEdit = async (id) => {
-       
+
         const res = await GetPurchaseOrderDetails(id);
         const po = res?.po || res;
 
         if (po) {
 
             setViewMode(false)
-          
+
             setSelectedOrder(po);
 
             formik.setValues({
@@ -206,7 +206,7 @@ const PurchaseOrder = () => {
 
 
 
-  
+
     const handleDelete = async (_id) => {
         if (window.confirm("Are you sure you want to delete this purchase order?")) {
             await DeletePurchaseOrder(_id);
@@ -214,7 +214,7 @@ const PurchaseOrder = () => {
         }
     };
 
-    
+
 
     return (
         <div className="p-6 font-sans relative">
@@ -244,7 +244,7 @@ const PurchaseOrder = () => {
                 </button>
             </div>
 
-         
+
             <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
                 <table className="min-w-full border-collapse text-sm text-left">
                     <thead>
@@ -318,7 +318,7 @@ const PurchaseOrder = () => {
             </div>
 
 
-           
+
             {showModal && (
                 <div className="fixed inset-0 flex justify-end bg-black/40 z-50 transition-opacity">
                     <div className="bg-white w-full max-w-2xl h-full shadow-2xl transform transition-all duration-500 ease-out">
@@ -452,11 +452,19 @@ const PurchaseOrder = () => {
                                         <button
                                             type="button"
                                             onClick={handleAddItem}
-                                            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                                            className="inline-flex items-center gap-2 rounded-md bg-blue-600 text-white px-4 py-2 font-medium shadow-sm 
+               hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 
+               transition-all duration-150 active:scale-[0.98]"
                                         >
-                                            <PlusCircle size={18} /> Add Item
+                                            <PlusCircle size={18} className="text-white" />
+                                            Add Item
                                         </button>
+
+
+
+                                        
                                     </div>
+
                                 )}
 
                                 {!viewMode && (
