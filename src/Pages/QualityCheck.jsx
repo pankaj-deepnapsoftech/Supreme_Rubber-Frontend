@@ -19,7 +19,7 @@ const QualityCheck = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showGtModal, setShowGtModal] = useState(false);
-  const [pendingData,setPendingData] = useState()
+  const [pendingData, setPendingData] = useState();
 
   const {
     products,
@@ -133,7 +133,7 @@ const QualityCheck = () => {
       {/* Table */}
       <div className="border rounded-lg overflow-hidden shadow-sm">
         <table className="w-full text-sm text-left">
-          <thead className="bg-gray-100 text-gray-700">
+          <thead className="bg-gray-200 text-gray-700">
             <tr>
               <th className="px-6 py-3 font-medium">Product Type</th>
               <th className="px-6 py-3 font-medium">Product Name</th>
@@ -340,9 +340,10 @@ const QualityCheck = () => {
             className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-           
             <div className="flex justify-between items-center border-b pb-3 mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Purchase Order List</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Purchase Order List
+              </h2>
               <button
                 onClick={() => setShowGtModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -351,7 +352,6 @@ const QualityCheck = () => {
               </button>
             </div>
 
-          
             <div className="overflow-x-auto border rounded-lg shadow-inner">
               <table className="min-w-full text-sm text-left">
                 <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
@@ -369,7 +369,9 @@ const QualityCheck = () => {
                     pendingData.map((po, i) => (
                       <tr
                         key={i}
-                        className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                        className={`border-b hover:bg-gray-50 transition ${
+                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                        }`}
                       >
                         <td className="px-4 py-3 font-semibold text-gray-800">
                           {po.po_number}
@@ -389,42 +391,45 @@ const QualityCheck = () => {
                         </td>
                         <td className="px-4 py-3 font-medium">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              po.status === "PO Created"
                                 ? "bg-blue-100 text-blue-700"
                                 : po.status === "Approved"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
+                                ? "bg-green-100 text-green-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
                           >
                             {po.status}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-600">
                           {po.products?.map((p, idx) => (
-                            <div key={idx} className="border-b last:border-0 py-1">
+                            <div
+                              key={idx}
+                              className="border-b last:border-0 py-1"
+                            >
                               <span className="font-medium text-gray-800">
                                 {p.item_name}
                               </span>{" "}
                               - {p.est_quantity} {p.uom}
                               <div className="text-xs text-gray-500">
-                                Remain: {p.remain_quantity}, Produced: {p.produce_quantity}
+                                Remain: {p.remain_quantity}, Produced:{" "}
+                                {p.produce_quantity}
                               </div>
                             </div>
                           ))}
                         </td>
-                    <td className="py-3 px-4 text-center border-b">
-                      <div className="flex items-center justify-start space-x-3">
-                        <button
-                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                          title="View"
+                        <td className="py-3 px-4 text-center border-b">
+                          <div className="flex items-center justify-start space-x-3">
+                            <button
+                              className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                              title="View"
                               onClick={() => AcceptPOData(po?._id)}
-                        >
-                         Accept
-                        </button>
-                        
-                      </div>
-                    </td>
-
+                            >
+                              Accept
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -441,7 +446,6 @@ const QualityCheck = () => {
               </table>
             </div>
 
-           
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setShowGtModal(false)}
@@ -453,7 +457,6 @@ const QualityCheck = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

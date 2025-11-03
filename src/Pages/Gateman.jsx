@@ -15,30 +15,25 @@ import {
 import { useGatemenContext } from "@/Context/GatemenContext";
 import { useFormik } from "formik";
 
-
 const Gateman = () => {
-
-
   const [searchQuery, setSearchQuery] = useState("");
   const [showPOModal, setShowPOModal] = useState(false);
-  const { PendingGatemenData, AcceptPOData } = useGatemenContext()
-  const [pendingData,setPendingData] = useState()
-  const [showModal,setShowModal] = useState()
+  const { PendingGatemenData, AcceptPOData } = useGatemenContext();
+  const [pendingData, setPendingData] = useState();
+  const [showModal, setShowModal] = useState();
   const [mode, setMode] = useState("add"); // add | edit | view
 
-  useEffect(()=>{
-   const fetchPendingData = async()=>{
-     const data = await PendingGatemenData()
-     setPendingData(data)
-    }
-    fetchPendingData()
-  },[])
-
-
+  useEffect(() => {
+    const fetchPendingData = async () => {
+      const data = await PendingGatemenData();
+      setPendingData(data);
+    };
+    fetchPendingData();
+  }, []);
 
   const formik = useFormik({
     initialValues: {
-      po_ref:"",
+      po_ref: "",
       po_number: "",
       invoice_number: "",
       company_name: "",
@@ -169,7 +164,7 @@ const Gateman = () => {
     link.click();
     document.body.removeChild(link);
   };
-  console.log(showModal)
+  console.log(showModal);
 
   return (
     <div className="p-6 relative w-full ">
@@ -178,7 +173,6 @@ const Gateman = () => {
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => {
-           
             // setSelectedSupplier(null);
             // formik.resetForm();
             setShowModal(true);
@@ -188,9 +182,7 @@ const Gateman = () => {
         </Button>
       </div>
 
-     
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-3 sm:space-y-0">
-        
         <div className="flex items-center space-x-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -205,12 +197,14 @@ const Gateman = () => {
             />
           </div>
 
-          <Button onClick={() => setShowPOModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm transition-all duration-150">
+          <Button
+            onClick={() => setShowPOModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm transition-all duration-150"
+          >
             PO Data
           </Button>
         </div>
 
-        
         <div className="flex items-center space-x-3 text-gray-600">
           <button
             // onClick={fetchSuppliers}
@@ -230,8 +224,6 @@ const Gateman = () => {
         </div>
       </div>
 
-
-     
       <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-auto">
         <div className="overflow-auto max-h-[70vh] rounded-lg">
           <table className="min-w-max w-full text-sm text-left text-gray-600">
@@ -243,13 +235,14 @@ const Gateman = () => {
                   "Company Name",
                   "Item",
                   "Quantity",
-                  
+
                   "Actions",
                 ].map((header, i) => (
                   <th
                     key={i}
-                    className={`py-3 px-4 text-center font-semibold ${i === 0 ? "rounded-tl-2xl" : ""
-                      } ${i === 7 ? "rounded-tr-2xl" : ""}`}
+                    className={`py-3 px-4 text-center font-semibold ${
+                      i === 0 ? "rounded-tl-2xl" : ""
+                    } ${i === 7 ? "rounded-tr-2xl" : ""}`}
                   >
                     {header}
                   </th>
@@ -339,11 +332,9 @@ const Gateman = () => {
         </div>
       </div>
 
-     
       <AnimatePresence>
         {showModal && (
           <>
-            
             <motion.div
               className="fixed inset-0 bg-black/30 z-40"
               initial={{ opacity: 0 }}
@@ -352,7 +343,6 @@ const Gateman = () => {
               onClick={() => setShowModal(false)}
             />
 
-           
             <motion.div
               className="fixed top-0 right-0 h-full w-[450px] bg-white shadow-2xl z-50 p-6 overflow-y-auto"
               initial={{ x: "100%" }}
@@ -365,8 +355,8 @@ const Gateman = () => {
                   {mode === "add"
                     ? "Add Gate Entry"
                     : mode === "edit"
-                      ? "Edit Gate Entry"
-                      : "Gate Entry Details"}
+                    ? "Edit Gate Entry"
+                    : "Gate Entry Details"}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -376,9 +366,7 @@ const Gateman = () => {
                 </button>
               </div>
 
-             
               <form onSubmit={formik.handleSubmit} className="space-y-4">
-             
                 <div>
                   <label className="block text-sm font-medium">PO Ref.</label>
                   <select
@@ -388,16 +376,16 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     // disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.po_number && formik.errors.po_number
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter PO Number"
-                  >
-
-                  </select>
+                  ></select>
                 </div>
-                
 
                 <div>
                   <label className="block text-sm font-medium">PO Number</label>
@@ -408,10 +396,13 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     // disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.po_number && formik.errors.po_number
                         ? "border-red-500 focus:ring-red-200"
                         : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter PO Number"
                   />
                 </div>
@@ -428,10 +419,14 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number && formik.errors.invoice_number
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.invoice_number &&
+                      formik.errors.invoice_number
                         ? "border-red-500 focus:ring-red-200"
                         : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Invoice Number"
                   />
                 </div>
@@ -448,17 +443,22 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.company_name && formik.errors.company_name
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.company_name && formik.errors.company_name
                         ? "border-red-500 focus:ring-red-200"
                         : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Company Name"
                   />
                 </div>
 
                 {/* Items List */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Items</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Items
+                  </label>
                   {formik.values.items.map((item, index) => (
                     <div
                       key={index}
@@ -535,7 +535,10 @@ const Gateman = () => {
                     type="file"
                     name="attached_invoice"
                     onChange={(e) =>
-                      formik.setFieldValue("attached_invoice", e.target.files[0])
+                      formik.setFieldValue(
+                        "attached_invoice",
+                        e.target.files[0]
+                      )
                     }
                     disabled={mode === "view"}
                     className="w-full border rounded-md px-3 py-2 mt-1"
@@ -550,8 +553,9 @@ const Gateman = () => {
                     value={formik.values.status}
                     onChange={formik.handleChange}
                     disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                   >
                     <option value="Entry Created">Entry Created</option>
                     <option value="Verified">Verified</option>
@@ -583,9 +587,10 @@ const Gateman = () => {
             className="bg-white rounded-xl shadow-2xl w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-           
             <div className="flex justify-between items-center border-b pb-3 mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Purchase Order List</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Purchase Order List
+              </h2>
               <button
                 onClick={() => setShowPOModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -594,7 +599,6 @@ const Gateman = () => {
               </button>
             </div>
 
-          
             <div className="overflow-x-auto border rounded-lg shadow-inner">
               <table className="min-w-full text-sm text-left">
                 <thead className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-xs uppercase tracking-wide">
@@ -612,7 +616,9 @@ const Gateman = () => {
                     pendingData.map((po, i) => (
                       <tr
                         key={i}
-                        className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                        className={`border-b hover:bg-gray-50 transition ${
+                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                        }`}
                       >
                         <td className="px-4 py-3 font-semibold text-gray-800">
                           {po.po_number}
@@ -632,42 +638,45 @@ const Gateman = () => {
                         </td>
                         <td className="px-4 py-3 font-medium">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              po.status === "PO Created"
                                 ? "bg-blue-100 text-blue-700"
                                 : po.status === "Approved"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
+                                ? "bg-green-100 text-green-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
                           >
                             {po.status}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-gray-600">
                           {po.products?.map((p, idx) => (
-                            <div key={idx} className="border-b last:border-0 py-1">
+                            <div
+                              key={idx}
+                              className="border-b last:border-0 py-1"
+                            >
                               <span className="font-medium text-gray-800">
                                 {p.item_name}
                               </span>{" "}
                               - {p.est_quantity} {p.uom}
                               <div className="text-xs text-gray-500">
-                                Remain: {p.remain_quantity}, Produced: {p.produce_quantity}
+                                Remain: {p.remain_quantity}, Produced:{" "}
+                                {p.produce_quantity}
                               </div>
                             </div>
                           ))}
                         </td>
-                    <td className="py-3 px-4 text-center border-b">
-                      <div className="flex items-center justify-start space-x-3">
-                        <button
-                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                          title="View"
+                        <td className="py-3 px-4 text-center border-b">
+                          <div className="flex items-center justify-start space-x-3">
+                            <button
+                              className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                              title="View"
                               onClick={() => AcceptPOData(po?._id)}
-                        >
-                         Accept
-                        </button>
-                        
-                      </div>
-                    </td>
-
+                            >
+                              Accept
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -684,7 +693,6 @@ const Gateman = () => {
               </table>
             </div>
 
-           
             <div className="mt-6 flex justify-end">
               <button
                 onClick={() => setShowPOModal(false)}
@@ -696,9 +704,6 @@ const Gateman = () => {
           </div>
         </div>
       )}
-
-
-
     </div>
   );
 };
