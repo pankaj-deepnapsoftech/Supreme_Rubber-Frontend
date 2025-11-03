@@ -28,7 +28,6 @@ const QualityCheck = () => {
     item_id: "",
     approved_quantity: "",
     rejected_quantity: "",
-    status: "pending",
     attached_report: null,
   });
 
@@ -81,7 +80,6 @@ const QualityCheck = () => {
         item_id: selectedReport.item_id || "",
         approved_quantity: selectedReport.approved_quantity || "",
         rejected_quantity: selectedReport.rejected_quantity || "",
-        status: selectedReport.status || "pending",
         attached_report: null,
       });
     }
@@ -97,7 +95,6 @@ const QualityCheck = () => {
       item_id: "",
       approved_quantity: "",
       rejected_quantity: "",
-      status: "pending",
       attached_report: null,
     });
   };
@@ -201,7 +198,6 @@ const QualityCheck = () => {
               item_id: "",
               approved_quantity: "",
               rejected_quantity: "",
-              status: "pending",
               attached_report: null,
             });
             setShowModal(true);
@@ -529,24 +525,6 @@ const QualityCheck = () => {
                     required
                     min="0"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({ ...formData, status: e.target.value })
-                    }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                    <option value="reviewed">Reviewed</option>
-                  </select>
                 </div>
 
                 <button
