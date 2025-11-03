@@ -120,6 +120,10 @@ const PurchaseOrder = () => {
         const po = res?.po || res;
 
         if (po) {
+
+            setEditMode(false)
+
+
             formik.setValues({
                 supplier: po.supplier?._id || "",
             });
@@ -161,6 +165,8 @@ const PurchaseOrder = () => {
         const po = res?.po || res;
 
         if (po) {
+
+            setViewMode(false)
           
             setSelectedOrder(po);
 
