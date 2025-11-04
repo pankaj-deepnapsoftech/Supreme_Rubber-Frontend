@@ -47,7 +47,7 @@ const Production_Start = () => {
   // Processes data
   const [processes, setProcesses] = useState([]);
 
-  const { getAllProducts } = useInventory();
+  const { getAllProducts, products } = useInventory();
 
   // Fetch all productions
   const fetchProductions = async () => {
@@ -145,10 +145,16 @@ const Production_Start = () => {
             raw_material_id: rawMaterialPopulated?._id || rm.raw_material || null,
             raw_material_name: rm.raw_material_name || rawMaterialPopulated?.name || "",
             raw_material_code: rm.raw_material_code || rawMaterialPopulated?.product_id || "",
-            est_qty: rm.current_stock ?? rawMaterialPopulated?.current_stock ?? 0,
+            // Use BOM weight as default estimated quantity
+            est_qty: (rm.weight !== undefined && rm.weight !== null && rm.weight !== "")
+              ? parseFloat(rm.weight) || 0
+              : 0,
             uom: rm.uom || rawMaterialPopulated?.uom || rm.product_snapshot?.uom || "",
             used_qty: "",
-            remain_qty: rm.current_stock ?? rawMaterialPopulated?.current_stock ?? 0,
+            // Initialize remain equal to est by default
+            remain_qty: (rm.weight !== undefined && rm.weight !== null && rm.weight !== "")
+              ? parseFloat(rm.weight) || 0
+              : 0,
             category: rm.category || rawMaterialPopulated?.category || rm.product_snapshot?.category || "",
             total_cost: "",
             weight: rm.weight || "",
@@ -166,10 +172,16 @@ const Production_Start = () => {
           raw_material_id: rawMaterialPopulated?._id || bom.raw_material || null,
           raw_material_name: bom.raw_material_name || rawMaterialPopulated?.name || "",
           raw_material_code: bom.raw_material_code || rawMaterialPopulated?.product_id || "",
-          est_qty: bom.raw_material_current_stock || rawMaterialPopulated?.current_stock || 0,
+          // Use BOM single raw material weight as default estimated quantity
+          est_qty: (bom.raw_material_weight !== undefined && bom.raw_material_weight !== null && bom.raw_material_weight !== "")
+            ? parseFloat(bom.raw_material_weight) || 0
+            : 0,
           uom: bom.raw_material_uom || rawMaterialPopulated?.uom || "",
           used_qty: "",
-          remain_qty: bom.raw_material_current_stock || rawMaterialPopulated?.current_stock || 0,
+          // Initialize remain equal to est by default
+          remain_qty: (bom.raw_material_weight !== undefined && bom.raw_material_weight !== null && bom.raw_material_weight !== "")
+            ? parseFloat(bom.raw_material_weight) || 0
+            : 0,
           category: bom.raw_material_category || rawMaterialPopulated?.category || "",
           total_cost: "",
           weight: bom.raw_material_weight || "",
@@ -227,15 +239,46 @@ const Production_Start = () => {
         const prod = parseFloat(field === "prod_qty" ? value : updated.prod_qty) || 0;
         updated.remain_qty = (est - prod).toFixed(2);
       }
-      // Calculate total_cost (simple formula: est_qty * unit_price)
-      // For now, using a placeholder calculation
+      // Calculate total_cost = est_qty * price (price from Inventory product)
       if (field === "est_qty" || field === "prod_qty") {
         const est = parseFloat(updated.est_qty) || 0;
-        // Assuming unit price is 100 (you can adjust this based on your logic)
-        updated.total_cost = (est * 100).toFixed(2);
+        // Try to find the finished good product by code or name
+        const productMatch = (products || []).find(
+          (p) => p?.product_id === updated.compound_code || p?.name === updated.compound_name
+        );
+        const unitPrice =
+          (typeof productMatch?.updated_price === "number" ? productMatch.updated_price : undefined) ??
+          (typeof productMatch?.latest_price === "number" ? productMatch.latest_price : undefined) ??
+          (typeof productMatch?.price === "number" ? productMatch.price : 0);
+        updated.total_cost = (est * (unitPrice || 0)).toFixed(2);
       }
       return updated;
     });
+
+    // If compound estimated qty changes, scale each RM est_qty = weight * compound_est
+    if (field === "est_qty") {
+      const estMultiplier = parseFloat(value) || 0;
+      setRawMaterials((prev) =>
+        (prev || []).map((rm) => {
+          const baseWeight = parseFloat(rm.weight) || 0;
+          const nextEst = baseWeight * estMultiplier;
+          const used = parseFloat(rm.used_qty) || 0;
+          const productMatch = (products || []).find(
+            (p) => p?._id === rm.raw_material_id || p?.product_id === rm.raw_material_code || p?.name === rm.raw_material_name
+          );
+          const unitPrice =
+            (typeof productMatch?.updated_price === "number" ? productMatch.updated_price : undefined) ??
+            (typeof productMatch?.latest_price === "number" ? productMatch.latest_price : undefined) ??
+            (typeof productMatch?.price === "number" ? productMatch.price : 0);
+          return {
+            ...rm,
+            est_qty: nextEst,
+            remain_qty: (nextEst - used).toFixed(2),
+            total_cost: (nextEst * (unitPrice || 0)).toFixed(2),
+          };
+        })
+      );
+    }
   };
 
   // Handle Raw Material changes
@@ -248,6 +291,18 @@ const Production_Start = () => {
         const est = parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
         const used = parseFloat(field === "used_qty" ? value : next[idx].used_qty) || 0;
         next[idx].remain_qty = (est - used).toFixed(2);
+      }
+      // Recalculate total_cost = est_qty * price when est or identity fields change
+      if (field === "est_qty" || field === "raw_material_id" || field === "raw_material_code" || field === "raw_material_name") {
+        const est = parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
+        const productMatch = (products || []).find(
+          (p) => p?._id === next[idx].raw_material_id || p?.product_id === next[idx].raw_material_code || p?.name === next[idx].raw_material_name
+        );
+        const unitPrice =
+          (typeof productMatch?.updated_price === "number" ? productMatch.updated_price : undefined) ??
+          (typeof productMatch?.latest_price === "number" ? productMatch.latest_price : undefined) ??
+          (typeof productMatch?.price === "number" ? productMatch.price : 0);
+        next[idx].total_cost = (est * (unitPrice || 0)).toFixed(2);
       }
       return next;
     });
@@ -356,7 +411,7 @@ const Production_Start = () => {
     setProcesses([]);
   };
 
-  // Filter productions
+  // Filter productions (show all, search applied)
   const filteredProductions = productions.filter((prod) => {
     const q = searchQuery.toLowerCase();
     const fg = prod.finished_goods?.[0];
@@ -553,6 +608,35 @@ const Production_Start = () => {
                             }
                           }}
                         />
+                        {(() => {
+                          const alreadySent = prod?.ready_for_qc === true;
+                          const alreadyQCed = prod?.qc_done === true;
+                          const isCompleted = prod?.status === 'completed';
+                          if (!isCompleted) return null;
+                          if (alreadyQCed) return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">QC Done</span>
+                          );
+                          if (alreadySent) return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">Waiting for QC</span>
+                          );
+                          return (
+                            <button
+                              className="px-3 py-1 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 text-xs"
+                              onClick={async () => {
+                                try {
+                                  await axiosHandler.patch(`/production/${prod._id}/ready-for-qc`);
+                                  toast.success('Sent to Quality Check');
+                                  fetchProductions();
+                                } catch (e) {
+                                  console.error(e);
+                                  toast.error('Failed to send to Quality Check');
+                                }
+                              }}
+                            >
+                              Send to Quality Check
+                            </button>
+                          );
+                        })()}
                       </div>
                     </td>
                   </tr>
