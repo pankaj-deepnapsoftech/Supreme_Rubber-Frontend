@@ -141,73 +141,74 @@ useEffect(() => {
           {/* CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 mt-4">
             {/* CARD - Purchase Order */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border-2 border-[#fb7777] bg-[#fddddd] rounded-[12px] p-3 flex justify-between items-center shadow-sm hover:shadow-md transition-all">
               <div className="flex flex-col">
-                <p className="text-[16px] text-gray-700">Purchase Order</p>
-                <p className="text-[24px] text-gray-700 font-semibold">24</p>
-                <p className="text-[13px] text-gray-600">
-                  <span className="text-[12px] text-green-400 flex items-center">
+                <p className="text-[15px] text-gray-700">Purchase Order</p>
+                <p className="text-[24px] text-gray-800 font-semibold">24</p>
+                <p className="text-[13px] text-gray-600 flex items-center">
+                  <span className="text-green-500 flex items-center">
                     5 <ArrowDropUpIcon className="mt-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#ffeded] rounded-full shadow-sm">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#ffe9e9] rounded-full">
                 <LuNotebookText className="text-[#fb7777] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total Production */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border-2 border-[#99db9f] bg-[#d3ffd5] rounded-[12px] p-3 flex justify-between items-center shadow-sm hover:shadow-md transition-all">
               <div className="flex flex-col">
-                <p className="text-[16px] text-gray-700">Total Production</p>
-                <p className="text-[24px] text-gray-700 font-semibold">15</p>
-                <p className="text-[13px] text-gray-600">
-                  <span className="text-[12px] text-red-400 flex items-center">
+                <p className="text-[15px] text-gray-700">Total Production</p>
+                <p className="text-[24px] text-gray-800 font-semibold">15</p>
+                <p className="text-[13px] text-gray-600 flex items-center">
+                  <span className="text-red-400 flex items-center">
                     2 <ArrowDropDown className="mb-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#eafbed] rounded-full shadow-sm">
-                <CheckCircleOutlineIcon className="text-[#99db9f] text-xl" />
+              <div className="flex items-center justify-center h-10 w-10 bg-[#eafbed] rounded-full">
+                <CheckCircleOutlineIcon className="text-[#58c468] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total BOM */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border-2 border-[#efb777] bg-[#ffe9cc] rounded-[12px] p-3 flex justify-between items-center shadow-sm hover:shadow-md transition-all">
               <div className="flex flex-col">
-                <p className="text-[16px] text-gray-700">Total BOM</p>
-                <p className="text-[24px] text-gray-700 font-semibold">3</p>
-                <p className="text-[13px] text-gray-600">
-                  <span className="text-[12px] text-green-400 flex items-center">
+                <p className="text-[15px] text-gray-700">Total BOM</p>
+                <p className="text-[24px] text-gray-800 font-semibold">3</p>
+                <p className="text-[13px] text-gray-600 flex items-center">
+                  <span className="text-green-500 flex items-center">
                     1 <ArrowDropUpIcon className="mb-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#fcefe0] rounded-full shadow-sm">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#fcefe0] rounded-full">
                 <GiNotebook className="text-[#efb777] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total Suppliers */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border-2 border-[#0ed8ef] bg-[#d6f8fa] rounded-[12px] p-3 flex justify-between items-center shadow-sm hover:shadow-md transition-all">
               <div className="flex flex-col">
-                <p className="text-[16px] text-gray-700">Total Suppliers</p>
-                <p className="text-[24px] text-gray-700 font-semibold">9</p>
-                <p className="text-[13px] text-gray-600">
-                  <span className="text-[12px] text-gray-400 flex items-center">
+                <p className="text-[15px] text-gray-700">Total Suppliers</p>
+                <p className="text-[24px] text-gray-800 font-semibold">9</p>
+                <p className="text-[13px] text-gray-600 flex items-center">
+                  <span className="text-gray-400 flex items-center">
                     0 <ArrowDropUpIcon className="mb-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#e7fdff] rounded-full shadow-sm">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#e7fdff] rounded-full">
                 <BsPeople className="text-[#0ed8ef] text-xl" />
               </div>
             </div>
           </div>
+
 
           {/* Sales Overview GRAPHS */}
 
