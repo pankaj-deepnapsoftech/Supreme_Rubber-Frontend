@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGatemenContext } from "@/Context/GatemenContext";
+import { useQualityCheck } from "@/Context/QualityCheckContext";
+import { useInventory } from "@/Context/InventoryContext";
 
 
 
@@ -33,6 +35,8 @@ const QualityCheck = () => {
     attached_report: null,
   });
 
+  const {getAllProducts} = useInventory();
+
   const { GetAllPOData } = useGatemenContext();
 
   const {
@@ -45,18 +49,18 @@ const QualityCheck = () => {
     selectedReport,
     setSelectedReport,
     loading,
-    getAllProducts,
-  } = useInventory();
-
-  
+    ChangesStatus,
+  } = useQualityCheck();
 
   useEffect(() => {
     const getGateman = async () => {
       const data = await GetAllPOData();
-      console.log(data)
-      setGetData(data)
-    
-    }
+      // Show both "Entry Created" and "Verified" entries
+      const filter = data.filter(
+        (i) => i?.status === "Entry Created" || i?.status === "Verified"
+      );
+      setGetData(filter);
+    };
     getGateman();
     getAllProducts();
   
@@ -301,9 +305,9 @@ const QualityCheck = () => {
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
                   return (
-                    item.name.toLowerCase().includes(q) ||
-                    item.category.toLowerCase().includes(q) ||
-                    item.product_id.toLowerCase().includes(q)
+                    item?.name?.toLowerCase()?.includes(q) ||
+                    item?.category?.toLowerCase()?.includes(q) ||
+                    item?.product_id?.toLowerCase()?.includes(q)
                   );
                 })
                 .map((item, i) => (
