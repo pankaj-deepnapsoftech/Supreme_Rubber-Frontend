@@ -60,7 +60,7 @@ export default function DashboardSupplier() {
             {`${suppliers.length} Supplier${suppliers.length !== 1 ? "s" : ""} found`}
           </p>
         </div>
-        <button className="text-sm text-blue-500 hover:underline" onClick={() => navigate("/supplier")}>
+        <button className="text-sm text-blue-500 hover:underline cursor-pointer" onClick={() => navigate("/supplier")}>
           View all
         </button>
       </div>

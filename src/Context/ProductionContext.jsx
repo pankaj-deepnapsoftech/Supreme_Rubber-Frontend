@@ -14,12 +14,12 @@ export const ProductionProvider = ({ children }) => {
       const res = await axiosHandler.get("/production/all");
       setProductions(res?.data?.productions || []);
     } catch (error) {
-      console.error("Error fetching productions:", error);
       setProductions([]);
     } finally {
       setLoading(false);
     }
   };
+
 
   // Fetch on mount
   useEffect(() => {
@@ -28,6 +28,7 @@ export const ProductionProvider = ({ children }) => {
 
   //  Derived data: total count
   const totalProductions = productions.length;
+
 
   return (
     <ProductionContext.Provider

@@ -68,8 +68,6 @@ const PurchaseOrder = () => {
       setSupplierData(sup || []);
       setInventoryData(inv?.products || []);
       const data = await GetAllPurchaseOrders();
-
-      console.log("this is data", data)
       setPOData(data);
     };
     fetchData();

@@ -16,7 +16,6 @@ export const BomProvider = ({ children }) => {
       setBoms(data);
       setFilteredBoms(data);
     } catch (error) {
-      console.error("Error fetching BOMs:", error);
       setBoms([]);
       setFilteredBoms([]);
     } finally {

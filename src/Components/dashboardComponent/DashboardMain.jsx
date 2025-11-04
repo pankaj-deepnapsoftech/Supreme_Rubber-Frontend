@@ -30,9 +30,8 @@ import { useGatemenContext } from "@/Context/GatemenContext";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { useProductionContext } from "@/Context/ProductionContext";
-import axiosHandler from "@/config/axiosconfig"; 
-
-
+import axiosHandler from "@/config/axiosconfig";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardMain() {
   const { GetAllPurchaseOrders } = usePurchanse_Order();
@@ -48,6 +47,8 @@ export default function DashboardMain() {
   const [supplier, setSupplier] = useState([]);
   const [lineData, setLineData] = useState([]);
   const [selectedYear, setSelectedYear] = useState(2025);
+
+  const navigate = useNavigate();
 
   const weeklyData = [
     { day: "Mon", a: 12, b: 8 },
@@ -90,11 +91,8 @@ export default function DashboardMain() {
     const fetchProductData = async () => {
       try {
         const res = await GetAllPurchaseOrders();
-        console.log("Purchase Orders Response:", res);
         const pro = await getAllProduction();
-        console.log("Production Order", pro);
         const sup = await getAllSupplier();
-        console.log("all supplier", sup);
 
         setOrders(res);
         setProduction(pro);
@@ -173,62 +171,61 @@ export default function DashboardMain() {
     fetchData();
   }, []);
 
+  const [productionData, setProductionData] = useState([]);
+  const [statusCount, setStatusCount] = useState({
+    completed: 0,
+    inProgress: 0,
+    notStarted: 0,
+  });
 
-const [productionData, setProductionData] = useState([]);
-const [statusCount, setStatusCount] = useState({
-  completed: 0,
-  inProgress: 0,
-  notStarted: 0,
-});
+  const pieDataStatus = [
+    { name: "Completed", value: statusCount.completed, color: "#00C49F" },
+    { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
+    { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
+  ];
 
-const pieDataStatus = [
-  { name: "Completed", value: statusCount.completed, color: "#00C49F" },
-  { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
-  { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
-];
+  const barData = [
+    {
+      name: "Production",
+      completed: statusCount.completed,
+      notCompleted: statusCount.inProgress + statusCount.notStarted,
+    },
+  ];
 
-const barData = [
-  {
-    name: "Production",
-    completed: statusCount.completed,
-    notCompleted: statusCount.inProgress + statusCount.notStarted,
-  },
-];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Correct API path based on your context route
+        const res = await axiosHandler.get("/production/all", {
+          withCredentials: true,
+        });
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      // Correct API path based on your context route
-      const res = await axiosHandler.get("/production/all", { withCredentials: true });
+        // Match the backend response structure
+        const data = res.data?.productions || [];
 
-      // Match the backend response structure
-      const data = res.data?.productions || [];
+        setProductionData(data);
 
-      console.log("Fetched production data:", data);
+        // Count statuses (normalized)
+        const counts = data.reduce(
+          (acc, item) => {
+            const s = (item.status || "").toLowerCase().trim();
+            if (s === "completed") acc.completed++;
+            else if (s === "in_progress" || s === "in progress")
+              acc.inProgress++;
+            else acc.notStarted++;
+            return acc;
+          },
+          { completed: 0, inProgress: 0, notStarted: 0 }
+        );
 
-      setProductionData(data);
+        setStatusCount(counts);
+      } catch (err) {
+        console.error("Fetch production data error:", err);
+      }
+    };
 
-      // Count statuses (normalized)
-      const counts = data.reduce(
-        (acc, item) => {
-          const s = (item.status || "").toLowerCase().trim();
-          if (s === "completed") acc.completed++;
-          else if (s === "in_progress" || s === "in progress") acc.inProgress++;
-          else acc.notStarted++;
-          return acc;
-        },
-        { completed: 0, inProgress: 0, notStarted: 0 }
-      );
-
-      setStatusCount(counts);
-    } catch (err) {
-      console.error("Fetch production data error:", err);
-    }
-  };
-
-  fetchData();
-}, []);
-
+    fetchData();
+  }, []);
 
   const donutData = [{ value: 80 }, { value: 20 }];
 
@@ -242,7 +239,11 @@ useEffect(() => {
           {/* CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 mt-4">
             {/* CARD - Purchase Order */}
-            <div className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5  flex justify-between items-center h-30 shadow-sm">
+            <div
+              onClick={() => navigate("/purchase-order")}
+              className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm 
+hover:shadow-lg hover:-translate-y-1 hover:bg-[#fce5e5] transition-all duration-300 ease-in-out cursor-pointer"
+            >
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
                 <p className="text-[24px] text-gray-700 font-semibold">
@@ -255,13 +256,17 @@ useEffect(() => {
                   &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#ffe9e9] rounded-full">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#ffe9e9] rounded-full group-hover:scale-110 transition-transform duration-300">
                 <LuNotebookText className="text-[#fb7777] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total Production */}
-            <div className="border border-[#99db9f] bg-[#d6f7d7] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
+            <div
+              onClick={() => navigate("/production/start")}
+              className="border border-[#99db9f] bg-[#d6f7d7] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm
+hover:shadow-lg hover:-translate-y-1 hover:bg-[#e5fbe6] transition-all duration-300 ease-in-out cursor-pointer"
+            >
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
                 <p className="text-[24px] text-gray-700 font-semibold">
@@ -274,13 +279,17 @@ useEffect(() => {
                   &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#eafbed] rounded-full">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#eafbed] rounded-full transition-transform duration-300 hover:scale-110">
                 <CheckCircleOutlineIcon className="text-[#58c468] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total BOM */}
-            <div className="border border-[#efb777] bg-[#f8e7d0] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
+            <div
+              onClick={() => navigate("/production/bom")}
+              className="border border-[#efb777] bg-[#f8e7d0] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm
+hover:shadow-lg hover:-translate-y-1 hover:bg-[#faeddc] transition-all duration-300 ease-in-out cursor-pointer"
+            >
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
                 <p className="text-[24px] text-gray-700 font-semibold">
@@ -293,13 +302,17 @@ useEffect(() => {
                   &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#fcefe0] rounded-full">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#fcefe0] rounded-full transition-transform duration-300 hover:scale-110">
                 <GiNotebook className="text-[#efb777] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total Suppliers */}
-            <div className="border border-[#0ed8ef] bg-[#d6f8fa] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
+            <div
+              onClick={() => navigate("/supplier")}
+              className="border border-[#0ed8ef] bg-[#d6f8fa] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm
+hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-300 ease-in-out cursor-pointer"
+            >
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Suppliers</p>
                 <p className="text-[24px] text-gray-700 font-semibold">
@@ -312,7 +325,7 @@ useEffect(() => {
                   &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#e7fdff] rounded-full">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#e7fdff] rounded-full transition-transform duration-300 hover:scale-110">
                 <BsPeople className="text-[#0ed8ef] text-xl" />
               </div>
             </div>
@@ -452,7 +465,12 @@ useEffect(() => {
                 </div>
                 <ResponsiveContainer width="100%" height={200} className="">
                   <PieChart>
-                    <Pie data={pieDataStatus} dataKey="value" outerRadius={80} label>
+                    <Pie
+                      data={pieDataStatus}
+                      dataKey="value"
+                      outerRadius={80}
+                      label
+                    >
                       {pieDataStatus.map((d, i) => (
                         <Cell key={i} fill={d.color} />
                       ))}
