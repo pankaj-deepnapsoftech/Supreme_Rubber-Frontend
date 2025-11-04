@@ -16,27 +16,21 @@ import { useQualityCheck } from "@/Context/QualityCheckContext";
 import { toast } from "react-toastify";
 import { useInventory } from "@/Context/InventoryContext";
 
-
-
-
 const QualityCheck = () => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
-  // const [selectedCategory, setSelectedCategory] = useState("");
   const [showGtModal, setShowGtModal] = useState(false);
   const [getData, setGetData] = useState([]);
   const [selectedEntryItems, setSelectedEntryItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({
     gateman_entry_id: "",
-    item_id: "",
-    approved_quantity: "",
-    rejected_quantity: "",
+    items: [],
     attached_report: null,
   });
 
-  const {getAllProducts} = useInventory();
+  const { getAllProducts } = useInventory();
 
   const { GetAllPOData } = useGatemenContext();
 
@@ -56,7 +50,6 @@ const QualityCheck = () => {
   useEffect(() => {
     const getGateman = async () => {
       const data = await GetAllPOData();
-      // Show both "Entry Created" and "Verified" entries
       const filter = data.filter(
         (i) => i?.status === "Entry Created" || i?.status === "Verified"
       );
@@ -64,11 +57,8 @@ const QualityCheck = () => {
     };
     getGateman();
     getAllProducts();
-  
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Function to refresh gateman data
   const refreshGatemanData = async () => {
     const data = await GetAllPOData();
     const filter = data.filter(
@@ -85,34 +75,41 @@ const QualityCheck = () => {
 
       if (gatemanEntry && gatemanEntry.items) {
         setSelectedEntryItems(gatemanEntry.items);
+
         if (selectedReport.item_id) {
           const item = gatemanEntry.items.find(
             (item) => item._id === selectedReport.item_id
           );
           setSelectedItem(item);
+
+          const itemsArray = [
+            {
+              item_id: selectedReport.item_id,
+              item_name: item ? item.item_name : "",
+              available_quantity: item ? item.item_quantity : 0,
+              approved_quantity: selectedReport.approved_quantity || "",
+              rejected_quantity: selectedReport.rejected_quantity || "",
+            },
+          ];
+
+          setFormData({
+            gateman_entry_id: selectedReport.gateman_entry_id || "",
+            items: itemsArray,
+            attached_report: null,
+          });
         }
       }
-
-      setFormData({
-        gateman_entry_id: selectedReport.gateman_entry_id || "",
-        item_id: selectedReport.item_id || "",
-        approved_quantity: selectedReport.approved_quantity || "",
-        rejected_quantity: selectedReport.rejected_quantity || "",
-        attached_report: null,
-      });
     }
   }, [selectedReport, getData]);
 
   const handleClose = () => {
     setShowModal(false);
     setSelectedReport(null);
-    setSelectedEntryItems([]); // Clear selected items
+    setSelectedEntryItems([]);
     setSelectedItem(null);
     setFormData({
       gateman_entry_id: "",
-      item_id: "",
-      approved_quantity: "",
-      rejected_quantity: "",
+      items: [],
       attached_report: null,
     });
   };
@@ -149,26 +146,41 @@ const QualityCheck = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate that an item is selected
-    if (!formData.item_id || !selectedItem) {
-      toast.error("Please select an item from the available items list.");
+    const validItems = formData.items.filter(
+      (item) => item.approved_quantity > 0 || item.rejected_quantity > 0
+    );
+
+    if (validItems.length === 0) {
+      toast.error(
+        "Please enter approved or rejected quantities for at least one item."
+      );
       return;
     }
 
     try {
-      const payload = {
-        gateman_entry_id: formData.gateman_entry_id,
-        item_id: formData.item_id,
-        approved_quantity: parseInt(formData.approved_quantity),
-        rejected_quantity: parseInt(formData.rejected_quantity),
-      };
+      const promises = validItems.map((item) => {
+        const payload = {
+          gateman_entry_id: formData.gateman_entry_id,
+          item_id: item.item_id,
+          approved_quantity: parseInt(item.approved_quantity) || 0,
+          rejected_quantity: parseInt(item.rejected_quantity) || 0,
+        };
+
+        if (selectedReport && selectedReport.item_id === item.item_id) {
+          return updateReport(selectedReport._id, payload);
+        } else {
+          return createReport(payload);
+        }
+      });
+
+      await Promise.all(promises);
 
       if (selectedReport) {
-        await updateReport(selectedReport._id, payload);
         toast.success("Quality check updated successfully");
       } else {
-        await createReport(payload);
-        toast.success("Quality check created successfully");
+        toast.success(
+          `Quality check created successfully for ${validItems.length} item(s)`
+        );
       }
 
       handleClose();
@@ -212,9 +224,7 @@ const QualityCheck = () => {
             setSelectedItem(null);
             setFormData({
               gateman_entry_id: "",
-              item_id: "",
-              approved_quantity: "",
-              rejected_quantity: "",
+              items: [],
               attached_report: null,
             });
             setShowModal(true);
@@ -255,8 +265,8 @@ const QualityCheck = () => {
               >
                 All
               </p>
-              {[...new Set(qualityReports?.map((p) => p.category) || [])].map((cat) => (
-
+              {[...new Set(qualityReports?.map((p) => p.category) || [])].map(
+                (cat) => (
                   <p
                     key={cat}
                     onClick={() => handleFilter(cat)}
@@ -322,11 +332,21 @@ const QualityCheck = () => {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.po_number || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.company_name || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.item_name || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.approved_quantity}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.rejected_quantity}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.gateman_entry_id?.po_number || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.gateman_entry_id?.company_name || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.item_name || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.approved_quantity}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.rejected_quantity}
+                    </td>
                     <td className="px-4 sm:px-6 py-3">{item?.status || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
@@ -344,7 +364,9 @@ const QualityCheck = () => {
                             ) {
                               try {
                                 await deleteReport(item._id);
-                                toast.success("Quality check deleted successfully");
+                                toast.success(
+                                  "Quality check deleted successfully"
+                                );
                               } catch (error) {
                                 console.error(
                                   "Error deleting quality check:",
@@ -421,16 +443,28 @@ const QualityCheck = () => {
 
                       if (selectedEntry && selectedEntry.items) {
                         setSelectedEntryItems(selectedEntry.items);
+                        const itemsArray = selectedEntry.items.map((item) => ({
+                          item_id: item._id,
+                          item_name: item.item_name,
+                          available_quantity: item.item_quantity,
+                          approved_quantity: "",
+                          rejected_quantity: "",
+                        }));
+                        setFormData({
+                          ...formData,
+                          gateman_entry_id: e.target.value,
+                          items: itemsArray,
+                        });
                       } else {
                         setSelectedEntryItems([]);
+                        setFormData({
+                          ...formData,
+                          gateman_entry_id: e.target.value,
+                          items: [],
+                        });
                       }
 
                       setSelectedItem(null);
-                      setFormData({
-                        ...formData,
-                        gateman_entry_id: e.target.value,
-                        item_id: "",
-                      });
                     }}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                     required
@@ -447,109 +481,94 @@ const QualityCheck = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Available Items
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Items Quality Check
                   </label>
 
                   {!formData.gateman_entry_id ? (
                     <div className="p-4 bg-gray-50 rounded-md text-center text-gray-500">
                       Please select a Gateman Entry first
                     </div>
-                  ) : selectedEntryItems.length === 0 ? (
+                  ) : formData.items.length === 0 ? (
                     <div className="p-4 bg-gray-50 rounded-md text-center text-gray-500">
                       No items available for this entry
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {selectedEntryItems.map((item) => (
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {formData.items.map((item, index) => (
                         <div
-                          key={item._id}
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setFormData({
-                              ...formData,
-                              item_id: item._id,
-                            });
-                          }}
-                          className={`p-3 border rounded-md cursor-pointer transition-all ${
-                            selectedItem?._id === item._id
-                              ? "border-blue-500 bg-blue-50 shadow-sm"
-                              : "border-gray-200 hover:border-blue-300 hover:bg-gray-50"
-                          }`}
+                          key={item.item_id}
+                          className="p-4 border rounded-lg bg-gray-50"
                         >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                {item.item_name}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Available Quantity: {item.item_quantity}
-                              </p>
-                            </div>
-                            {selectedItem?._id === item._id && (
-                              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              </div>
-                            )}
+                          <div className="mb-3">
+                            <h4 className="font-medium text-gray-800 mb-1">
+                              {item.item_name}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Available Quantity: {item.available_quantity}
+                            </p>
                           </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Approved Quantity
+                              </label>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={item.approved_quantity}
+                                onChange={(e) => {
+                                  const newItems = [...formData.items];
+                                  newItems[index].approved_quantity =
+                                    e.target.value;
+                                  setFormData({
+                                    ...formData,
+                                    items: newItems,
+                                  });
+                                }}
+                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-100"
+                                min="0"
+                                max={item.available_quantity}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Rejected Quantity
+                              </label>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={item.rejected_quantity}
+                                onChange={(e) => {
+                                  const newItems = [...formData.items];
+                                  newItems[index].rejected_quantity =
+                                    e.target.value;
+                                  setFormData({
+                                    ...formData,
+                                    items: newItems,
+                                  });
+                                }}
+                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-100"
+                                min="0"
+                                max={item.available_quantity}
+                              />
+                            </div>
+                          </div>
+
+                          {(parseInt(item.approved_quantity) || 0) +
+                            (parseInt(item.rejected_quantity) || 0) >
+                            parseInt(item.available_quantity) && (
+                            <p className="text-xs text-red-500 mt-1">
+                              Total quantity cannot exceed available quantity (
+                              {item.available_quantity})
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
                   )}
-
-                  {selectedItem && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                      <p className="text-sm text-green-700">
-                        <strong>Selected:</strong> {selectedItem.item_name}
-                      </p>
-                      <p className="text-sm text-green-600">
-                        <strong>Available Quantity:</strong>{" "}
-                        {selectedItem.item_quantity}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Approved Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="approved_quantity"
-                    placeholder="Enter approved quantity"
-                    value={formData.approved_quantity}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        approved_quantity: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    required
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rejected Quantity
-                  </label>
-                  <input
-                    type="number"
-                    name="rejected_quantity"
-                    placeholder="Enter rejected quantity"
-                    value={formData.rejected_quantity}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        rejected_quantity: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    required
-                    min="0"
-                  />
                 </div>
 
                 <button
@@ -637,7 +656,10 @@ const QualityCheck = () => {
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             <button
-                              onClick={async () => { await ChangesStatus(po._id); await refreshGatemanData(); }}
+                              onClick={async () => {
+                                await ChangesStatus(po._id);
+                                await refreshGatemanData();
+                              }}
                               className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                             >
                               Verified
@@ -650,7 +672,6 @@ const QualityCheck = () => {
                                 title="View"
                                 onClick={async () => {
                                   await ChangesStatus(po?._id);
-                                  // Refresh gateman data after status change
                                   await refreshGatemanData();
                                 }}
                               >
