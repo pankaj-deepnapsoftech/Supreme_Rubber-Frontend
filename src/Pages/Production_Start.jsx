@@ -9,7 +9,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useInventory } from "@/Context/InventoryContext";
 import axiosHandler from "@/config/axiosconfig";
 import { toast } from "react-toastify";
@@ -27,7 +27,7 @@ const Production_Start = () => {
   // BOM and form data
   const [boms, setBoms] = useState([]);
   const [selectedBomId, setSelectedBomId] = useState("");
-  const [selectedBom, setSelectedBom] = useState(null);
+  const [_selectedBom, setSelectedBom] = useState(null);
 
   // Finished Goods data
   const [finishedGood, setFinishedGood] = useState({
@@ -570,13 +570,13 @@ const Production_Start = () => {
       {/* Add Production Modal */}
       <AnimatePresence>
         {showModal && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           >
-            <motion.div
+            <Motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
@@ -584,14 +584,14 @@ const Production_Start = () => {
               className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { resetForm(); setShowModal(false); }}
                 className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
               >
                 ✕
               </button>
 
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { resetForm(); setShowModal(false); }}
                 className="text-2xl mb-4 hover:text-blue-500 transition"
               >
                 ←
@@ -854,21 +854,21 @@ const Production_Start = () => {
                   </button>
                 </div>
               </form>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
 
       {/* View Details Modal */}
       <AnimatePresence>
         {viewDetails && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           >
-            <motion.div
+            <Motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
@@ -922,8 +922,8 @@ const Production_Start = () => {
                   ))}
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </div>

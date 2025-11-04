@@ -10,8 +10,10 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useGatemenContext } from "@/Context/GatemenContext";
+import { useInventory } from "@/Context/InventoryContext";
+import { toast } from "react-toastify";
 
 
 
@@ -20,7 +22,7 @@ const QualityCheck = () => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  // const [selectedCategory, setSelectedCategory] = useState("");
   const [showGtModal, setShowGtModal] = useState(false);
   const [getData, setGetData] = useState([]);
   const [selectedEntryItems, setSelectedEntryItems] = useState([]);
@@ -36,7 +38,7 @@ const QualityCheck = () => {
   const { GetAllPOData } = useGatemenContext();
 
   const {
-    qualityReports,
+    qualityReports = [],
     getAllReports,
     getReportById,
     createReport,
@@ -60,6 +62,7 @@ const QualityCheck = () => {
     getGateman();
     getAllProducts();
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -103,7 +106,6 @@ const QualityCheck = () => {
   };
 
   const handleFilter = (category) => {
-    setSelectedCategory(category);
     if (category === "All") setFilteredReports(qualityReports);
     else {
       const filtered = qualityReports.filter((p) => p.category === category);
@@ -137,7 +139,7 @@ const QualityCheck = () => {
 
     // Validate that an item is selected
     if (!formData.item_id || !selectedItem) {
-      alert("Please select an item from the available items list.");
+      toast.error("Please select an item from the available items list.");
       return;
     }
 
@@ -151,10 +153,10 @@ const QualityCheck = () => {
 
       if (selectedReport) {
         await updateReport(selectedReport._id, payload);
-        alert("Quality check updated successfully!");
+        toast.success("Quality check updated successfully");
       } else {
         await createReport(payload);
-        alert("Quality check created successfully!");
+        toast.success("Quality check created successfully");
       }
 
       handleClose();
@@ -163,14 +165,14 @@ const QualityCheck = () => {
       console.error("Error submitting quality check:", error);
 
       if (error.response?.data?.message) {
-        alert(`Error: ${error.response.data.message}`);
+        toast.error(`Error: ${error.response.data.message}`);
       } else if (error.response?.data?.errors) {
         const errorMessages = error.response.data.errors
           .map((err) => err.message)
           .join(", ");
-        alert(`Validation errors: ${errorMessages}`);
+        toast.error(`Validation errors: ${errorMessages}`);
       } else {
-        alert("Error submitting quality check. Please try again.");
+        toast.error("Error submitting quality check. Please try again.");
       }
     }
   };
@@ -325,13 +327,13 @@ const QualityCheck = () => {
                             ) {
                               try {
                                 await deleteReport(item._id);
-                                alert("Quality check deleted successfully!");
+                                toast.success("Quality check deleted successfully");
                               } catch (error) {
                                 console.error(
                                   "Error deleting quality check:",
                                   error
                                 );
-                                alert(
+                                toast.error(
                                   "Error deleting quality check. Please try again."
                                 );
                               }
@@ -360,14 +362,14 @@ const QualityCheck = () => {
       <AnimatePresence>
         {showModal && (
           <>
-            <motion.div
+            <Motion.div
               className="fixed inset-0 bg-black/40 z-40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleClose}
             />
-            <motion.div
+            <Motion.div
               className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 p-5 sm:p-6 overflow-y-auto"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -545,7 +547,7 @@ const QualityCheck = () => {
                     : "Submit"}
                 </button>
               </form>
-            </motion.div>
+            </Motion.div>
           </>
         )}
       </AnimatePresence>
@@ -615,21 +617,11 @@ const QualityCheck = () => {
                           {po?.items.map((i) => i.item_quantity).join(", ")}
                         </td>
                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {/* {po?.status} */}
-                          <button onClick={() => changeStatus(po._id)} className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium">
-                            verified
-                            </button>
+                          {po?.status || "—"}
                         </td>
                         <td className="py-3 px-4 text-center border-b">
                           <div className="flex items-center justify-start space-x-3">
-                            <button
-                              className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                              title="View"
-                              onClick={() => ChangesStatus(po?._id)}
-                            >
-                              Verified
-                            </button>
-
+                            {/* Removed undefined action button */}
                           </div>
                         </td>
                       </tr>
