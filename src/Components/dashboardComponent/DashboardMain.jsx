@@ -7,6 +7,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { GiNotebook } from "react-icons/gi";
 import { BsPeople } from "react-icons/bs";
 import DashboardTable from "./DashboardTable";
+import { useBomContext } from "@/Context/BomContext";
 
 import {
   LineChart,
@@ -28,6 +29,8 @@ import { useInventory } from "../../Context/InventoryContext";
 import { useGatemenContext } from "@/Context/GatemenContext";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import { useSupplierContext } from "@/Context/SuplierContext";
+import { useProductionContext } from "@/Context/ProductionContext";
+
 
 
 
@@ -37,6 +40,13 @@ export default function DashboardMain() {
   const {GetAllPurchaseOrders} = usePurchanse_Order();
   const {getAllProducts : getAllProduction} = useInventory();
   const { getAllSupplier } = useSupplierContext();
+
+  const { boms } = useBomContext();
+  const { totalProductions } = useProductionContext();
+
+  
+
+
   
 const [period, setPeriod] = useState()
   const [orders, setOrders] = useState([]);
@@ -195,7 +205,7 @@ const [period, setPeriod] = useState()
             <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">{totalProductions}</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-red-400 flex items-center">
                     2 <ArrowDropDown className="mb-0.5" />
@@ -212,7 +222,7 @@ const [period, setPeriod] = useState()
             <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">{boms.length}</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     1 <ArrowDropUpIcon className="mb-0.5" />
