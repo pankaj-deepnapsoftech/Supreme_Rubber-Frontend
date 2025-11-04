@@ -103,11 +103,21 @@ const App = () => {
           />
 
 
-          <Route
+          {/* <Route
             path="quality-check"
             element={
               <ProtectedRoute path="/quality-check">
                 <QualityCheck />
+              </ProtectedRoute>
+            }
+          /> */}
+          <Route
+            path="quality-check"
+            element={
+              <ProtectedRoute path="/quality-check">
+                <QualityCheckProvider>
+                  <QualityCheck />
+                </QualityCheckProvider>
               </ProtectedRoute>
             }
           />

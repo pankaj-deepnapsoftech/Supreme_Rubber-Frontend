@@ -70,6 +70,8 @@ const Gateman = () => {
   });
 
    
+  console.log(POData)
+
   const formik = useFormik({
     enableReinitialize: true, 
     initialValues: edittable
@@ -122,7 +124,7 @@ const Gateman = () => {
 
           await PostGatemenData(formData);
         }
-
+         formik.resetForm()
         setShowModal(false);
         handleRefresh();
       } catch (error) {
@@ -366,33 +368,43 @@ const handleAccept = async (id) => {
                     name="po_ref"
                     value={formik.values.po_ref}
                     onChange={(e) => {
-                      const selectedPOId = e.target.value
-                      formik.setFieldValue("po_ref", selectedPOId)
+                      const selectedPOId = e.target.value;
+                      formik.setFieldValue("po_ref", selectedPOId);
 
-
-                      const selectedPO = POData?.find((po) => po._id === selectedPOId)
+                      const selectedPO = POData?.find((po) => po._id === selectedPOId);
 
                       if (selectedPO) {
-
-                        formik.setFieldValue("po_number", selectedPO.po_number)
+                        formik.setFieldValue("po_number", selectedPO.po_number);
                         formik.setFieldValue(
                           "items",
                           selectedPO.products?.map((p) => ({
                             item_name: p.item_name,
                             item_quantity: p.est_quantity || 1,
                           })) || []
-                        )
+                        );
+                        formik.setFieldValue(
+                          "company_name",
+                          selectedPO?.supplier?.company_name
+                        );
                       }
                     }}
                     className="w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 focus:ring-blue-200"
+                    disabled={!POData || POData.length === 0} // disable if no data
                   >
-                    <option value="">Select PO</option>
-                    {POData?.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.po_number} — {p.products?.[0]?.item_name}
-                      </option>
-                    ))}
+                    {POData && POData.length > 0 ? (
+                      <>
+                        <option value="">Select PO</option>
+                        {POData.map((p) => (
+                          <option key={p._id} value={p._id}>
+                            {p.po_number} — {p.products?.[0]?.item_name}
+                          </option>
+                        ))}
+                      </>
+                    ) : (
+                      <option value="">No PO available</option>
+                    )}
                   </select>
+
 
                 </div>
 
@@ -405,7 +417,7 @@ const handleAccept = async (id) => {
                     value={formik.values.po_number}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    // disabled={mode === "view"}
+                    readOnly={true}
                     className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
                       ? "border-red-500 focus:ring-red-200"
                       : "focus:ring-blue-200"
@@ -415,24 +427,7 @@ const handleAccept = async (id) => {
                 </div>
 
                 
-                <div>
-                  <label className="block text-sm font-medium">
-                    Invoice Number
-                  </label>
-                  <input
-                    type="text"
-                    name="invoice_number"
-                    value={formik.values.invoice_number}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number && formik.errors.invoice_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                    placeholder="Enter Invoice Number"
-                  />
-                </div>
+              
 
                
                 <div>
@@ -445,7 +440,7 @@ const handleAccept = async (id) => {
                     value={formik.values.company_name}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    disabled={mode === "view"}
+                    readOnly={true}
                     className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.company_name && formik.errors.company_name
                       ? "border-red-500 focus:ring-red-200"
                       : "focus:ring-blue-200"
@@ -468,6 +463,7 @@ const handleAccept = async (id) => {
                         type="text"
                         name={`items[${index}].item_name`}
                         value={item.item_name}
+                        readOnly={true}
                         onChange={formik.handleChange}
                         disabled={mode === "view"}
                         placeholder="Item Name"
@@ -479,6 +475,7 @@ const handleAccept = async (id) => {
                         value={item.item_quantity}
                         onChange={formik.handleChange}
                         disabled={mode === "view"}
+                        readOnly={true}
                         placeholder="Qty"
                         className="w-20 border rounded-md px-2 py-1"
                       />
@@ -512,7 +509,24 @@ const handleAccept = async (id) => {
                     </Button>
                   )}
                 </div>
-
+                <div>
+                  <label className="block text-sm font-medium">
+                    Invoice Number
+                  </label>
+                  <input
+                    type="text"
+                    name="invoice_number"
+                    value={formik.values.invoice_number}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    disabled={mode === "view"}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number && formik.errors.invoice_number
+                      ? "border-red-500 focus:ring-red-200"
+                      : "focus:ring-blue-200"
+                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    placeholder="Enter Invoice Number"
+                  />
+                </div>
                 {/* Attachments */}
                 <div>
                   <label className="block text-sm font-medium">Attach PO</label>

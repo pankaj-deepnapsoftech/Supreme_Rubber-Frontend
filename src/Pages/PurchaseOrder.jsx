@@ -267,7 +267,8 @@ const PurchaseOrder = () => {
                   <td className="py-3 px-4 text-center">
                     {order.products?.length || 0}
                   </td>
-
+                  
+                  
                   <td className="py-3 px-4 text-center">
                     <span className="bg-green-100 px-3 py-1 text-green-700 rounded-full text-[10px] sm:text-xs font-semibold whitespace-nowrap">
                       {order.status || "--"}
