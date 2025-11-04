@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axiosHandler from "../config/axiosconfig";
+import { toast } from "react-toastify";
 
 const QualityCheckContext = createContext();
 
@@ -12,10 +13,11 @@ export const QualityCheckProvider = ({ children }) => {
   const getAllReports = async () => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get("/quality-check", { withCredentials: true });
-      console.log(res)
-      const data = res?.data?.data?.filter((i)=> i?.status === "pending");
-      setQualityReports(data|| []);
+      const res = await axiosHandler.get("/quality-check", {
+        withCredentials: true,
+      });
+      console.log(res);
+      setQualityReports(res.data?.data || []);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -23,72 +25,85 @@ export const QualityCheckProvider = ({ children }) => {
     }
   };
 
-
-  console.log(qualityReports)
+  // console.log(qualityReports)
   // Get one
   const getReportById = async (id) => {
     try {
-      const res = await axiosHandler.get(`/quality-check/${id}`, { withCredentials: true });
-      setSelectedReport(res.data?.data);
-      return res.data?.data;
+      setLoading(true);
+      const res = await axiosHandler.get(`/quality-check/${id}`, {
+        withCredentials: true,
+      });
+      setSelectedReport(res.data.data);
+      return res.data.data;
     } catch (err) {
       console.error("Detail fetch error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Create
   const createReport = async (formData) => {
     try {
+      setLoading(true);
       const res = await axiosHandler.post("/quality-check", formData, {
         withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "application/json" },
       });
       await getAllReports();
-      return res.data?.data;
+      return res.data.data;
     } catch (err) {
       console.error("Create error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Update
-  const updateReport = async (updatedData) => {
+  const updateReport = async (id, updatedData) => {
     try {
-      const res = await axiosHandler.put("/quality-check", updatedData, {
+      setLoading(true);
+      const res = await axiosHandler.put(`/quality-check/${id}`, updatedData, {
         withCredentials: true,
+        headers: { "Content-Type": "application/json" },
       });
       await getAllReports();
-      return res.data?.data;
+      return res.data.data;
     } catch (err) {
       console.error("Update error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Delete
   const deleteReport = async (_id) => {
     try {
-      await axiosHandler.delete("/quality-check", {
-        data: { _id },
+      setLoading(true);
+      await axiosHandler.delete(`/quality-check/${_id}`, {
         withCredentials: true,
       });
       setQualityReports((prev) => prev.filter((r) => r._id !== _id));
     } catch (err) {
       console.error("Delete error:", err);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-//   staus 
-  const changeStatus = async (_id, newStatus) => {
-console.log(_id)
-    try {
 
-      await axiosHandler.put(`/gateman/change-status/${_id}`, {
-        withCredentials: true,
-        });
-        await getAllReports();
-    } catch (err) {
-        console.error("Status change error:", err);
+   const ChangesStatus = async(_id) =>{
+    try {
+      const res = await axiosHandler.patch(`/gateman/change-status/${_id}`)
+      toast.success(res?.data?.message)
+    } catch (error) {
+       console.log(error)
     }
-    };
+   }
 
   useEffect(() => {
     getAllReports();
@@ -106,7 +121,7 @@ console.log(_id)
         updateReport,
         deleteReport,
         setSelectedReport,
-        changeStatus
+        ChangesStatus
       }}
     >
       {children}
