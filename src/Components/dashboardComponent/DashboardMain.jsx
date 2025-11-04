@@ -30,7 +30,7 @@ import { useGatemenContext } from "@/Context/GatemenContext";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { useProductionContext } from "@/Context/ProductionContext";
-
+import axiosHandler from "@/config/axiosconfig"; 
 
 
 
@@ -157,21 +157,62 @@ const [period, setPeriod] = useState()
     fetchData();
   }, []);
 
-  const pieDataStatus = [
-    { name: "Completed", value: 124, color: "#3B82F6" },
-    { name: "Not Started", value: 80, color: "#EC4899" },
-    { name: "In Progress", value: 60, color: "#A78BFA" },
-  ];
 
-  const barData = [
-    { day: "Mon", completed: 20, notCompleted: 15 },
-    { day: "Tue", completed: 30, notCompleted: 10 },
-    { day: "Wed", completed: 25, notCompleted: 12 },
-    { day: "Thu", completed: 40, notCompleted: 5 },
-    { day: "Fri", completed: 35, notCompleted: 10 },
-    { day: "Sat", completed: 28, notCompleted: 8 },
-    { day: "Sun", completed: 18, notCompleted: 12 },
-  ];
+const [productionData, setProductionData] = useState([]);
+const [statusCount, setStatusCount] = useState({
+  completed: 0,
+  inProgress: 0,
+  notStarted: 0,
+});
+
+const pieDataStatus = [
+  { name: "Completed", value: statusCount.completed, color: "#00C49F" },
+  { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
+  { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
+];
+
+const barData = [
+  {
+    name: "Production",
+    completed: statusCount.completed,
+    notCompleted: statusCount.inProgress + statusCount.notStarted,
+  },
+];
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Correct API path based on your context route
+      const res = await axiosHandler.get("/production/all", { withCredentials: true });
+
+      // Match the backend response structure
+      const data = res.data?.productions || [];
+
+      console.log("Fetched production data:", data);
+
+      setProductionData(data);
+
+      // Count statuses (normalized)
+      const counts = data.reduce(
+        (acc, item) => {
+          const s = (item.status || "").toLowerCase().trim();
+          if (s === "completed") acc.completed++;
+          else if (s === "in_progress" || s === "in progress") acc.inProgress++;
+          else acc.notStarted++;
+          return acc;
+        },
+        { completed: 0, inProgress: 0, notStarted: 0 }
+      );
+
+      setStatusCount(counts);
+    } catch (err) {
+      console.error("Fetch production data error:", err);
+    }
+  };
+
+  fetchData();
+}, []);
+
 
   const donutData = [{ value: 80 }, { value: 20 }];
 
@@ -360,14 +401,9 @@ const [period, setPeriod] = useState()
                     </select>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={200} className="">
                   <PieChart>
-                    <Pie
-                      data={pieDataStatus}
-                      dataKey="value"
-                      outerRadius={80}
-                      label
-                    >
+                    <Pie data={pieDataStatus} dataKey="value" outerRadius={80} label>
                       {pieDataStatus.map((d, i) => (
                         <Cell key={i} fill={d.color} />
                       ))}
@@ -401,7 +437,7 @@ const [period, setPeriod] = useState()
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="day" stroke="#6B7280" />
+                    <XAxis dataKey="name" stroke="#6B7280" />
                     <YAxis stroke="#6B7280" />
                     <Tooltip />
                     <Bar dataKey="completed" fill="#3B82F6" />
