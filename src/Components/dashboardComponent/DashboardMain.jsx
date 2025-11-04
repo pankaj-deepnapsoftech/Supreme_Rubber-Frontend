@@ -30,9 +30,7 @@ import { useGatemenContext } from "@/Context/GatemenContext";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { useProductionContext } from "@/Context/ProductionContext";
-import axiosHandler from "@/config/axiosconfig"; 
-
-
+import axiosHandler from "@/config/axiosconfig";
 
 export default function DashboardMain() {
   const { GetAllPurchaseOrders } = usePurchanse_Order();
@@ -42,12 +40,93 @@ export default function DashboardMain() {
   const { boms } = useBomContext();
   const { totalProductions } = useProductionContext();
 
-  const [period, setPeriod] = useState();
+  const [period, setPeriod] = useState("Weekly");
   const [orders, setOrders] = useState([]);
   const [production, setProduction] = useState([]);
   const [supplier, setSupplier] = useState([]);
   const [lineData, setLineData] = useState([]);
   const [selectedYear, setSelectedYear] = useState(2025);
+  const [loadingProductionGraph, setLoadingProductionGraph] = useState(false);
+
+  // Fetch production graph data from API
+  const fetchProductionGraphData = async (
+    selectedPeriod = period,
+    year = selectedYear
+  ) => {
+    setLoadingProductionGraph(true);
+    try {
+      const params = new URLSearchParams({
+        period: selectedPeriod.toLowerCase(),
+      });
+
+      if (selectedPeriod.toLowerCase() === "yearly") {
+        params.append("year", year);
+      }
+
+      const response = await axiosHandler.get(
+        `/production/dashboard/graph?${params}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data?.success) {
+        const graphData = response.data.data.graphData;
+
+        // Transform data for the chart
+        const chartData = graphData.map((item) => ({
+          ...item,
+          productions: item.productions, // Single line for production count
+        }));
+
+        setLineData(chartData);
+      }
+    } catch (error) {
+      console.error("Error fetching production graph data:", error);
+      // Fallback to dummy data on error
+      setLineData(getDefaultData(selectedPeriod));
+    } finally {
+      setLoadingProductionGraph(false);
+    }
+  };
+
+  // Default data fallback
+  const getDefaultData = (period) => {
+    switch (period) {
+      case "Weekly":
+        return [
+          { day: "Mon", productions: 0 },
+          { day: "Tue", productions: 0 },
+          { day: "Wed", productions: 0 },
+          { day: "Thu", productions: 0 },
+          { day: "Fri", productions: 0 },
+          { day: "Sat", productions: 0 },
+          { day: "Sun", productions: 0 },
+        ];
+      case "Monthly":
+        return Array.from({ length: 30 }, (_, i) => ({
+          date: (i + 1).toString(),
+          productions: 0,
+        }));
+      case "Yearly":
+        return [
+          { month: "Jan", productions: 0 },
+          { month: "Feb", productions: 0 },
+          { month: "Mar", productions: 0 },
+          { month: "Apr", productions: 0 },
+          { month: "May", productions: 0 },
+          { month: "Jun", productions: 0 },
+          { month: "Jul", productions: 0 },
+          { month: "Aug", productions: 0 },
+          { month: "Sep", productions: 0 },
+          { month: "Oct", productions: 0 },
+          { month: "Nov", productions: 0 },
+          { month: "Dec", productions: 0 },
+        ];
+      default:
+        return [];
+    }
+  };
 
   const weeklyData = [
     { day: "Mon", a: 12, b: 8 },
@@ -79,12 +158,10 @@ export default function DashboardMain() {
     { month: "Dec", a: 35, b: 26 },
   ];
 
-  // 👇 Auto-update graph when period changes
+  // 👇 Auto-update graph when period or year changes
   useEffect(() => {
-    if (period === "Weekly") setLineData(weeklyData);
-    else if (period === "Monthly") setLineData(monthlyData);
-    else setLineData(yearlyData);
-  }, [period]);
+    fetchProductionGraphData(period, selectedYear);
+  }, [period, selectedYear]);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -173,62 +250,63 @@ export default function DashboardMain() {
     fetchData();
   }, []);
 
+  const [productionData, setProductionData] = useState([]);
+  const [statusCount, setStatusCount] = useState({
+    completed: 0,
+    inProgress: 0,
+    notStarted: 0,
+  });
 
-const [productionData, setProductionData] = useState([]);
-const [statusCount, setStatusCount] = useState({
-  completed: 0,
-  inProgress: 0,
-  notStarted: 0,
-});
+  const pieDataStatus = [
+    { name: "Completed", value: statusCount.completed, color: "#00C49F" },
+    { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
+    { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
+  ];
 
-const pieDataStatus = [
-  { name: "Completed", value: statusCount.completed, color: "#00C49F" },
-  { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
-  { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
-];
+  const barData = [
+    {
+      name: "Production",
+      completed: statusCount.completed,
+      notCompleted: statusCount.inProgress + statusCount.notStarted,
+    },
+  ];
 
-const barData = [
-  {
-    name: "Production",
-    completed: statusCount.completed,
-    notCompleted: statusCount.inProgress + statusCount.notStarted,
-  },
-];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Correct API path based on your context route
+        const res = await axiosHandler.get("/production/all", {
+          withCredentials: true,
+        });
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      // Correct API path based on your context route
-      const res = await axiosHandler.get("/production/all", { withCredentials: true });
+        // Match the backend response structure
+        const data = res.data?.productions || [];
 
-      // Match the backend response structure
-      const data = res.data?.productions || [];
+        console.log("Fetched production data:", data);
 
-      console.log("Fetched production data:", data);
+        setProductionData(data);
 
-      setProductionData(data);
+        // Count statuses (normalized)
+        const counts = data.reduce(
+          (acc, item) => {
+            const s = (item.status || "").toLowerCase().trim();
+            if (s === "completed") acc.completed++;
+            else if (s === "in_progress" || s === "in progress")
+              acc.inProgress++;
+            else acc.notStarted++;
+            return acc;
+          },
+          { completed: 0, inProgress: 0, notStarted: 0 }
+        );
 
-      // Count statuses (normalized)
-      const counts = data.reduce(
-        (acc, item) => {
-          const s = (item.status || "").toLowerCase().trim();
-          if (s === "completed") acc.completed++;
-          else if (s === "in_progress" || s === "in progress") acc.inProgress++;
-          else acc.notStarted++;
-          return acc;
-        },
-        { completed: 0, inProgress: 0, notStarted: 0 }
-      );
+        setStatusCount(counts);
+      } catch (err) {
+        console.error("Fetch production data error:", err);
+      }
+    };
 
-      setStatusCount(counts);
-    } catch (err) {
-      console.error("Fetch production data error:", err);
-    }
-  };
-
-  fetchData();
-}, []);
-
+    fetchData();
+  }, []);
 
   const donutData = [{ value: 80 }, { value: 20 }];
 
@@ -334,7 +412,10 @@ useEffect(() => {
                     {["Weekly", "Monthly", "Yearly"].map((p) => (
                       <button
                         key={p}
-                        onClick={() => setPeriod(p)}
+                        onClick={() => {
+                          setPeriod(p);
+                          fetchProductionGraphData(p, selectedYear);
+                        }}
                         className={`px-3 py-1 text-sm rounded-md transition cursor-pointer ${
                           p === period
                             ? "bg-blue-500 text-white"
@@ -350,9 +431,11 @@ useEffect(() => {
                       <select
                         className="ml-2 border border-gray-300 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         value={selectedYear}
-                        onChange={(e) =>
-                          setSelectedYear(Number(e.target.value))
-                        }
+                        onChange={(e) => {
+                          const newYear = Number(e.target.value);
+                          setSelectedYear(newYear);
+                          fetchProductionGraphData(period, newYear);
+                        }}
                       >
                         {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
                           <option key={year} value={year}>
@@ -365,39 +448,54 @@ useEffect(() => {
                 </div>
 
                 <div className="w-full overflow-x-auto">
-                  <ResponsiveContainer
-                    width="100%"
-                    height={250}
-                    className="mt-[30px]"
-                  >
-                    <LineChart data={lineData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis
-                        dataKey={
-                          period === "Weekly"
-                            ? "day"
-                            : period === "Monthly"
-                            ? "date"
-                            : "month"
-                        }
-                        stroke="#6B7280"
-                      />
-                      <YAxis stroke="#6B7280" />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="a"
-                        stroke="#3B82F6"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="b"
-                        stroke="#F59E0B"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {loadingProductionGraph ? (
+                    <div className="flex items-center justify-center h-[250px]">
+                      <div className="text-gray-500">
+                        Loading production data...
+                      </div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer
+                      width="100%"
+                      height={250}
+                      className="mt-[30px]"
+                    >
+                      <LineChart data={lineData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis
+                          dataKey={
+                            period === "Weekly"
+                              ? "day"
+                              : period === "Monthly"
+                              ? "date"
+                              : "month"
+                          }
+                          stroke="#6B7280"
+                        />
+                        <YAxis stroke="#6B7280" />
+                        <Tooltip
+                          formatter={(value, name) => [value, "Productions"]}
+                          labelFormatter={(label) => {
+                            if (period === "Weekly") return `Day: ${label}`;
+                            if (period === "Monthly") return `Date: ${label}`;
+                            return `Month: ${label}`;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="productions"
+                          stroke="#3B82F6"
+                          strokeWidth={3}
+                          dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
+                          activeDot={{
+                            r: 6,
+                            stroke: "#3B82F6",
+                            strokeWidth: 2,
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
@@ -452,7 +550,12 @@ useEffect(() => {
                 </div>
                 <ResponsiveContainer width="100%" height={200} className="">
                   <PieChart>
-                    <Pie data={pieDataStatus} dataKey="value" outerRadius={80} label>
+                    <Pie
+                      data={pieDataStatus}
+                      dataKey="value"
+                      outerRadius={80}
+                      label
+                    >
                       {pieDataStatus.map((d, i) => (
                         <Cell key={i} fill={d.color} />
                       ))}
