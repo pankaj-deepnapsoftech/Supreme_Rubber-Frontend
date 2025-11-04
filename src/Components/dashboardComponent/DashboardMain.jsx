@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { LuNotebookText } from "react-icons/lu";
@@ -24,6 +24,10 @@ import {
 } from "recharts";
 import DashboardSupplier from "./DashboardSupplier";
 
+import { useInventory } from "../../Context/InventoryContext";
+import { useGatemenContext } from "@/Context/GatemenContext";
+
+
 export default function DashboardMain() {
   const [period, setPeriod] = useState(" ");
 
@@ -42,12 +46,72 @@ export default function DashboardMain() {
     { month: "Dec", a: 35, b: 26 },
   ];
 
-  const pieDataInventory = [
-    { name: "Raw materials", value: 10, color: "#FBBF24" },
-    { name: "Work in progress", value: 20, color: "#A78BFA" },
-    { name: "Finished goods (FGW)", value: 30, color: "#3B82F6" },
-    { name: "CMW", value: 15, color: "#F87171" },
-  ];
+ 
+// inventory pie chart
+const [pieDataInventory, setPieDataInventory] = useState([]);
+const { products, getAllProducts } = useInventory();
+ useEffect(() => {
+  if (products && products.length > 0) {
+
+    const categoryCounts = products.reduce((acc, p) => {
+      const category = p.category || "Uncategorized";
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+
+    const formatted = Object.entries(categoryCounts).map(
+      ([category, count]) => ({
+        name: category,
+        value: count,
+      })
+    );
+
+    const colors = ["#FBBF24", "#A78BFA", "#3B82F6", "#F87171", "#10B981"];
+    const coloredData = formatted.map((d, i) => ({
+      ...d,
+      color: colors[i % colors.length],
+    }));
+
+    setPieDataInventory(coloredData);
+  }
+}, [products]);
+
+useEffect(() => {
+  getAllProducts();
+}, []);
+
+
+// gate man entry
+const { GetAllPOData } = useGatemenContext();
+const [gateChartData, setGateChartData] = useState([]);
+useEffect(() => {
+  const fetchData = async () => {
+    const data = await GetAllPOData();
+    if (data) {
+      const statusCounts = data.reduce((acc, entry) => {
+        const status = entry.status || "Unknown";
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+
+      const formatted = Object.entries(statusCounts).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      const colors = ["#3B82F6", "#10B981", "#FBBF24", "#F87171"];
+      const coloredData = formatted.map((d, i) => ({
+        ...d,
+        color: colors[i % colors.length],
+      }));
+
+      setGateChartData(coloredData);
+    }
+  };
+  fetchData();
+}, []);
+
+
 
   const pieDataStatus = [
     { name: "Completed", value: 124, color: "#3B82F6" },
@@ -222,6 +286,7 @@ export default function DashboardMain() {
                       innerRadius={50}
                       outerRadius={80}
                       dataKey="value"
+                      label
                     >
                       {pieDataInventory.map((d, i) => (
                         <Cell key={i} fill={d.color} />
@@ -230,11 +295,10 @@ export default function DashboardMain() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
+
               </div>
             </div>
 
-            {/* Production Status */}
-            {/* Row: Production Status + Production + Gate Entry */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-4">
               {/* Production Status */}
               <div className="flex-1 min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
@@ -323,20 +387,20 @@ export default function DashboardMain() {
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={donutData}
-                      dataKey="value"
-                      innerRadius={60}
-                      outerRadius={80}
-                      startAngle={90}
-                      endAngle={-270}
-                    >
-                      <Cell fill="#3B82F6" />
-                      <Cell fill="#E5E7EB" />
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
+                 <PieChart>
+                  <Pie
+                    data={gateChartData}
+                    innerRadius={50}
+                    outerRadius={80}
+                    dataKey="value"
+                    label
+                  >
+                    {gateChartData.map((d, i) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
                 </ResponsiveContainer>
                 <p className="text-center text-sm text-gray-600 mt-2">
                   <b>Order ID:</b> 100 kg received
