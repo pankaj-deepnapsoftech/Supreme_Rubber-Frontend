@@ -14,9 +14,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useInventory } from "@/Context/InventoryContext";
 import { useGatemenContext } from "@/Context/GatemenContext";
 
-
-
-
 const QualityCheck = () => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,8 +23,7 @@ const QualityCheck = () => {
   const [pendingData, setPendingData] = useState();
   const [getData, setGetData] = useState();
 
-  const {GetAllPOData} = useGatemenContext();
-
+  const { GetAllPOData } = useGatemenContext();
 
   const {
     products,
@@ -37,18 +33,16 @@ const QualityCheck = () => {
     getAllProducts,
   } = useInventory();
 
-  
+
+  // console.log("Quality Check", products)
 
   useEffect(() => {
-    const getGateman = async()=>{
+    const getGateman = async () => {
       const data = await GetAllPOData();
-      console.log(data)
-      setGetData(data)
-    
-    }
+      setGetData(data);
+    };
     getGateman();
     getAllProducts();
-  
   }, []);
 
   const handleClose = () => {
@@ -160,7 +154,7 @@ const QualityCheck = () => {
               <th className="px-4 sm:px-6 py-3 font-medium">Product Name</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
+              <th className="px-9 sm:px-9 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
                 Action
               </th>
@@ -177,6 +171,7 @@ const QualityCheck = () => {
               (filteredProducts.length ? filteredProducts : products)
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
+                  console.log(item.approved);
                   return (
                     item.name.toLowerCase().includes(q) ||
                     item.category.toLowerCase().includes(q) ||
@@ -193,8 +188,20 @@ const QualityCheck = () => {
                     <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
                     <td className="px-4 sm:px-6 py-3">{item.category}</td>
                     <td className="px-4 sm:px-6 py-3">{item.name}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.uom}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item.current_stock} {item.uom}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item.approved === true ? (
+                        <span className="bg-green-100 px-3 py-1 text-green-700 rounded-full text-[10px] sm:text-xs font-semibold whitespace-nowrap">
+                          Approved
+                        </span>
+                      ) : (
+                        <span className="bg-green-100 px-3 py-1 text-red-700 rounded-full text-[10px] sm:text-xs font-semibold whitespace-nowrap">
+                          Rejected
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit className="h-4 w-4 text-blue-500 cursor-pointer" />
@@ -388,11 +395,11 @@ const QualityCheck = () => {
                           {po?.company_name}
                         </td>
                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.items.map((i) => i.item_name).join(', ')}
+                          {po?.items.map((i) => i.item_name).join(", ")}
                         </td>
-                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.items.map((i)=> i.item_quantity).join(", ")}
-                        </td> 
+                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                          {po?.items.map((i) => i.item_quantity).join(", ")}
+                        </td>
                         <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                           {po?.status}
                         </td>
