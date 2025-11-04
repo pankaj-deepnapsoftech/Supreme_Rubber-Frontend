@@ -35,52 +35,36 @@ import axiosHandler from "@/config/axiosconfig";
 
 
 export default function DashboardMain() {
-
-
-  const {GetAllPurchaseOrders} = usePurchanse_Order();
-  const {getAllProducts : getAllProduction} = useInventory();
+  const { GetAllPurchaseOrders } = usePurchanse_Order();
+  const { getAllProducts: getAllProduction } = useInventory();
   const { getAllSupplier } = useSupplierContext();
 
   const { boms } = useBomContext();
   const { totalProductions } = useProductionContext();
 
-  
-
-
-  
-const [period, setPeriod] = useState()
+  const [period, setPeriod] = useState();
   const [orders, setOrders] = useState([]);
-  const [production, setProduction] = useState([])
-  const [supplier, setSupplier] = useState([])
+  const [production, setProduction] = useState([]);
+  const [supplier, setSupplier] = useState([]);
+  const [lineData, setLineData] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(2025);
 
- 
-  useEffect(() => {
-    const fetchProductData = async () => {
-      try {
-        const res = await GetAllPurchaseOrders();
-        console.log("Purchase Orders Response:", res);
-        const pro = await getAllProduction()
-        console.log("Production Order", pro)
-        const sup = await getAllSupplier();
-        console.log("all supplier", sup)
+  const weeklyData = [
+    { day: "Mon", a: 12, b: 8 },
+    { day: "Tue", a: 16, b: 12 },
+    { day: "Wed", a: 25, b: 20 },
+    { day: "Thu", a: 22, b: 30 },
+    { day: "Fri", a: 35, b: 26 },
+    { day: "Sat", a: 18, b: 10 },
+    { day: "Sun", a: 28, b: 32 },
+  ];
+  const monthlyData = Array.from({ length: 30 }, (_, i) => ({
+    date: (i + 1).toString(),
+    a: Math.floor(Math.random() * 40) + 5,
+    b: Math.floor(Math.random() * 40) + 5,
+  }));
 
-        setOrders(res);
-        setProduction(pro);
-        setSupplier(sup);
-      } catch (error) {
-        console.error("Error fetching purchase orders:", error);
-      }
-    };
-
-    fetchProductData();
-  }, []);
-
-  const productCount = orders?.pos?.length;
-  const productionCount = production?.products?.length
-  const Supplier = supplier?.length
-
-
-  const lineData = [
+  const yearlyData = [
     { month: "Jan", a: 12, b: 8 },
     { month: "Feb", a: 16, b: 12 },
     { month: "Mar", a: 25, b: 20 },
@@ -94,6 +78,38 @@ const [period, setPeriod] = useState()
     { month: "Nov", a: 22, b: 30 },
     { month: "Dec", a: 35, b: 26 },
   ];
+
+  // 👇 Auto-update graph when period changes
+  useEffect(() => {
+    if (period === "Weekly") setLineData(weeklyData);
+    else if (period === "Monthly") setLineData(monthlyData);
+    else setLineData(yearlyData);
+  }, [period]);
+
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const res = await GetAllPurchaseOrders();
+        console.log("Purchase Orders Response:", res);
+        const pro = await getAllProduction();
+        console.log("Production Order", pro);
+        const sup = await getAllSupplier();
+        console.log("all supplier", sup);
+
+        setOrders(res);
+        setProduction(pro);
+        setSupplier(sup);
+      } catch (error) {
+        console.error("Error fetching purchase orders:", error);
+      }
+    };
+
+    fetchProductData();
+  }, []);
+
+  const productCount = orders?.pos?.length;
+  const productionCount = production?.products?.length;
+  const Supplier = supplier?.length;
 
   // inventory pie chart
   const [pieDataInventory, setPieDataInventory] = useState([]);
@@ -229,7 +245,9 @@ useEffect(() => {
             <div className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5  flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{productCount}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {productCount}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     5 <ArrowDropUpIcon className="mt-0.5" />
@@ -246,7 +264,9 @@ useEffect(() => {
             <div className="border border-[#99db9f] bg-[#d6f7d7] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{totalProductions}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {totalProductions}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-red-400 flex items-center">
                     2 <ArrowDropDown className="mb-0.5" />
@@ -263,7 +283,9 @@ useEffect(() => {
             <div className="border border-[#efb777] bg-[#f8e7d0] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{boms.length}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {boms.length}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     1 <ArrowDropUpIcon className="mb-0.5" />
@@ -280,7 +302,9 @@ useEffect(() => {
             <div className="border border-[#0ed8ef] bg-[#d6f8fa] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Suppliers</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{Supplier}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {Supplier}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-gray-400 flex items-center">
                     0 <ArrowDropUpIcon className="mb-0.5" />
@@ -294,7 +318,6 @@ useEffect(() => {
             </div>
           </div>
 
-
           {/* Sales Overview GRAPHS */}
 
           <div className="p-6 flex flex-wrap  bg-gray-50 min-h-screen">
@@ -307,7 +330,7 @@ useEffect(() => {
                   <h2 className="font-semibold text-gray-700 text-lg">
                     Production Graph
                   </h2>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {["Weekly", "Monthly", "Yearly"].map((p) => (
                       <button
                         key={p}
@@ -321,6 +344,23 @@ useEffect(() => {
                         {p}
                       </button>
                     ))}
+
+                    {/* 👇 Show Year Select only when 'Yearly' is active */}
+                    {period === "Yearly" && (
+                      <select
+                        className="ml-2 border border-gray-300 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={selectedYear}
+                        onChange={(e) =>
+                          setSelectedYear(Number(e.target.value))
+                        }
+                      >
+                        {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 
@@ -332,7 +372,16 @@ useEffect(() => {
                   >
                     <LineChart data={lineData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis dataKey="month" stroke="#6B7280" />
+                      <XAxis
+                        dataKey={
+                          period === "Weekly"
+                            ? "day"
+                            : period === "Monthly"
+                            ? "date"
+                            : "month"
+                        }
+                        stroke="#6B7280"
+                      />
                       <YAxis stroke="#6B7280" />
                       <Tooltip />
                       <Line

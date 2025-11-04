@@ -52,7 +52,7 @@ export default function DashboardTable() {
             </h2>
             <p className="text-xs text-gray-500">{roles.length} Roles found</p>
           </div>
-          <button className="text-sm text-blue-500 hover:underline self-start sm:self-auto">
+          <button className="text-sm text-blue-500 hover:underline self-start sm:self-auto" onClick={()=>{"/supplier"}}>
             View all
           </button>
         </div>
