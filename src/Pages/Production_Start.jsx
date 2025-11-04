@@ -464,7 +464,7 @@ const Production_Start = () => {
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left min-w-[600px]">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
