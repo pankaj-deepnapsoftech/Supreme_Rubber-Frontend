@@ -7,6 +7,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { GiNotebook } from "react-icons/gi";
 import { BsPeople } from "react-icons/bs";
 import DashboardTable from "./DashboardTable";
+import { useBomContext } from "@/Context/BomContext";
 
 import {
   LineChart,
@@ -28,49 +29,121 @@ import { useInventory } from "../../Context/InventoryContext";
 import { useGatemenContext } from "@/Context/GatemenContext";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import { useSupplierContext } from "@/Context/SuplierContext";
-
-
+import { useProductionContext } from "@/Context/ProductionContext";
+import axiosHandler from "@/config/axiosconfig";
 
 export default function DashboardMain() {
-
-
-  const {GetAllPurchaseOrders} = usePurchanse_Order();
-  const {getAllProducts : getAllProduction} = useInventory();
+  const { GetAllPurchaseOrders } = usePurchanse_Order();
+  const { getAllProducts: getAllProduction } = useInventory();
   const { getAllSupplier } = useSupplierContext();
-  
-const [period, setPeriod] = useState()
+
+  const { boms } = useBomContext();
+  const { totalProductions } = useProductionContext();
+
+  const [period, setPeriod] = useState("Weekly");
   const [orders, setOrders] = useState([]);
-  const [production, setProduction] = useState([])
-  const [supplier, setSupplier] = useState([])
+  const [production, setProduction] = useState([]);
+  const [supplier, setSupplier] = useState([]);
+  const [lineData, setLineData] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(2025);
+  const [loadingProductionGraph, setLoadingProductionGraph] = useState(false);
 
- 
-  useEffect(() => {
-    const fetchProductData = async () => {
-      try {
-        const res = await GetAllPurchaseOrders();
-        console.log("Purchase Orders Response:", res);
-        const pro = await getAllProduction()
-        console.log("Production Order", pro)
-        const sup = await getAllSupplier();
-        console.log("all supplier", sup)
+  // Fetch production graph data from API
+  const fetchProductionGraphData = async (
+    selectedPeriod = period,
+    year = selectedYear
+  ) => {
+    setLoadingProductionGraph(true);
+    try {
+      const params = new URLSearchParams({
+        period: selectedPeriod.toLowerCase(),
+      });
 
-        setOrders(res);
-        setProduction(pro);
-        setSupplier(sup);
-      } catch (error) {
-        console.error("Error fetching purchase orders:", error);
+      if (selectedPeriod.toLowerCase() === "yearly") {
+        params.append("year", year);
       }
-    };
 
-    fetchProductData();
-  }, []);
+      const response = await axiosHandler.get(
+        `/production/dashboard/graph?${params}`,
+        {
+          withCredentials: true,
+        }
+      );
 
-  const productCount = orders?.pos?.length;
-  const productionCount = production?.products?.length
-  const Supplier = supplier?.length
+      if (response.data?.success) {
+        const graphData = response.data.data.graphData;
 
+        // Transform data for the chart
+        const chartData = graphData.map((item) => ({
+          ...item,
+          productions: item.productions, // Single line for production count
+        }));
 
-  const lineData = [
+        setLineData(chartData);
+      }
+    } catch (error) {
+      console.error("Error fetching production graph data:", error);
+      // Fallback to dummy data on error
+      setLineData(getDefaultData(selectedPeriod));
+    } finally {
+      setLoadingProductionGraph(false);
+    }
+  };
+
+  // Default data fallback
+  const getDefaultData = (period) => {
+    switch (period) {
+      case "Weekly":
+        return [
+          { day: "Mon", productions: 0 },
+          { day: "Tue", productions: 0 },
+          { day: "Wed", productions: 0 },
+          { day: "Thu", productions: 0 },
+          { day: "Fri", productions: 0 },
+          { day: "Sat", productions: 0 },
+          { day: "Sun", productions: 0 },
+        ];
+      case "Monthly":
+        return Array.from({ length: 30 }, (_, i) => ({
+          date: (i + 1).toString(),
+          productions: 0,
+        }));
+      case "Yearly":
+        return [
+          { month: "Jan", productions: 0 },
+          { month: "Feb", productions: 0 },
+          { month: "Mar", productions: 0 },
+          { month: "Apr", productions: 0 },
+          { month: "May", productions: 0 },
+          { month: "Jun", productions: 0 },
+          { month: "Jul", productions: 0 },
+          { month: "Aug", productions: 0 },
+          { month: "Sep", productions: 0 },
+          { month: "Oct", productions: 0 },
+          { month: "Nov", productions: 0 },
+          { month: "Dec", productions: 0 },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const weeklyData = [
+    { day: "Mon", a: 12, b: 8 },
+    { day: "Tue", a: 16, b: 12 },
+    { day: "Wed", a: 25, b: 20 },
+    { day: "Thu", a: 22, b: 30 },
+    { day: "Fri", a: 35, b: 26 },
+    { day: "Sat", a: 18, b: 10 },
+    { day: "Sun", a: 28, b: 32 },
+  ];
+  const monthlyData = Array.from({ length: 30 }, (_, i) => ({
+    date: (i + 1).toString(),
+    a: Math.floor(Math.random() * 40) + 5,
+    b: Math.floor(Math.random() * 40) + 5,
+  }));
+
+  const yearlyData = [
     { month: "Jan", a: 12, b: 8 },
     { month: "Feb", a: 16, b: 12 },
     { month: "Mar", a: 25, b: 20 },
@@ -84,6 +157,36 @@ const [period, setPeriod] = useState()
     { month: "Nov", a: 22, b: 30 },
     { month: "Dec", a: 35, b: 26 },
   ];
+
+  // 👇 Auto-update graph when period or year changes
+  useEffect(() => {
+    fetchProductionGraphData(period, selectedYear);
+  }, [period, selectedYear]);
+
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const res = await GetAllPurchaseOrders();
+        console.log("Purchase Orders Response:", res);
+        const pro = await getAllProduction();
+        console.log("Production Order", pro);
+        const sup = await getAllSupplier();
+        console.log("all supplier", sup);
+
+        setOrders(res);
+        setProduction(pro);
+        setSupplier(sup);
+      } catch (error) {
+        console.error("Error fetching purchase orders:", error);
+      }
+    };
+
+    fetchProductData();
+  }, []);
+
+  const productCount = orders?.pos?.length;
+  const productionCount = production?.products?.length;
+  const Supplier = supplier?.length;
 
   // inventory pie chart
   const [pieDataInventory, setPieDataInventory] = useState([]);
@@ -147,21 +250,63 @@ const [period, setPeriod] = useState()
     fetchData();
   }, []);
 
+  const [productionData, setProductionData] = useState([]);
+  const [statusCount, setStatusCount] = useState({
+    completed: 0,
+    inProgress: 0,
+    notStarted: 0,
+  });
+
   const pieDataStatus = [
-    { name: "Completed", value: 124, color: "#3B82F6" },
-    { name: "Not Started", value: 80, color: "#EC4899" },
-    { name: "In Progress", value: 60, color: "#A78BFA" },
+    { name: "Completed", value: statusCount.completed, color: "#00C49F" },
+    { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
+    { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
   ];
 
   const barData = [
-    { day: "Mon", completed: 20, notCompleted: 15 },
-    { day: "Tue", completed: 30, notCompleted: 10 },
-    { day: "Wed", completed: 25, notCompleted: 12 },
-    { day: "Thu", completed: 40, notCompleted: 5 },
-    { day: "Fri", completed: 35, notCompleted: 10 },
-    { day: "Sat", completed: 28, notCompleted: 8 },
-    { day: "Sun", completed: 18, notCompleted: 12 },
+    {
+      name: "Production",
+      completed: statusCount.completed,
+      notCompleted: statusCount.inProgress + statusCount.notStarted,
+    },
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Correct API path based on your context route
+        const res = await axiosHandler.get("/production/all", {
+          withCredentials: true,
+        });
+
+        // Match the backend response structure
+        const data = res.data?.productions || [];
+
+        console.log("Fetched production data:", data);
+
+        setProductionData(data);
+
+        // Count statuses (normalized)
+        const counts = data.reduce(
+          (acc, item) => {
+            const s = (item.status || "").toLowerCase().trim();
+            if (s === "completed") acc.completed++;
+            else if (s === "in_progress" || s === "in progress")
+              acc.inProgress++;
+            else acc.notStarted++;
+            return acc;
+          },
+          { completed: 0, inProgress: 0, notStarted: 0 }
+        );
+
+        setStatusCount(counts);
+      } catch (err) {
+        console.error("Fetch production data error:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const donutData = [{ value: 80 }, { value: 20 }];
 
@@ -178,7 +323,9 @@ const [period, setPeriod] = useState()
             <div className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5  flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{productCount}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {productCount}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     5 <ArrowDropUpIcon className="mt-0.5" />
@@ -195,7 +342,9 @@ const [period, setPeriod] = useState()
             <div className="border border-[#99db9f] bg-[#d6f7d7] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {totalProductions}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-red-400 flex items-center">
                     2 <ArrowDropDown className="mb-0.5" />
@@ -212,7 +361,9 @@ const [period, setPeriod] = useState()
             <div className="border border-[#efb777] bg-[#f8e7d0] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {boms.length}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     1 <ArrowDropUpIcon className="mb-0.5" />
@@ -229,7 +380,9 @@ const [period, setPeriod] = useState()
             <div className="border border-[#0ed8ef] bg-[#d6f8fa] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Suppliers</p>
-                <p className="text-[24px] text-gray-700 font-semibold">{Supplier}</p>
+                <p className="text-[24px] text-gray-700 font-semibold">
+                  {Supplier}
+                </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-gray-400 flex items-center">
                     0 <ArrowDropUpIcon className="mb-0.5" />
@@ -243,7 +396,6 @@ const [period, setPeriod] = useState()
             </div>
           </div>
 
-
           {/* Sales Overview GRAPHS */}
 
           <div className="p-6 flex flex-wrap  bg-gray-50 min-h-screen">
@@ -256,12 +408,15 @@ const [period, setPeriod] = useState()
                   <h2 className="font-semibold text-gray-700 text-lg">
                     Production Graph
                   </h2>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {["Weekly", "Monthly", "Yearly"].map((p) => (
                       <button
                         key={p}
-                        onClick={() => setPeriod(p)}
-                        className={`px-3 py-1 text-sm rounded-md transition ${
+                        onClick={() => {
+                          setPeriod(p);
+                          fetchProductionGraphData(p, selectedYear);
+                        }}
+                        className={`px-3 py-1 text-sm rounded-md transition cursor-pointer ${
                           p === period
                             ? "bg-blue-500 text-white"
                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -270,34 +425,77 @@ const [period, setPeriod] = useState()
                         {p}
                       </button>
                     ))}
+
+                    {/* 👇 Show Year Select only when 'Yearly' is active */}
+                    {period === "Yearly" && (
+                      <select
+                        className="ml-2 border border-gray-300 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={selectedYear}
+                        onChange={(e) => {
+                          const newYear = Number(e.target.value);
+                          setSelectedYear(newYear);
+                          fetchProductionGraphData(period, newYear);
+                        }}
+                      >
+                        {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 
                 <div className="w-full overflow-x-auto">
-                  <ResponsiveContainer
-                    width="100%"
-                    height={250}
-                    className="mt-[30px]"
-                  >
-                    <LineChart data={lineData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis dataKey="month" stroke="#6B7280" />
-                      <YAxis stroke="#6B7280" />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="a"
-                        stroke="#3B82F6"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="b"
-                        stroke="#F59E0B"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {loadingProductionGraph ? (
+                    <div className="flex items-center justify-center h-[250px]">
+                      <div className="text-gray-500">
+                        Loading production data...
+                      </div>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer
+                      width="100%"
+                      height={250}
+                      className="mt-[30px]"
+                    >
+                      <LineChart data={lineData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis
+                          dataKey={
+                            period === "Weekly"
+                              ? "day"
+                              : period === "Monthly"
+                              ? "date"
+                              : "month"
+                          }
+                          stroke="#6B7280"
+                        />
+                        <YAxis stroke="#6B7280" />
+                        <Tooltip
+                          formatter={(value, name) => [value, "Productions"]}
+                          labelFormatter={(label) => {
+                            if (period === "Weekly") return `Day: ${label}`;
+                            if (period === "Monthly") return `Date: ${label}`;
+                            return `Month: ${label}`;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="productions"
+                          stroke="#3B82F6"
+                          strokeWidth={3}
+                          dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
+                          activeDot={{
+                            r: 6,
+                            stroke: "#3B82F6",
+                            strokeWidth: 2,
+                          }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </div>
 
@@ -307,7 +505,7 @@ const [period, setPeriod] = useState()
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Inventory
                   </h2>
-                  <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                  <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                     <option className="text-gray-500">Weekly</option>
                     <option className="text-gray-500">Monthly</option>
                     <option className="text-gray-500">Yearly</option>
@@ -341,7 +539,7 @@ const [period, setPeriod] = useState()
                     Production Status
                   </h2>
                   <div className="flex">
-                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                    <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                       <option className="text-gray-500 hover:bg-[#cd9cf2]">
                         Weekly
                       </option>
@@ -350,7 +548,7 @@ const [period, setPeriod] = useState()
                     </select>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={200} className="">
                   <PieChart>
                     <Pie
                       data={pieDataStatus}
@@ -375,7 +573,7 @@ const [period, setPeriod] = useState()
                     Production
                   </h2>
                   <div className="flex">
-                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                    <select className="border border-gray-200 text-xs cursor-pointer hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                       <option className="text-gray-500 hover:bg-[#cd9cf2]">
                         Weekly
                       </option>
@@ -391,7 +589,7 @@ const [period, setPeriod] = useState()
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={barData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="day" stroke="#6B7280" />
+                    <XAxis dataKey="name" stroke="#6B7280" />
                     <YAxis stroke="#6B7280" />
                     <Tooltip />
                     <Bar dataKey="completed" fill="#3B82F6" />
@@ -407,7 +605,7 @@ const [period, setPeriod] = useState()
                     Gate Entry
                   </h2>
                   <div className="flex">
-                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                    <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                       <option className="text-gray-500 hover:bg-[#cd9cf2]">
                         Weekly
                       </option>
