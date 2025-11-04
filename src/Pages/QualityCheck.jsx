@@ -58,15 +58,12 @@ const QualityCheck = () => {
 
   useEffect(() => {
     if (selectedReport) {
-      // Find the gateman entry for the selected report
       const gatemanEntry = getData.find(
         (entry) => entry._id === selectedReport.gateman_entry_id
       );
 
-      // Auto-populate items if gateman entry is found
       if (gatemanEntry && gatemanEntry.items) {
         setSelectedEntryItems(gatemanEntry.items);
-        // If editing and item_id exists, find the selected item
         if (selectedReport.item_id) {
           const item = gatemanEntry.items.find(
             (item) => item._id === selectedReport.item_id
@@ -89,7 +86,7 @@ const QualityCheck = () => {
     setShowModal(false);
     setSelectedReport(null);
     setSelectedEntryItems([]); // Clear selected items
-    setSelectedItem(null); // Clear selected item
+    setSelectedItem(null);
     setFormData({
       gateman_entry_id: "",
       item_id: "",
@@ -191,8 +188,8 @@ const QualityCheck = () => {
           className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
           onClick={() => {
             setSelectedReport(null);
-            setSelectedEntryItems([]); // Clear selected items
-            setSelectedItem(null); // Clear selected item
+            setSelectedEntryItems([]);
+            setSelectedItem(null);
             setFormData({
               gateman_entry_id: "",
               item_id: "",
@@ -263,7 +260,6 @@ const QualityCheck = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
@@ -290,7 +286,6 @@ const QualityCheck = () => {
                 })
                 .map((item, i) => (
                   <tr
-                    // key={i}
                     key={item._id || i}
                     className={`border-t ${
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
@@ -391,14 +386,12 @@ const QualityCheck = () => {
 
                       console.log("Selected Entry:", selectedEntry);
 
-                      // Auto-fetch items for selected gateman entry
                       if (selectedEntry && selectedEntry.items) {
                         setSelectedEntryItems(selectedEntry.items);
                       } else {
                         setSelectedEntryItems([]);
                       }
 
-                      // Reset item selection when gateman entry changes
                       setSelectedItem(null);
                       setFormData({
                         ...formData,
@@ -471,7 +464,6 @@ const QualityCheck = () => {
                     </div>
                   )}
 
-                  {/* Show selected item details */}
                   {selectedItem && (
                     <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
                       <p className="text-sm text-green-700">
