@@ -291,7 +291,7 @@ export default function DashboardMain() {
                       <button
                         key={p}
                         onClick={() => setPeriod(p)}
-                        className={`px-3 py-1 text-sm rounded-md transition ${
+                        className={`px-3 py-1 text-sm rounded-md transition cursor-pointer ${
                           p === period
                             ? "bg-blue-500 text-white"
                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -363,7 +363,7 @@ export default function DashboardMain() {
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Inventory
                   </h2>
-                  <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                  <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                     <option className="text-gray-500">Weekly</option>
                     <option className="text-gray-500">Monthly</option>
                     <option className="text-gray-500">Yearly</option>
@@ -397,7 +397,7 @@ export default function DashboardMain() {
                     Production Status
                   </h2>
                   <div className="flex">
-                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                    <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                       <option className="text-gray-500 hover:bg-[#cd9cf2]">
                         Weekly
                       </option>
@@ -431,7 +431,7 @@ export default function DashboardMain() {
                     Production
                   </h2>
                   <div className="flex">
-                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                    <select className="border border-gray-200 text-xs cursor-pointer hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                       <option className="text-gray-500 hover:bg-[#cd9cf2]">
                         Weekly
                       </option>
@@ -463,7 +463,7 @@ export default function DashboardMain() {
                     Gate Entry
                   </h2>
                   <div className="flex">
-                    <select className="border border-gray-200 text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                    <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
                       <option className="text-gray-500 hover:bg-[#cd9cf2]">
                         Weekly
                       </option>

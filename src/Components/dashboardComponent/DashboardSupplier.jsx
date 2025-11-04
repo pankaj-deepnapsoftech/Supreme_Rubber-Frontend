@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Edit2, Trash2 } from "lucide-react";
 import { useSupplierContext } from "@/Context/SuplierContext";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardSupplier() {
   const { getAllSupplier, deleteSupplier } = useSupplierContext();
   const [suppliers, setSuppliers] = useState([]);
+  const navigate = useNavigate();
 
   // ✅ Fetch live data from context (no loading)
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function DashboardSupplier() {
             {`${suppliers.length} Supplier${suppliers.length !== 1 ? "s" : ""} found`}
           </p>
         </div>
-        <button className="text-sm text-blue-500 hover:underline">
+        <button className="text-sm text-blue-500 hover:underline" onClick={() => navigate("/supplier")}>
           View all
         </button>
       </div>
