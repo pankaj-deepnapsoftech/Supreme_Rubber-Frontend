@@ -322,11 +322,21 @@ const QualityCheck = () => {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.po_number || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.company_name || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.item_name || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.approved_quantity}</td>
-                    <td className="px-4 sm:px-6 py-3">{item?.rejected_quantity}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.gateman_entry_id?.po_number || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.gateman_entry_id?.company_name || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.item_name || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.approved_quantity}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item?.rejected_quantity}
+                    </td>
                     <td className="px-4 sm:px-6 py-3">{item?.status || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
@@ -344,7 +354,9 @@ const QualityCheck = () => {
                             ) {
                               try {
                                 await deleteReport(item._id);
-                                toast.success("Quality check deleted successfully");
+                                toast.success(
+                                  "Quality check deleted successfully"
+                                );
                               } catch (error) {
                                 console.error(
                                   "Error deleting quality check:",
@@ -637,7 +649,10 @@ const QualityCheck = () => {
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             <button
-                              onClick={async () => { await ChangesStatus(po._id); await refreshGatemanData(); }}
+                              onClick={async () => {
+                                await ChangesStatus(po._id);
+                                await refreshGatemanData();
+                              }}
                               className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                             >
                               Verified
