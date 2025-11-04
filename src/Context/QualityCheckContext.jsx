@@ -14,7 +14,8 @@ export const QualityCheckProvider = ({ children }) => {
       setLoading(true);
       const res = await axiosHandler.get("/quality-check", { withCredentials: true });
       console.log(res)
-      setQualityReports(res.data?.data || []);
+      const data = res?.data?.data?.filter((i)=> i?.status === "pending");
+      setQualityReports(data|| []);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -22,12 +23,14 @@ export const QualityCheckProvider = ({ children }) => {
     }
   };
 
+
+  console.log(qualityReports)
   // Get one
   const getReportById = async (id) => {
     try {
       const res = await axiosHandler.get(`/quality-check/${id}`, { withCredentials: true });
-      setSelectedReport(res.data.entry);
-      return res.data.entry;
+      setSelectedReport(res.data?.data);
+      return res.data?.data;
     } catch (err) {
       console.error("Detail fetch error:", err);
     }
@@ -41,7 +44,7 @@ export const QualityCheckProvider = ({ children }) => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await getAllReports();
-      return res.data.entry;
+      return res.data?.data;
     } catch (err) {
       console.error("Create error:", err);
     }
@@ -54,7 +57,7 @@ export const QualityCheckProvider = ({ children }) => {
         withCredentials: true,
       });
       await getAllReports();
-      return res.data.entry;
+      return res.data?.data;
     } catch (err) {
       console.error("Update error:", err);
     }
@@ -73,6 +76,20 @@ export const QualityCheckProvider = ({ children }) => {
     }
   };
 
+//   staus 
+  const changeStatus = async (_id, newStatus) => {
+console.log(_id)
+    try {
+
+      await axiosHandler.put(`/gateman/change-status/${_id}`, {
+        withCredentials: true,
+        });
+        await getAllReports();
+    } catch (err) {
+        console.error("Status change error:", err);
+    }
+    };
+
   useEffect(() => {
     getAllReports();
   }, []);
@@ -89,6 +106,7 @@ export const QualityCheckProvider = ({ children }) => {
         updateReport,
         deleteReport,
         setSelectedReport,
+        changeStatus
       }}
     >
       {children}
