@@ -65,6 +65,15 @@ const QualityCheck = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Function to refresh gateman data
+  const refreshGatemanData = async () => {
+    const data = await GetAllPOData();
+    const filter = data.filter(
+      (i) => i?.status === "Entry Created" || i?.status === "Verified"
+    );
+    setGetData(filter);
+  };
+
   useEffect(() => {
     if (selectedReport) {
       const gatemanEntry = getData.find(
@@ -591,48 +600,66 @@ const QualityCheck = () => {
 
                 <tbody>
                   {getData && getData.length > 0 ? (
-                    getData.map((po, i) => (
-                      <tr
-                        key={i}
-                        className={`border-b hover:bg-gray-50 transition ${
-                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                        }`}
-                      >
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.po_number}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
-                          {po?.invoice_number || "—"}
-                          {/* <div className="text-xs text-gray-500 truncate">
+                    getData
+                      .filter((po) => po.status === "Entry Created")
+                      .map((po, i) => (
+                        <tr
+                          key={i}
+                          className={`border-b hover:bg-gray-50 transition ${
+                            i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
+                        >
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.po_number}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
+                            {po?.invoice_number || "—"}
+                            {/* <div className="text-xs text-gray-500 truncate">
                             {po.supplier?.name} ({po.supplier?.email})
                           </div> */}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.company_name}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.items.map((i) => i.item_name).join(", ")}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.items.map((i) => i.item_quantity).join(", ")}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.status || "—"}
-                        </td>
-                        <td className="py-3 px-4 text-center border-b">
-                          <div className="flex items-center justify-start space-x-3">
-                            {/* Removed undefined action button */}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.company_name}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.items.map((i) => i.item_name).join(", ")}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.items.map((i) => i.item_quantity).join(", ")}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {/* {po?.status} */}
+                            <button
+                              onClick={() => changeStatus(po._id)}
+                              className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
+                            >
+                              verified
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-center border-b">
+                            <div className="flex items-center justify-start space-x-3">
+                              <button
+                                className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                                title="View"
+                                onClick={async () => {
+                                  await ChangesStatus(po?._id);
+                                  // Refresh gateman data after status change
+                                  await refreshGatemanData();
+                                }}
+                              >
+                                Verified
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
                       <td
-                        colSpan="6"
+                        colSpan="7"
                         className="text-center text-gray-500 py-6 italic"
                       >
-                        No Gateman Record Found
+                        No Gateman Records with "Entry Created" Status Found
                       </td>
                     </tr>
                   )}
