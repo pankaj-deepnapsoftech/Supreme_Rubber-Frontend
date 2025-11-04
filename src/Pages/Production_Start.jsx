@@ -9,46 +9,362 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useInventory } from "@/Context/InventoryContext";
+import axiosHandler from "@/config/axiosconfig";
+import { toast } from "react-toastify";
 
 const Production_Start = () => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [productions, setProductions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [currentProductionId, setCurrentProductionId] = useState("");
+  const [viewDetails, setViewDetails] = useState(null);
 
-  const {
-    products,
-    deleteProduct,
-    getProductDetails,
-    loading,
-    getAllProducts,
-  } = useInventory();
+  // BOM and form data
+  const [boms, setBoms] = useState([]);
+  const [selectedBomId, setSelectedBomId] = useState("");
+  const [_selectedBom, setSelectedBom] = useState(null);
+
+  // Finished Goods data
+  const [finishedGood, setFinishedGood] = useState({
+    compound_code: "",
+    compound_name: "",
+    est_qty: "",
+    uom: "",
+    prod_qty: "",
+    remain_qty: "",
+    category: "",
+    total_cost: "",
+  });
+
+  // Raw Materials data
+  const [rawMaterials, setRawMaterials] = useState([]);
+
+  // Processes data
+  const [processes, setProcesses] = useState([]);
+
+  const { getAllProducts } = useInventory();
+
+  // Fetch all productions
+  const fetchProductions = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosHandler.get("/production/all");
+      setProductions(res?.data?.productions || []);
+    } catch (e) {
+      console.error("Error fetching productions", e);
+      setProductions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch all BOMs
+  const fetchBoms = async () => {
+    try {
+      const res = await axiosHandler.get("/bom/all");
+      setBoms(res?.data?.boms || []);
+    } catch (e) {
+      console.error("Error fetching BOMs", e);
+      setBoms([]);
+    }
+  };
 
   useEffect(() => {
     getAllProducts();
+    fetchBoms();
+    fetchProductions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFilter = (category) => {
-    setSelectedCategory(category);
-    if (category === "All") setFilteredProducts(products);
-    else setFilteredProducts(products.filter((p) => p.category === category));
+  // Handle BOM selection
+  const handleBomSelect = async (bomId) => {
+    if (!bomId) {
+      setSelectedBomId("");
+      setSelectedBom(null);
+      setRawMaterials([]);
+      setProcesses([]);
+      return;
+    }
+
+    setSelectedBomId(bomId);
+    
+    try {
+      // Fetch detailed BOM data to ensure all fields are populated
+      const res = await axiosHandler.get(`/bom/${bomId}`);
+      const bom = res?.data?.bom;
+      
+      if (!bom) {
+        setSelectedBom(null);
+        setRawMaterials([]);
+        setProcesses([]);
+        return;
+      }
+
+      setSelectedBom(bom);
+      console.log("Selected BOM:", bom);
+      console.log("Raw Materials:", bom.rawMaterials);
+
+      // Get first compound from compoundingStandards or use top-level
+      const compound =
+        bom.compoundingStandards?.[0] ||
+        {
+          compound_code: bom.compound_code,
+          compound_name: bom.compound_name,
+          product_snapshot: bom.compound,
+        };
+
+      // Auto-fill Finished Goods
+      setFinishedGood({
+        compound_code: compound.compound_code || bom.compound_code || "",
+        compound_name: compound.compound_name || bom.compound_name || "",
+        est_qty: "",
+        uom: compound.product_snapshot?.uom || bom.compound?.uom || "",
+        prod_qty: "",
+        remain_qty: "",
+        category: compound.product_snapshot?.category || bom.compound?.category || "",
+        total_cost: "",
+      });
+
+      // Auto-fill Raw Materials from BOM
+      let rms = [];
+      
+      // Check if rawMaterials array exists and has data
+      if (bom.rawMaterials && Array.isArray(bom.rawMaterials) && bom.rawMaterials.length > 0) {
+        rms = bom.rawMaterials.map((rm) => {
+          // Handle populated raw_material object
+          const rawMaterialPopulated = rm.raw_material && typeof rm.raw_material === 'object' ? rm.raw_material : null;
+          
+          return {
+            raw_material_id: rawMaterialPopulated?._id || rm.raw_material || null,
+            raw_material_name: rm.raw_material_name || rawMaterialPopulated?.name || "",
+            raw_material_code: rm.raw_material_code || rawMaterialPopulated?.product_id || "",
+            est_qty: rm.current_stock ?? rawMaterialPopulated?.current_stock ?? 0,
+            uom: rm.uom || rawMaterialPopulated?.uom || rm.product_snapshot?.uom || "",
+            used_qty: "",
+            remain_qty: rm.current_stock ?? rawMaterialPopulated?.current_stock ?? 0,
+            category: rm.category || rawMaterialPopulated?.category || rm.product_snapshot?.category || "",
+            total_cost: "",
+            weight: rm.weight || "",
+            tolerance: rm.tolerance || "",
+            code_no: rm.code_no || "",
+          };
+        });
+      }
+      
+      // Fallback to single raw material if array is empty
+      if (rms.length === 0 && (bom.raw_material || bom.raw_material_name)) {
+        const rawMaterialPopulated = bom.raw_material && typeof bom.raw_material === 'object' ? bom.raw_material : null;
+        
+        rms.push({
+          raw_material_id: rawMaterialPopulated?._id || bom.raw_material || null,
+          raw_material_name: bom.raw_material_name || rawMaterialPopulated?.name || "",
+          raw_material_code: bom.raw_material_code || rawMaterialPopulated?.product_id || "",
+          est_qty: bom.raw_material_current_stock || rawMaterialPopulated?.current_stock || 0,
+          uom: bom.raw_material_uom || rawMaterialPopulated?.uom || "",
+          used_qty: "",
+          remain_qty: bom.raw_material_current_stock || rawMaterialPopulated?.current_stock || 0,
+          category: bom.raw_material_category || rawMaterialPopulated?.category || "",
+          total_cost: "",
+          weight: bom.raw_material_weight || "",
+          tolerance: bom.raw_material_tolerance || "",
+          code_no: "",
+        });
+      }
+
+      console.log("Processed Raw Materials:", rms);
+      setRawMaterials(rms);
+
+      // Auto-fill Processes from BOM
+      const procList = (bom.processes || [])
+        .map((proc, idx) => ({
+          process_name: proc || bom[`process${idx + 1}`] || "",
+          work_done: "",
+          start: false,
+          done: false,
+          status: "pending",
+        }))
+        .filter((p) => p.process_name);
+
+      // If processes array is empty, check process1-4
+      if (!procList.length) {
+        for (let i = 1; i <= 4; i++) {
+          const procName = bom[`process${i}`];
+          if (procName) {
+            procList.push({
+              process_name: procName,
+              work_done: "",
+              start: false,
+              done: false,
+              status: "pending",
+            });
+          }
+        }
+      }
+
+      setProcesses(procList);
+    } catch (error) {
+      console.error("Error fetching BOM details:", error);
+      setSelectedBom(null);
+      setRawMaterials([]);
+      setProcesses([]);
+    }
   };
 
-  const handleDownload = () => {
-    const headers = ["Product Id", "Category", "Name", "Stock", "UOM"];
-    const rows = (filteredProducts.length ? filteredProducts : products).map(
-      (p) => [p.product_id, p.category, p.name, p.current_stock, p.uom]
-    );
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const link = document.createElement("a");
-    link.href = encodeURI(csvContent);
-    link.download = "inventory.csv";
-    link.click();
+  // Handle Finished Goods field changes
+  const handleFinishedGoodChange = (field, value) => {
+    setFinishedGood((prev) => {
+      const updated = { ...prev, [field]: value };
+      // Calculate remain_qty
+      if (field === "est_qty" || field === "prod_qty") {
+        const est = parseFloat(field === "est_qty" ? value : updated.est_qty) || 0;
+        const prod = parseFloat(field === "prod_qty" ? value : updated.prod_qty) || 0;
+        updated.remain_qty = (est - prod).toFixed(2);
+      }
+      // Calculate total_cost (simple formula: est_qty * unit_price)
+      // For now, using a placeholder calculation
+      if (field === "est_qty" || field === "prod_qty") {
+        const est = parseFloat(updated.est_qty) || 0;
+        // Assuming unit price is 100 (you can adjust this based on your logic)
+        updated.total_cost = (est * 100).toFixed(2);
+      }
+      return updated;
+    });
   };
+
+  // Handle Raw Material changes
+  const handleRawMaterialChange = (idx, field, value) => {
+    setRawMaterials((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      // Calculate remain_qty for raw materials
+      if (field === "est_qty" || field === "used_qty") {
+        const est = parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
+        const used = parseFloat(field === "used_qty" ? value : next[idx].used_qty) || 0;
+        next[idx].remain_qty = (est - used).toFixed(2);
+      }
+      return next;
+    });
+  };
+
+  // Handle Process changes
+  const handleProcessChange = (idx, field, value) => {
+    setProcesses((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      // Update status based on start/done
+      if (field === "start" || field === "done") {
+        next[idx].status = next[idx].done
+          ? "completed"
+          : next[idx].start
+          ? "in_progress"
+          : "pending";
+      }
+      return next;
+    });
+  };
+
+  // Handle form submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedBomId) {
+      toast.error("Please select a BOM");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const payload = {
+        bom: selectedBomId,
+        finished_goods: [
+          {
+            compound_code: finishedGood.compound_code,
+            compound_name: finishedGood.compound_name,
+            est_qty: parseFloat(finishedGood.est_qty) || 0,
+            uom: finishedGood.uom,
+            prod_qty: parseFloat(finishedGood.prod_qty) || 0,
+            remain_qty: parseFloat(finishedGood.remain_qty) || 0,
+            category: finishedGood.category,
+            total_cost: parseFloat(finishedGood.total_cost) || 0,
+          },
+        ],
+        raw_materials: rawMaterials.map((rm) => ({
+          raw_material_id: rm.raw_material_id,
+          raw_material_name: rm.raw_material_name,
+          raw_material_code: rm.raw_material_code,
+          est_qty: parseFloat(rm.est_qty) || 0,
+          uom: rm.uom,
+          used_qty: parseFloat(rm.used_qty) || 0,
+          remain_qty: parseFloat(rm.remain_qty) || 0,
+          category: rm.category,
+          total_cost: parseFloat(rm.total_cost) || 0,
+          weight: rm.weight || "",
+          tolerance: rm.tolerance || "",
+          code_no: rm.code_no || "",
+        })),
+        processes: processes.map((proc) => ({
+          process_name: proc.process_name,
+          work_done: parseFloat(proc.work_done) || 0,
+          start: proc.start || false,
+          done: proc.done || false,
+        })),
+      };
+
+      let res;
+      if (editMode && currentProductionId) {
+        res = await axiosHandler.put("/production", { _id: currentProductionId, ...payload });
+      } else {
+        res = await axiosHandler.post("/production", payload);
+      }
+      if (res.data.success) {
+        toast.success(editMode ? "Production updated successfully" : "Production created successfully");
+        setShowModal(false);
+        resetForm();
+        fetchProductions();
+      }
+    } catch (error) {
+      console.error("Error creating production", error);
+      toast.error(error.response?.data?.message || (editMode ? "Failed to update production" : "Failed to create production"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setSelectedBomId("");
+    setSelectedBom(null);
+    setEditMode(false);
+    setCurrentProductionId("");
+    setFinishedGood({
+      compound_code: "",
+      compound_name: "",
+      est_qty: "",
+      uom: "",
+      prod_qty: "",
+      remain_qty: "",
+      category: "",
+      total_cost: "",
+    });
+    setRawMaterials([]);
+    setProcesses([]);
+  };
+
+  // Filter productions
+  const filteredProductions = productions.filter((prod) => {
+    const q = searchQuery.toLowerCase();
+    const fg = prod.finished_goods?.[0];
+    return (
+      prod.production_id?.toLowerCase().includes(q) ||
+      fg?.compound_code?.toLowerCase().includes(q) ||
+      fg?.compound_name?.toLowerCase().includes(q) ||
+      prod.bom?.compound_code?.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
@@ -57,7 +373,10 @@ const Production_Start = () => {
         <h1 className="text-xl sm:text-2xl font-semibold">Production Start</h1>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setShowModal(true);
+            resetForm();
+          }}
         >
           Add Production
         </Button>
@@ -65,7 +384,6 @@ const Production_Start = () => {
 
       {/* Search & Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-        {/* Search */}
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
           <input
@@ -77,36 +395,10 @@ const Production_Start = () => {
           />
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-4 text-gray-600">
-          <div className="relative group">
-            <Filter className="cursor-pointer hover:text-gray-800" />
-            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
-              <p
-                onClick={() => handleFilter("All")}
-                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-              >
-                All
-              </p>
-              {[...new Set(products.map((p) => p.category))].map((cat) => (
-                <p
-                  key={cat}
-                  onClick={() => handleFilter(cat)}
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                >
-                  {cat}
-                </p>
-              ))}
-            </div>
-          </div>
-
           <RefreshCcw
             className="cursor-pointer hover:text-gray-800"
-            onClick={getAllProducts}
-          />
-          <Download
-            className="cursor-pointer hover:text-gray-800"
-            onClick={handleDownload}
+            onClick={fetchProductions}
           />
         </div>
       </div>
@@ -115,7 +407,7 @@ const Production_Start = () => {
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left min-w-[600px]">
           <thead>
-            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
@@ -128,43 +420,145 @@ const Production_Start = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
-                  Loading products...
+                <td colSpan="5" className="text-center py-6 text-gray-500">
+                  Loading productions...
                 </td>
               </tr>
-            ) : products?.length > 0 ? (
-              (filteredProducts.length ? filteredProducts : products)
-                .filter((item) => {
-                  const q = searchQuery.toLowerCase();
-                  return (
-                    item.name.toLowerCase().includes(q) ||
-                    item.category.toLowerCase().includes(q) ||
-                    item.product_id.toLowerCase().includes(q)
-                  );
-                })
-                .map((item, index) => (
+            ) : filteredProductions?.length > 0 ? (
+              filteredProductions.map((prod, index) => {
+                const fg = prod.finished_goods?.[0];
+                return (
                   <tr
-                    key={index}
+                    key={prod._id}
                     className={`border-t ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.category}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.name}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {fg?.compound_code || prod.bom?.compound_code || prod.production_id}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {(() => {
+                        const deriveStatus = (p) => {
+                          const list = Array.isArray(p?.processes) ? p.processes : [];
+                          if (!p?.status && list.length) {
+                            const allDone = list.every((pr) => pr.done === true || pr.status === "completed");
+                            const anyStarted = list.some((pr) => pr.start === true || pr.status === "in_progress");
+                            return allDone ? "completed" : anyStarted ? "in_progress" : "pending";
+                          }
+                          return p?.status || "pending";
+                        };
+                        const statusVal = deriveStatus(prod);
+                        const label = statusVal === "in_progress" ? "Work in progress" : statusVal;
+                        const cls =
+                          statusVal === "completed"
+                            ? "bg-green-100 text-green-600"
+                            : statusVal === "in_progress"
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-gray-100 text-gray-600";
+                        return (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${cls}`}>
+                            {label}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">{fg?.prod_qty || fg?.est_qty || 0}</td>
+                    <td className="px-4 sm:px-6 py-3">{fg?.uom || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center space-x-3">
-                        <Edit className="h-4 w-4 text-blue-500 cursor-pointer" />
-                        <Trash2 className="h-4 w-4 text-red-500 cursor-pointer" />
-                        <Eye className="h-4 w-4 text-gray-600 cursor-pointer" />
+                        <Edit
+                          className="h-4 w-4 text-blue-500 cursor-pointer"
+                          onClick={async () => {
+                            try {
+                              const res = await axiosHandler.get(`/production/${prod._id}`);
+                              const data = res?.data?.production;
+                              if (!data) return;
+                              setEditMode(true);
+                              setCurrentProductionId(data._id);
+                              setShowModal(true);
+                              // Prefill BOM selection
+                              const bomId = data?.bom?._id || data?.bom;
+                              await handleBomSelect(bomId);
+                              // Prefill FG
+                              const fg = (data.finished_goods || [])[0] || {};
+                              setFinishedGood({
+                                compound_code: fg.compound_code || "",
+                                compound_name: fg.compound_name || "",
+                                est_qty: String(fg.est_qty ?? ""),
+                                uom: fg.uom || "",
+                                prod_qty: String(fg.prod_qty ?? ""),
+                                remain_qty: String(fg.remain_qty ?? ""),
+                                category: fg.category || "",
+                                total_cost: String(fg.total_cost ?? ""),
+                              });
+                              // Prefill RMs
+                              setRawMaterials(
+                                (data.raw_materials || []).map((rm) => ({
+                                  raw_material_id: rm.raw_material_id || null,
+                                  raw_material_name: rm.raw_material_name || "",
+                                  raw_material_code: rm.raw_material_code || "",
+                                  est_qty: String(rm.est_qty ?? ""),
+                                  uom: rm.uom || "",
+                                  used_qty: String(rm.used_qty ?? ""),
+                                  remain_qty: String(rm.remain_qty ?? ""),
+                                  category: rm.category || "",
+                                  total_cost: String(rm.total_cost ?? ""),
+                                  weight: rm.weight || "",
+                                  tolerance: rm.tolerance || "",
+                                  code_no: rm.code_no || "",
+                                }))
+                              );
+                              // Prefill processes
+                              setProcesses(
+                                (data.processes || []).map((p) => ({
+                                  process_name: p.process_name || "",
+                                  work_done: String(p.work_done ?? ""),
+                                  start: !!p.start,
+                                  done: !!p.done,
+                                  status: p.status || (p.done ? "completed" : p.start ? "in_progress" : "pending"),
+                                }))
+                              );
+                            } catch (e) {
+                              console.error(e);
+                              toast.error("Failed to load production details for edit");
+                            }
+                          }}
+                        />
+                        <Trash2
+                          className="h-4 w-4 text-red-500 cursor-pointer"
+                          onClick={async () => {
+                            if (!confirm("Delete this production?")) return;
+                            try {
+                              await axiosHandler.delete("/production", { data: { id: prod._id } });
+                              toast.success("Production deleted");
+                              fetchProductions();
+                            } catch (e) {
+                              console.error(e);
+                              toast.error("Failed to delete production");
+                            }
+                          }}
+                        />
+                        <Eye
+                          className="h-4 w-4 text-gray-600 cursor-pointer"
+                          onClick={async () => {
+                            try {
+                              const res = await axiosHandler.get(`/production/${prod._id}`);
+                              setViewDetails(res?.data?.production || null);
+                            } catch (e) {
+                              console.error(e);
+                              toast.error("Failed to load production details");
+                            }
+                          }}
+                        />
                       </div>
                     </td>
                   </tr>
-                ))
+                );
+              })
             ) : (
               <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
+                <td colSpan="5" className="text-center py-6 text-gray-500">
                   No Production found.
                 </td>
               </tr>
@@ -173,198 +567,363 @@ const Production_Start = () => {
         </table>
       </div>
 
-      {/* Add BOM Modal */}
+      {/* Add Production Modal */}
       <AnimatePresence>
         {showModal && (
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           >
-            <motion.div
+            <Motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
               transition={{ duration: 0.25 }}
               className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
-              {/* Close Button */}
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { resetForm(); setShowModal(false); }}
                 className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
               >
                 ✕
               </button>
 
-              {/* Back Button */}
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { resetForm(); setShowModal(false); }}
                 className="text-2xl mb-4 hover:text-blue-500 transition"
               >
                 ←
               </button>
 
-              {/* Title */}
               <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-6 sm:mb-8">
                 Add New Production
               </h1>
 
-              {/* ---------- Finished Goods Section ---------- */}
-              <section className="mb-10">
-                <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Finished Goods
-                  </h2>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-1.5 shadow text-sm font-medium">
-                    Add More
-                  </button>
-                </div>
+              <form onSubmit={handleSubmit}>
+                {/* ---------- Finished Goods Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Compound Details
+                    </h2>
+                  </div>
 
-                {/* Header Row */}
-                <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
-                  {[
-                    "Finished Goods",
-                    "EST. QTY",
-                    "UOM",
-                    "PROD. QTY",
-                    "Remain QTY",
-                    "Category",
-                    "Total Cost",
-                  ].map((head) => (
-                    <div key={head} className="p-2 text-center truncate">
-                      {head}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Input Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
-                  {[
-                    "Enter Finished Good",
-                    "Enter Quantity",
-                    "Enter UOM",
-                    "Enter Quantity",
-                    "Enter Quantity",
-                    "Enter Category",
-                    "Enter Total Cost",
-                  ].map((ph) => (
-                    <input
-                      key={ph}
-                      placeholder={ph}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
-                    />
-                  ))}
-                </div>
-              </section>
-
-              {/* ---------- Raw Materials Section ---------- */}
-              <section className="mb-10">
-                <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Raw Materials
-                  </h2>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-1.5 shadow text-sm font-medium">
-                    Add More
-                  </button>
-                </div>
-
-                {/* Header Row */}
-                <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
-                  {[
-                    "Finished Goods",
-                    "EST. QTY",
-                    "UOM",
-                    "Used QTY",
-                    "Remain QTY",
-                    "Category",
-                    "Total Cost",
-                  ].map((head) => (
-                    <div key={head} className="p-2 text-center truncate">
-                      {head}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Example Multiple Rows */}
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3"
-                  >
+                  <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
                     {[
-                      "Enter Finished Good",
-                      "Enter Quantity",
-                      "Enter UOM",
-                      "Enter Quantity",
-                      "Enter Quantity",
-                      "Enter Category",
-                      "Enter Total Cost",
-                    ].map((ph) => (
-                      <input
-                        key={ph + i}
-                        placeholder={ph}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
-                      />
+                      "Compound Details",
+                      "EST. QTY",
+                      "UOM",
+                      "PROD. QTY",
+                      "Remain QTY",
+                      "Category",
+                      "Total Cost",
+                    ].map((head) => (
+                      <div key={head} className="p-2 text-center truncate">
+                        {head}
+                      </div>
                     ))}
                   </div>
-                ))}
-              </section>
 
-              {/* ---------- Processes Section ---------- */}
-              <section className="mb-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
+                    <select
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      value={selectedBomId}
+                      onChange={(e) => handleBomSelect(e.target.value)}
+                      required
                     >
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-gray-800">
-                          Process {i}
-                        </h3>
-                        <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium">
-                          Completed
-                        </span>
+                      <option value="">Select Compound</option>
+                      {boms.map((b) => (
+                        <option key={b._id} value={b._id}>
+                          {b.compound_name || "Unnamed"}
+                          {b.compound_code ? ` (${b.compound_code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={finishedGood.est_qty}
+                      onChange={(e) => handleFinishedGoodChange("est_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter UOM"
+                      value={finishedGood.uom}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={finishedGood.prod_qty}
+                      onChange={(e) => handleFinishedGoodChange("prod_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Remain QTY"
+                      value={finishedGood.remain_qty}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter Category"
+                      value={finishedGood.category}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Total Cost"
+                      value={finishedGood.total_cost}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                  </div>
+                </section>
+
+                {/* ---------- Raw Materials Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Raw Materials
+                    </h2>
+                  </div>
+
+                  {rawMaterials.length > 0 ? (
+                    <>
+                      <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                        {[
+                          "Finished Goods",
+                          "EST. QTY",
+                          "UOM",
+                          "Used QTY",
+                          "Remain QTY",
+                          "Category",
+                          "Total Cost",
+                        ].map((head) => (
+                          <div key={head} className="p-2 text-center truncate">
+                            {head}
+                          </div>
+                        ))}
                       </div>
 
-                      <input
-                        placeholder={i % 2 === 0 ? "Extruding" : "Leveling"}
-                        className="border border-gray-300 rounded-md px-3 py-2 w-full mb-3 text-sm focus:ring-1 focus:ring-blue-400"
-                      />
+                      {rawMaterials.map((rm, idx) => (
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
+                          <input
+                            value={`${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="EST. QTY"
+                            value={rm.est_qty}
+                            onChange={(e) => handleRawMaterialChange(idx, "est_qty", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                          <input
+                            type="text"
+                            placeholder="UOM"
+                            value={rm.uom}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Used QTY"
+                            value={rm.used_qty}
+                            onChange={(e) => handleRawMaterialChange(idx, "used_qty", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Remain QTY"
+                            value={rm.remain_qty}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Category"
+                            value={rm.category}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Total Cost"
+                            value={rm.total_cost}
+                            onChange={(e) => handleRawMaterialChange(idx, "total_cost", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                        </div>
+                      ))}
+                    </>
+                  ) : selectedBomId ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No raw materials found for the selected BOM. Please check if the BOM has raw materials configured.
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      Please select a BOM to see raw materials.
+                    </div>
+                  )}
+                </section>
 
-                      <label className="text-sm text-gray-700 font-medium mb-1 block">
-                        Work Done
-                      </label>
-                      <input
-                        placeholder="1000"
-                        type="number"
-                        className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-400 mb-2"
-                      />
+                {/* ---------- Processes Section ---------- */}
+                <section className="mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {processes.map((proc, idx) => (
+                      <div
+                        key={idx}
+                        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-semibold text-gray-800">
+                            Process {idx + 1}
+                          </h3>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              proc.status === "completed"
+                                ? "text-green-600 bg-green-100"
+                                : proc.status === "in_progress"
+                                ? "text-yellow-600 bg-yellow-100"
+                                : "text-gray-600 bg-gray-100"
+                            }`}
+                          >
+                            {proc.status}
+                          </span>
+                        </div>
 
-                      <div className="flex gap-4 items-center mt-2 flex-wrap">
-                        <label className="flex items-center gap-1 text-sm text-gray-700">
-                          <input type="checkbox" className="accent-blue-600" />
-                          Start
+                        <input
+                          type="text"
+                          placeholder="Process Name"
+                          value={proc.process_name}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 w-full mb-3 text-sm bg-gray-50"
+                        />
+
+                        <label className="text-sm text-gray-700 font-medium mb-1 block">
+                          Work Done
                         </label>
-                        <label className="flex items-center gap-1 text-sm text-gray-700">
-                          <input type="checkbox" className="accent-blue-600" />
-                          Done
-                        </label>
+                        <input
+                          type="number"
+                          placeholder="1000"
+                          value={proc.work_done}
+                          onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
+                          className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-400 mb-2"
+                        />
+
+                        <div className="flex gap-4 items-center mt-2 flex-wrap">
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="accent-blue-600"
+                              checked={proc.start}
+                              onChange={(e) => handleProcessChange(idx, "start", e.target.checked)}
+                            />
+                            Start
+                          </label>
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="accent-blue-600"
+                              checked={proc.done}
+                              onChange={(e) => handleProcessChange(idx, "done", e.target.checked)}
+                            />
+                            Done
+                          </label>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                </section>
+
+                <div className="flex justify-center mt-10 mb-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-2 shadow-md font-medium transition disabled:opacity-50"
+                  >
+                    {submitting ? "Submitting..." : "Submit"}
+                  </button>
+                </div>
+              </form>
+            </Motion.div>
+          </Motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* View Details Modal */}
+      <AnimatePresence>
+        {viewDetails && (
+          <Motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          >
+            <Motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-4xl max-h-[85vh] overflow-y-auto p-5"
+            >
+              <button
+                onClick={() => setViewDetails(null)}
+                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
+              >
+                ✕
+              </button>
+              <h2 className="text-xl font-semibold mb-4">Production Details</h2>
+              <div className="space-y-3 text-sm">
+                <div><span className="font-medium">Production ID:</span> {viewDetails?.production_id || "-"}</div>
+                <div><span className="font-medium">BOM:</span> {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}</div>
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Finished Goods</h3>
+                  {(viewDetails?.finished_goods || []).map((fg, i) => (
+                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
+                      <div><span className="font-medium">Compound:</span> {fg.compound_name || fg.compound_code}</div>
+                      <div><span className="font-medium">EST:</span> {fg.est_qty}</div>
+                      <div><span className="font-medium">PROD:</span> {fg.prod_qty}</div>
+                      <div><span className="font-medium">Remain:</span> {fg.remain_qty}</div>
+                      <div><span className="font-medium">UOM:</span> {fg.uom}</div>
+                      <div><span className="font-medium">Category:</span> {fg.category}</div>
                     </div>
                   ))}
                 </div>
-              </section>
-
-              {/* Submit Button */}
-              <div className="flex justify-center mt-10 mb-4">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-2 shadow-md font-medium transition">
-                  Submit
-                </button>
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Raw Materials</h3>
+                  {(viewDetails?.raw_materials || []).map((rm, i) => (
+                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
+                      <div><span className="font-medium">Item:</span> {rm.raw_material_name || rm.raw_material_code}</div>
+                      <div><span className="font-medium">EST:</span> {rm.est_qty}</div>
+                      <div><span className="font-medium">Used:</span> {rm.used_qty}</div>
+                      <div><span className="font-medium">Remain:</span> {rm.remain_qty}</div>
+                      <div><span className="font-medium">UOM:</span> {rm.uom}</div>
+                      <div><span className="font-medium">Category:</span> {rm.category}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Processes</h3>
+                  {(viewDetails?.processes || []).map((p, i) => (
+                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
+                      <div><span className="font-medium">Process:</span> {p.process_name}</div>
+                      <div><span className="font-medium">Work Done:</span> {p.work_done}</div>
+                      <div><span className="font-medium">Status:</span> {p.status}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -17,7 +17,7 @@ export default function UserRolesManagement() {
     "user role",
     "employee",
     "inventory",
-    "quality chek",
+    "quality check",
     "production",
     "bom",
     "gateman",
