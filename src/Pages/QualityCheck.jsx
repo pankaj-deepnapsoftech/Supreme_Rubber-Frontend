@@ -10,8 +10,10 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useGatemenContext } from "@/Context/GatemenContext";
+import { useQualityCheck } from "@/Context/QualityCheckContext";
+import { toast } from "react-toastify";
 import { useInventory } from "@/Context/InventoryContext";
 
 
@@ -21,7 +23,7 @@ const QualityCheck = () => {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  // const [selectedCategory, setSelectedCategory] = useState("");
   const [showGtModal, setShowGtModal] = useState(false);
   const [getData, setGetData] = useState([]);
   const [selectedEntryItems, setSelectedEntryItems] = useState([]);
@@ -34,10 +36,12 @@ const QualityCheck = () => {
     attached_report: null,
   });
 
+  const {getAllProducts} = useInventory();
+
   const { GetAllPOData } = useGatemenContext();
 
   const {
-    qualityReports,
+    qualityReports = [],
     getAllReports,
     getReportById,
     createReport,
@@ -46,22 +50,32 @@ const QualityCheck = () => {
     selectedReport,
     setSelectedReport,
     loading,
-    getAllProducts,
-  } = useInventory();
-
-  
+    ChangesStatus,
+  } = useQualityCheck();
 
   useEffect(() => {
     const getGateman = async () => {
       const data = await GetAllPOData();
-      console.log(data)
-      setGetData(data)
-    
-    }
+      // Show both "Entry Created" and "Verified" entries
+      const filter = data.filter(
+        (i) => i?.status === "Entry Created" || i?.status === "Verified"
+      );
+      setGetData(filter);
+    };
     getGateman();
     getAllProducts();
   
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Function to refresh gateman data
+  const refreshGatemanData = async () => {
+    const data = await GetAllPOData();
+    const filter = data.filter(
+      (i) => i?.status === "Entry Created" || i?.status === "Verified"
+    );
+    setGetData(filter);
+  };
 
   useEffect(() => {
     if (selectedReport) {
@@ -104,7 +118,6 @@ const QualityCheck = () => {
   };
 
   const handleFilter = (category) => {
-    setSelectedCategory(category);
     if (category === "All") setFilteredReports(qualityReports);
     else {
       const filtered = qualityReports.filter((p) => p.category === category);
@@ -138,7 +151,7 @@ const QualityCheck = () => {
 
     // Validate that an item is selected
     if (!formData.item_id || !selectedItem) {
-      alert("Please select an item from the available items list.");
+      toast.error("Please select an item from the available items list.");
       return;
     }
 
@@ -152,10 +165,10 @@ const QualityCheck = () => {
 
       if (selectedReport) {
         await updateReport(selectedReport._id, payload);
-        alert("Quality check updated successfully!");
+        toast.success("Quality check updated successfully");
       } else {
         await createReport(payload);
-        alert("Quality check created successfully!");
+        toast.success("Quality check created successfully");
       }
 
       handleClose();
@@ -164,14 +177,14 @@ const QualityCheck = () => {
       console.error("Error submitting quality check:", error);
 
       if (error.response?.data?.message) {
-        alert(`Error: ${error.response.data.message}`);
+        toast.error(`Error: ${error.response.data.message}`);
       } else if (error.response?.data?.errors) {
         const errorMessages = error.response.data.errors
           .map((err) => err.message)
           .join(", ");
-        alert(`Validation errors: ${errorMessages}`);
+        toast.error(`Validation errors: ${errorMessages}`);
       } else {
-        alert("Error submitting quality check. Please try again.");
+        toast.error("Error submitting quality check. Please try again.");
       }
     }
   };
@@ -271,10 +284,11 @@ const QualityCheck = () => {
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
-              <th className="px-4 sm:px-6 py-3 font-medium">Product Type</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Product Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">PO Number</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Company</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Approved</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Rejected</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
                 Action
@@ -292,10 +306,13 @@ const QualityCheck = () => {
               (filteredReports.length ? filteredReports : qualityReports)
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
+                  const po = item?.gateman_entry_id?.po_number || "";
+                  const company = item?.gateman_entry_id?.company_name || "";
+                  const name = item?.item_name || "";
                   return (
-                    item.name.toLowerCase().includes(q) ||
-                    item.category.toLowerCase().includes(q) ||
-                    item.product_id.toLowerCase().includes(q)
+                    po.toLowerCase().includes(q) ||
+                    company.toLowerCase().includes(q) ||
+                    name.toLowerCase().includes(q)
                   );
                 })
                 .map((item, i) => (
@@ -305,11 +322,12 @@ const QualityCheck = () => {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.category}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.name}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.uom}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.po_number || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.company_name || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.item_name || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.approved_quantity}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.rejected_quantity}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.status || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit
@@ -326,13 +344,13 @@ const QualityCheck = () => {
                             ) {
                               try {
                                 await deleteReport(item._id);
-                                alert("Quality check deleted successfully!");
+                                toast.success("Quality check deleted successfully");
                               } catch (error) {
                                 console.error(
                                   "Error deleting quality check:",
                                   error
                                 );
-                                alert(
+                                toast.error(
                                   "Error deleting quality check. Please try again."
                                 );
                               }
@@ -361,14 +379,14 @@ const QualityCheck = () => {
       <AnimatePresence>
         {showModal && (
           <>
-            <motion.div
+            <Motion.div
               className="fixed inset-0 bg-black/40 z-40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleClose}
             />
-            <motion.div
+            <Motion.div
               className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white shadow-2xl z-50 p-5 sm:p-6 overflow-y-auto"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -546,7 +564,7 @@ const QualityCheck = () => {
                     : "Submit"}
                 </button>
               </form>
-            </motion.div>
+            </Motion.div>
           </>
         )}
       </AnimatePresence>
@@ -589,59 +607,66 @@ const QualityCheck = () => {
                 </thead>
 
                 <tbody>
-                 {(getData || []).length > 0 ? (
-  getData.map((po, i) => (
-                      <tr
-                        key={i}
-                        className={`border-b hover:bg-gray-50 transition ${
-                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                        }`}
-                      >
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.po_number}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
-                          {po?.invoice_number || "—"}
-                          {/* <div className="text-xs text-gray-500 truncate">
+                  {getData && getData.length > 0 ? (
+                    getData
+                      .filter((po) => po.status === "Entry Created")
+                      .map((po, i) => (
+                        <tr
+                          key={i}
+                          className={`border-b hover:bg-gray-50 transition ${
+                            i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
+                        >
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.po_number}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
+                            {po?.invoice_number || "—"}
+                            {/* <div className="text-xs text-gray-500 truncate">
                             {po.supplier?.name} ({po.supplier?.email})
                           </div> */}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.company_name}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.items.map((i) => i.item_name).join(", ")}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {po?.items.map((i) => i.item_quantity).join(", ")}
-                        </td>
-                        <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                          {/* {po?.status} */}
-                          <button onClick={() => changeStatus(po._id)} className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium">
-                            verified
-                            </button>
-                        </td>
-                        <td className="py-3 px-4 text-center border-b">
-                          <div className="flex items-center justify-start space-x-3">
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.company_name}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.items.map((i) => i.item_name).join(", ")}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
+                            {po?.items.map((i) => i.item_quantity).join(", ")}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             <button
-                              className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                              title="View"
-                              onClick={() => ChangesStatus(po?._id)}
+                              onClick={async () => { await ChangesStatus(po._id); await refreshGatemanData(); }}
+                              className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                             >
                               Verified
                             </button>
-
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-3 px-4 text-center border-b">
+                            <div className="flex items-center justify-start space-x-3">
+                              <button
+                                className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                                title="View"
+                                onClick={async () => {
+                                  await ChangesStatus(po?._id);
+                                  // Refresh gateman data after status change
+                                  await refreshGatemanData();
+                                }}
+                              >
+                                Verified
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
                       <td
-                        colSpan="6"
+                        colSpan="7"
                         className="text-center text-gray-500 py-6 italic"
                       >
-                        No Gateman Record Found
+                        No Gateman Records with "Entry Created" Status Found
                       </td>
                     </tr>
                   )}
