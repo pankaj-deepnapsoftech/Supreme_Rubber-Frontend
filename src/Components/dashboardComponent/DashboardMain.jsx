@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { LuNotebookText } from "react-icons/lu";
@@ -26,10 +26,49 @@ import DashboardSupplier from "./DashboardSupplier";
 
 import { useInventory } from "../../Context/InventoryContext";
 import { useGatemenContext } from "@/Context/GatemenContext";
+import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
+import { useSupplierContext } from "@/Context/SuplierContext";
+
 
 
 export default function DashboardMain() {
-  const [period, setPeriod] = useState(" ");
+
+
+  const {GetAllPurchaseOrders} = usePurchanse_Order();
+  const {getAllProducts : getAllProduction} = useInventory();
+  const { getAllSupplier } = useSupplierContext();
+  
+const [period, setPeriod] = useState()
+  const [orders, setOrders] = useState([]);
+  const [production, setProduction] = useState([])
+  const [supplier, setSupplier] = useState([])
+
+ 
+  useEffect(() => {
+    const fetchProductData = async () => {
+      try {
+        const res = await GetAllPurchaseOrders();
+        console.log("Purchase Orders Response:", res);
+        const pro = await getAllProduction()
+        console.log("Production Order", pro)
+        const sup = await getAllSupplier();
+        console.log("all supplier", sup)
+
+        setOrders(res);
+        setProduction(pro);
+        setSupplier(sup);
+      } catch (error) {
+        console.error("Error fetching purchase orders:", error);
+      }
+    };
+
+    fetchProductData();
+  }, []);
+
+  const productCount = orders?.pos?.length;
+  const productionCount = production?.products?.length
+  const Supplier = supplier?.length
+
 
   const lineData = [
     { month: "Jan", a: 12, b: 8 },
@@ -46,72 +85,67 @@ export default function DashboardMain() {
     { month: "Dec", a: 35, b: 26 },
   ];
 
- 
-// inventory pie chart
-const [pieDataInventory, setPieDataInventory] = useState([]);
-const { products, getAllProducts } = useInventory();
- useEffect(() => {
-  if (products && products.length > 0) {
-
-    const categoryCounts = products.reduce((acc, p) => {
-      const category = p.category || "Uncategorized";
-      acc[category] = (acc[category] || 0) + 1;
-      return acc;
-    }, {});
-
-    const formatted = Object.entries(categoryCounts).map(
-      ([category, count]) => ({
-        name: category,
-        value: count,
-      })
-    );
-
-    const colors = ["#FBBF24", "#A78BFA", "#3B82F6", "#F87171", "#10B981"];
-    const coloredData = formatted.map((d, i) => ({
-      ...d,
-      color: colors[i % colors.length],
-    }));
-
-    setPieDataInventory(coloredData);
-  }
-}, [products]);
-
-useEffect(() => {
-  getAllProducts();
-}, []);
-
-
-// gate man entry
-const { GetAllPOData } = useGatemenContext();
-const [gateChartData, setGateChartData] = useState([]);
-useEffect(() => {
-  const fetchData = async () => {
-    const data = await GetAllPOData();
-    if (data) {
-      const statusCounts = data.reduce((acc, entry) => {
-        const status = entry.status || "Unknown";
-        acc[status] = (acc[status] || 0) + 1;
+  // inventory pie chart
+  const [pieDataInventory, setPieDataInventory] = useState([]);
+  const { products, getAllProducts } = useInventory();
+  useEffect(() => {
+    if (products && products.length > 0) {
+      const categoryCounts = products.reduce((acc, p) => {
+        const category = p.category || "Uncategorized";
+        acc[category] = (acc[category] || 0) + 1;
         return acc;
       }, {});
 
-      const formatted = Object.entries(statusCounts).map(([name, value]) => ({
-        name,
-        value,
-      }));
+      const formatted = Object.entries(categoryCounts).map(
+        ([category, count]) => ({
+          name: category,
+          value: count,
+        })
+      );
 
-      const colors = ["#3B82F6", "#10B981", "#FBBF24", "#F87171"];
+      const colors = ["#FBBF24", "#A78BFA", "#3B82F6", "#F87171", "#10B981"];
       const coloredData = formatted.map((d, i) => ({
         ...d,
         color: colors[i % colors.length],
       }));
 
-      setGateChartData(coloredData);
+      setPieDataInventory(coloredData);
     }
-  };
-  fetchData();
-}, []);
+  }, [products]);
 
+  useEffect(() => {
+    getAllProducts();
+  }, []);
 
+  // gate man entry
+  const { GetAllPOData } = useGatemenContext();
+  const [gateChartData, setGateChartData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await GetAllPOData();
+      if (data) {
+        const statusCounts = data.reduce((acc, entry) => {
+          const status = entry.status || "Unknown";
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {});
+
+        const formatted = Object.entries(statusCounts).map(([name, value]) => ({
+          name,
+          value,
+        }));
+
+        const colors = ["#3B82F6", "#10B981", "#FBBF24", "#F87171"];
+        const coloredData = formatted.map((d, i) => ({
+          ...d,
+          color: colors[i % colors.length],
+        }));
+
+        setGateChartData(coloredData);
+      }
+    };
+    fetchData();
+  }, []);
 
   const pieDataStatus = [
     { name: "Completed", value: 124, color: "#3B82F6" },
@@ -141,73 +175,74 @@ useEffect(() => {
           {/* CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 mt-4">
             {/* CARD - Purchase Order */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5  flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
-                <p className="text-[24px] text-gray-700 font-semibold">24</p>
+                <p className="text-[24px] text-gray-700 font-semibold">{productCount}</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     5 <ArrowDropUpIcon className="mt-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#ffeded] rounded-full shadow-sm">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#ffe9e9] rounded-full">
                 <LuNotebookText className="text-[#fb7777] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total Production */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border border-[#99db9f] bg-[#d6f7d7] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
-                <p className="text-[24px] text-gray-700 font-semibold">15</p>
+                <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-red-400 flex items-center">
                     2 <ArrowDropDown className="mb-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#eafbed] rounded-full shadow-sm">
-                <CheckCircleOutlineIcon className="text-[#99db9f] text-xl" />
+              <div className="flex items-center justify-center h-10 w-10 bg-[#eafbed] rounded-full">
+                <CheckCircleOutlineIcon className="text-[#58c468] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total BOM */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border border-[#efb777] bg-[#f8e7d0] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
-                <p className="text-[24px] text-gray-700 font-semibold">3</p>
+                <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
                     1 <ArrowDropUpIcon className="mb-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#fcefe0] rounded-full shadow-sm">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#fcefe0] rounded-full">
                 <GiNotebook className="text-[#efb777] text-xl" />
               </div>
             </div>
 
             {/* CARD - Total Suppliers */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-26 shadow-sm">
+            <div className="border border-[#0ed8ef] bg-[#d6f8fa] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Suppliers</p>
-                <p className="text-[24px] text-gray-700 font-semibold">9</p>
+                <p className="text-[24px] text-gray-700 font-semibold">{Supplier}</p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-gray-400 flex items-center">
                     0 <ArrowDropUpIcon className="mb-0.5" />
                   </span>
-                  v/s last month
+                  &nbsp;v/s last month
                 </p>
               </div>
-              <div className="flex items-center justify-center h-10 w-10 bg-[#e7fdff] rounded-full shadow-sm">
+              <div className="flex items-center justify-center h-10 w-10 bg-[#e7fdff] rounded-full">
                 <BsPeople className="text-[#0ed8ef] text-xl" />
               </div>
             </div>
           </div>
+
 
           {/* Sales Overview GRAPHS */}
 
@@ -295,7 +330,6 @@ useEffect(() => {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-
               </div>
             </div>
 
@@ -387,20 +421,20 @@ useEffect(() => {
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
-                 <PieChart>
-                  <Pie
-                    data={gateChartData}
-                    innerRadius={50}
-                    outerRadius={80}
-                    dataKey="value"
-                    label
-                  >
-                    {gateChartData.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
+                  <PieChart>
+                    <Pie
+                      data={gateChartData}
+                      innerRadius={50}
+                      outerRadius={80}
+                      dataKey="value"
+                      label
+                    >
+                      {gateChartData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
                 </ResponsiveContainer>
                 <p className="text-center text-sm text-gray-600 mt-2">
                   <b>Order ID:</b> 100 kg received

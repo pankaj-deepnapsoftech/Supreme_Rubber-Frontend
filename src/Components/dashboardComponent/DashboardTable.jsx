@@ -6,8 +6,7 @@ import { useInventory } from "@/Context/InventoryContext";
 
 export default function DashboardTable() {
   const { products, getAllProducts } = useInventory();
-
-  console.log("Dashboard", products);
+  
 
   useEffect(() => {
     const fetchData = async () => {

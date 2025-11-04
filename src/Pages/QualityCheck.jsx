@@ -255,8 +255,8 @@ const QualityCheck = () => {
               >
                 All
               </p>
-              {[...new Set(qualityReports.map((p) => p.category))].map(
-                (cat) => (
+              {[...new Set(qualityReports?.map((p) => p.category) || [])].map((cat) => (
+
                   <p
                     key={cat}
                     onClick={() => handleFilter(cat)}
