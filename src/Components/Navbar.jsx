@@ -10,7 +10,6 @@ const Navbar = () => {
         <div className="flex items-center gap-3 text-gray-700 cursor-pointer">
           <img className="w-[15px] h-[13px]" src="/Vector.png" alt="png" />
           <span className="font-medium">English</span>
-
         </div>
       </div>
 
