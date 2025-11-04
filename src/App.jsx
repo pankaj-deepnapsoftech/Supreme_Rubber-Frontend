@@ -17,7 +17,6 @@ import ForgotPassword from "./Pages/ForgotPasswordPage";
 import OTPVerification from "./Pages/OTPVerificationPage";
 import VerifyEmail from "./Pages/verifyEmail";
 import PurchaseOrder from "./Pages/PurchaseOrder";
-
 import { QualityCheckProvider } from "./Context/QualityCheckContext";
 
 const App = () => {

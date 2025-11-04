@@ -12,7 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGatemenContext } from "@/Context/GatemenContext";
-import { useQualityCheck } from "@/Context/QualityCheckContext";
+
+
+
 
 const QualityCheck = () => {
   const [showModal, setShowModal] = useState(false);
@@ -43,20 +45,21 @@ const QualityCheck = () => {
     selectedReport,
     setSelectedReport,
     loading,
-    ChangesStatus,
-  } = useQualityCheck();
+    getAllProducts,
+  } = useInventory();
+
+  
 
   useEffect(() => {
     const getGateman = async () => {
       const data = await GetAllPOData();
-      // Show both "Entry Created" and "Verified" entries
-      const filter = data.filter(
-        (i) => i?.status === "Entry Created" || i?.status === "Verified"
-      );
-      setGetData(filter);
-    };
+      console.log(data)
+      setGetData(data)
+    
+    }
     getGateman();
-    getAllReports();
+    getAllProducts();
+  
   }, []);
 
   // Function to refresh gateman data
@@ -275,12 +278,15 @@ const QualityCheck = () => {
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
-            <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
-              <th className="px-4 py-3 font-medium">Product Name</th>
-              <th className="px-4 py-3 font-medium">Approved</th>
-              <th className="px-4 py-3 font-medium">Rejected</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium text-center">Action</th>
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+              <th className="px-4 sm:px-6 py-3 font-medium">Product Type</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Product Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
+              <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -294,7 +300,11 @@ const QualityCheck = () => {
               (filteredReports.length ? filteredReports : qualityReports)
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
-                  return item.item_name?.toLowerCase().includes(q);
+                  return (
+                    item.name.toLowerCase().includes(q) ||
+                    item.category.toLowerCase().includes(q) ||
+                    item.product_id.toLowerCase().includes(q)
+                  );
                 })
                 .map((item, i) => (
                   <tr
@@ -303,11 +313,12 @@ const QualityCheck = () => {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 py-3">{item.item_name}</td>
-                    <td className="px-4 py-3">{item.approved_quantity}</td>
-                    <td className="px-4 py-3">{item.rejected_quantity}</td>
-                    <td className="px-4 py-3">{item.status}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.category}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.name}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
+                    <td className="px-4 sm:px-6 py-3">{item.uom}</td>
+                    <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"

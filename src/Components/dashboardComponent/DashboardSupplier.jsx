@@ -1,37 +1,62 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, Edit2, Trash2 } from "lucide-react";
+import { useSupplierContext } from "@/Context/SuplierContext";
 
 export default function DashboardSupplier() {
-  const suppliers = [
-    {
-      id: "454334",
-      name: "Raghav Chadha",
-      mobile: "5464545554",
-      location: "19/08/25",
-    },
-    {
-      id: "454334",
-      name: "Raghav Chadha",
-      mobile: "5464545554",
-      location: "19/08/25",
-    },
-    {
-      id: "454334",
-      name: "Raghav Chadha",
-      mobile: "5464545554",
-      location: "19/08/25",
-    },
-  ];
+  const { getAllSupplier, deleteSupplier } = useSupplierContext();
+  const [suppliers, setSuppliers] = useState([]);
+
+  // ✅ Fetch live data from context (no loading)
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const res = await getAllSupplier();
+        const data = Array.isArray(res)
+          ? res
+          : res?.suppliers || [];
+
+        setSuppliers(data);
+      } catch (error) {
+        console.error("Error fetching suppliers:", error);
+      }
+    };
+
+    fetchSuppliers();
+  }, []);
+
+  // ✅ Handlers
+  const handleView = (supplier) => {
+    console.log("View Supplier:", supplier);
+  };
+
+  const handleEdit = (supplier) => {
+    console.log("Edit Supplier:", supplier);
+  };
+
+  const handleDelete = async (id) => {
+    if (!id) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this supplier?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteSupplier(id);
+      setSuppliers((prev) => prev.filter((s) => s._id !== id));
+    } catch (err) {
+      console.error("Error deleting supplier:", err);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 w-full">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div>
-          <h2 className="font-semibold text-gray-800 text-[15px]">
-            Supplier
-          </h2>
-          <p className="text-xs text-gray-500">7 Approval found</p>
+          <h2 className="font-semibold text-gray-800 text-[15px]">Suppliers</h2>
+          <p className="text-xs text-gray-500">
+            {`${suppliers.length} Supplier${suppliers.length !== 1 ? "s" : ""} found`}
+          </p>
         </div>
         <button className="text-sm text-blue-500 hover:underline">
           View all
@@ -39,36 +64,96 @@ export default function DashboardSupplier() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left text-gray-700">
-          <thead className="text-xs text-gray-500 bg-gray-50 border-b">
-            <tr>
-              <th className="px-3 py-2">ID</th>
-              <th className="px-3 py-2">Name</th>
-              <th className="px-3 py-2">Mobile No.</th>
-              <th className="px-3 py-2">Location</th>
-              <th className="px-3 py-2 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {suppliers.map((supplier, index) => (
-              <tr
-                key={index}
-                className="border-b last:border-0 hover:bg-gray-50 transition"
-              >
-                <td className="px-3 py-2">{supplier.id}</td>
-                <td className="px-3 py-2">{supplier.name}</td>
-                <td className="px-3 py-2">{supplier.mobile}</td>
-                <td className="px-3 py-2">{supplier.location}</td>
-                <td className="px-3 py-2 flex justify-center items-center space-x-3">
-                  <Eye className="w-4 h-4 text-gray-500 cursor-pointer hover:text-blue-500" />
-                  <Edit2 className="w-4 h-4 text-gray-500 cursor-pointer hover:text-green-500" />
-                  <Trash2 className="w-4 h-4 text-gray-500 cursor-pointer hover:text-red-500" />
-                </td>
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-auto">
+        <div className="overflow-auto max-h-[70vh] rounded-lg">
+          <table className="min-w-max w-full text-sm text-left text-gray-600">
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-gray-200 text-gray-800 uppercase text-xs tracking-wide">
+                {[
+                  "ID",
+                  "Name",
+                  "Phone",
+                  "Email",
+                  "Address",
+                  "Actions",
+                ].map((header, i) => (
+                  <th
+                    key={i}
+                    className={`py-3 px-4 text-center font-semibold ${
+                      i === 0 ? "rounded-tl-2xl" : ""
+                    } ${i === 7 ? "rounded-tr-2xl" : ""}`}
+                  >
+                    {header}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {suppliers.length > 0 ? (
+                suppliers.map((s, i) => (
+                  <tr
+                    key={s._id || i}
+                    className={`transition-all duration-200 ${
+                      i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    } hover:bg-blue-50`}
+                  >
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {s.supplier_id || "—"}
+                    </td>
+                    <td className="py-3 px-4 font-medium text-gray-800 border-b">
+                      {s.name || "—"}
+                    </td>
+                    <td className="py-3 px-4 text-gray-700 border-b">
+                      {s.phone || "—"}
+                    </td>
+                    <td className="py-3 px-4 text-gray-700 border-b">
+                      {s.email || "—"}
+                    </td>
+                    
+                    <td className="py-3 px-4 text-gray-700 border-b truncate max-w-[200px]">
+                      {s.address || "—"}
+                    </td>
+                    <td className="py-3 px-4 text-center border-b">
+                      <div className="flex items-center justify-center space-x-3">
+                        {/* <button
+                          className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          title="View"
+                          onClick={() => handleView(s)}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                          title="Edit"
+                          onClick={() => handleEdit(s)}
+                        >
+                          <Edit2 size={16} />
+                        </button> */}
+                        <button
+                          className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                          title="Delete"
+                          onClick={() => handleDelete(s._id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="text-center py-6 text-gray-400 italic bg-gray-50"
+                  >
+                    No suppliers found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

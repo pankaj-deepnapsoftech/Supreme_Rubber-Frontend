@@ -47,6 +47,7 @@ export const InventoryProvider = ({ children }) => {
       setLoading(true);
       const res = await axiosHandler.get("/product/all");
       setProducts(res?.data?.products || []);
+      console.log("qlt",res)
       return res.data;
     } catch (error) {
       console.error("❌ Error fetching all products:", error);

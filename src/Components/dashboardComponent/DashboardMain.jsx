@@ -25,6 +25,8 @@ import {
 import DashboardSupplier from "./DashboardSupplier";
 
 import { useInventory } from "../../Context/InventoryContext";
+import { useGatemenContext } from "@/Context/GatemenContext";
+
 
 export default function DashboardMain() {
   const [period, setPeriod] = useState(" ");
@@ -45,19 +47,18 @@ export default function DashboardMain() {
   ];
 
  
-  const [pieDataInventory, setPieDataInventory] = useState([]);
-  const { products, getAllProducts } = useInventory();
-
+// inventory pie chart
+const [pieDataInventory, setPieDataInventory] = useState([]);
+const { products, getAllProducts } = useInventory();
  useEffect(() => {
   if (products && products.length > 0) {
-    // Count how many products exist in each category
+
     const categoryCounts = products.reduce((acc, p) => {
       const category = p.category || "Uncategorized";
       acc[category] = (acc[category] || 0) + 1;
       return acc;
     }, {});
 
-    // Convert to chart format
     const formatted = Object.entries(categoryCounts).map(
       ([category, count]) => ({
         name: category,
@@ -65,7 +66,6 @@ export default function DashboardMain() {
       })
     );
 
-    // Assign colors dynamically
     const colors = ["#FBBF24", "#A78BFA", "#3B82F6", "#F87171", "#10B981"];
     const coloredData = formatted.map((d, i) => ({
       ...d,
@@ -75,6 +75,42 @@ export default function DashboardMain() {
     setPieDataInventory(coloredData);
   }
 }, [products]);
+
+useEffect(() => {
+  getAllProducts();
+}, []);
+
+
+// gate man entry
+const { GetAllPOData } = useGatemenContext();
+const [gateChartData, setGateChartData] = useState([]);
+useEffect(() => {
+  const fetchData = async () => {
+    const data = await GetAllPOData();
+    if (data) {
+      const statusCounts = data.reduce((acc, entry) => {
+        const status = entry.status || "Unknown";
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+      }, {});
+
+      const formatted = Object.entries(statusCounts).map(([name, value]) => ({
+        name,
+        value,
+      }));
+
+      const colors = ["#3B82F6", "#10B981", "#FBBF24", "#F87171"];
+      const coloredData = formatted.map((d, i) => ({
+        ...d,
+        color: colors[i % colors.length],
+      }));
+
+      setGateChartData(coloredData);
+    }
+  };
+  fetchData();
+}, []);
+
 
 
   const pieDataStatus = [
@@ -351,20 +387,20 @@ export default function DashboardMain() {
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={donutData}
-                      dataKey="value"
-                      innerRadius={60}
-                      outerRadius={80}
-                      startAngle={90}
-                      endAngle={-270}
-                    >
-                      <Cell fill="#3B82F6" />
-                      <Cell fill="#E5E7EB" />
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
+                 <PieChart>
+                  <Pie
+                    data={gateChartData}
+                    innerRadius={50}
+                    outerRadius={80}
+                    dataKey="value"
+                    label
+                  >
+                    {gateChartData.map((d, i) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
                 </ResponsiveContainer>
                 <p className="text-center text-sm text-gray-600 mt-2">
                   <b>Order ID:</b> 100 kg received

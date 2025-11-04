@@ -157,6 +157,24 @@ const Gateman = () => {
     document.body.removeChild(link);
   };
 
+const handleAccept = async (id) => {
+  try {
+    await AcceptPOData(id);
+
+    setPendingData((prev) => prev.filter((po) => po._id !== id));
+
+
+    // Close modal only if you want to 
+     setShowPOModal(false);
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to accept purchase order");
+  }
+};
+
+
+
+
   return (
     <div className="p-6 relative w-full">
      
@@ -650,7 +668,7 @@ const Gateman = () => {
                             <button
                               className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
                               title="View"
-                              onClick={() => AcceptPOData(po?._id)}
+                              onClick={() =>handleAccept(po?._id)}
                             >
                               Accept
                             </button>
