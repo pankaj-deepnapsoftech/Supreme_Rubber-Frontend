@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useGatemenContext } from "@/Context/GatemenContext";
 import { useQualityCheck } from "@/Context/QualityCheckContext";
+import { toast } from "react-toastify";
 import { useInventory } from "@/Context/InventoryContext";
 
 
@@ -283,10 +284,11 @@ const QualityCheck = () => {
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
-              <th className="px-4 sm:px-6 py-3 font-medium">Product Type</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Product Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">PO Number</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Company</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Approved</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Rejected</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
                 Action
@@ -304,10 +306,13 @@ const QualityCheck = () => {
               (filteredReports.length ? filteredReports : qualityReports)
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
+                  const po = item?.gateman_entry_id?.po_number || "";
+                  const company = item?.gateman_entry_id?.company_name || "";
+                  const name = item?.item_name || "";
                   return (
-                    item?.name?.toLowerCase()?.includes(q) ||
-                    item?.category?.toLowerCase()?.includes(q) ||
-                    item?.product_id?.toLowerCase()?.includes(q)
+                    po.toLowerCase().includes(q) ||
+                    company.toLowerCase().includes(q) ||
+                    name.toLowerCase().includes(q)
                   );
                 })
                 .map((item, i) => (
@@ -317,11 +322,12 @@ const QualityCheck = () => {
                       i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 sm:px-6 py-3">{item.product_id}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.category}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.name}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.current_stock}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.uom}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.po_number || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.gateman_entry_id?.company_name || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.item_name || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.approved_quantity}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.rejected_quantity}</td>
+                    <td className="px-4 sm:px-6 py-3">{item?.status || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit
@@ -630,12 +636,11 @@ const QualityCheck = () => {
                             {po?.items.map((i) => i.item_quantity).join(", ")}
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                            {/* {po?.status} */}
                             <button
-                              onClick={() => changeStatus(po._id)}
+                              onClick={async () => { await ChangesStatus(po._id); await refreshGatemanData(); }}
                               className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                             >
-                              verified
+                              Verified
                             </button>
                           </td>
                           <td className="py-3 px-4 text-center border-b">
