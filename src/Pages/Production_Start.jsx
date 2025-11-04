@@ -26,6 +26,8 @@ const Production_Start = () => {
     getAllProducts,
   } = useInventory();
 
+  
+
   useEffect(() => {
     getAllProducts();
   }, []);

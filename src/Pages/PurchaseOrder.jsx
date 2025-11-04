@@ -22,6 +22,7 @@ const PurchaseOrder = () => {
     DeletePurchaseOrder,
   } = usePurchanse_Order();
 
+
   const { getAllSupplier } = useSupplierContext();
   const { getAllProducts } = useInventory();
 
@@ -67,6 +68,8 @@ const PurchaseOrder = () => {
       setSupplierData(sup || []);
       setInventoryData(inv?.products || []);
       const data = await GetAllPurchaseOrders();
+
+      console.log("this is data", data)
       setPOData(data);
     };
     fetchData();

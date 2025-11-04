@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGatemenContext } from "@/Context/GatemenContext";
+import { useInventory } from "@/Context/InventoryContext";
 
 
 
@@ -241,8 +242,8 @@ const QualityCheck = () => {
               >
                 All
               </p>
-              {[...new Set(qualityReports.map((p) => p.category))].map(
-                (cat) => (
+              {[...new Set(qualityReports?.map((p) => p.category) || [])].map((cat) => (
+
                   <p
                     key={cat}
                     onClick={() => handleFilter(cat)}
@@ -588,8 +589,8 @@ const QualityCheck = () => {
                 </thead>
 
                 <tbody>
-                  {getData && getData.length > 0 ? (
-                    getData.map((po, i) => (
+                 {(getData || []).length > 0 ? (
+  getData.map((po, i) => (
                       <tr
                         key={i}
                         className={`border-b hover:bg-gray-50 transition ${
