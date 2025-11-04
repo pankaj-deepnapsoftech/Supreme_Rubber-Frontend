@@ -98,20 +98,22 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile hamburger button */}
-      <button
-        onClick={openMobile}
-        aria-label="Open menu"
-        className="md:hidden fixed top-4 left-4 z-50 inline-flex items-center justify-center p-2 rounded-md bg-white shadow text-gray-700"
-      >
-        <Menu size={20} />
-      </button>
+      {/* Mobile hamburger button - hidden when drawer is open */}
+      {!isMobileOpen && (
+        <button
+          onClick={openMobile}
+          aria-label="Open menu"
+          className="md:hidden fixed top-4 left-4 z-50 inline-flex items-center justify-center p-2 rounded-md bg-white shadow text-gray-700"
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex-col justify-between h-screen">
       {/* --- Top section (Logo + menu) --- */}
       <div>
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center ">
           <img src="/CompanyLogo.png" alt="Company Logo" className="h-16" />
         </div>
 
@@ -200,21 +202,29 @@ const Sidebar = () => {
             onClick={closeMobile}
             aria-hidden
           />
+          
 
-          <aside className="relative w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex flex-col justify-between h-full transform transition-transform">
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <img src="/CompanyLogo.png" alt="Company Logo" className="h-12" />
-                </div>
-                <button
-                  onClick={closeMobile}
-                  aria-label="Close menu"
-                  className="inline-flex items-center justify-center p-2 rounded-md bg-gray-100 text-gray-700"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+        <aside className="relative w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex flex-col justify-between h-full transform transition-transform">
+          <div>
+            
+            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <img
+                src="/CompanyLogo.png"
+                alt="Company Logo"
+                className="h-12"
+              />
+            </div>
+            <button
+            onClick={closeMobile}
+            aria-label="Close menu"
+            className="inline-flex items-center justify-center p-2 rounded-md bg-gray-100 text-gray-700"
+          >
+            <X size={18} />
+          </button>
+                    
+          </div>
+
 
               <nav className="flex flex-col gap-1">
                 {allowedMenu.map((item) => (
@@ -280,7 +290,6 @@ const Sidebar = () => {
                 ))}
               </nav>
             </div>
-
             <div className="mt-auto pt-4 border-t border-gray-200">
               <Button
                 onClick={() => {
@@ -296,6 +305,8 @@ const Sidebar = () => {
           </aside>
         </div>
       )}
+
+
     </>
   );
 };
