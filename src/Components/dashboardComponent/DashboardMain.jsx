@@ -175,7 +175,7 @@ const [period, setPeriod] = useState()
           {/* CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-2 mt-4">
             {/* CARD - Purchase Order */}
-            <div className="border border-gray-200  bg-white rounded-[10px] p-2.5  flex justify-between items-center h-30 shadow-sm">
+            <div className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5  flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
                 <p className="text-[24px] text-gray-700 font-semibold">{productCount}</p>
@@ -192,7 +192,7 @@ const [period, setPeriod] = useState()
             </div>
 
             {/* CARD - Total Production */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
+            <div className="border border-[#99db9f] bg-[#d6f7d7] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Production</p>
                 <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
@@ -209,7 +209,7 @@ const [period, setPeriod] = useState()
             </div>
 
             {/* CARD - Total BOM */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
+            <div className="border border-[#efb777] bg-[#f8e7d0] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total BOM</p>
                 <p className="text-[24px] text-gray-700 font-semibold">{productionCount}</p>
@@ -226,7 +226,7 @@ const [period, setPeriod] = useState()
             </div>
 
             {/* CARD - Total Suppliers */}
-            <div className="border border-gray-200 bg-white rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
+            <div className="border border-[#0ed8ef] bg-[#d6f8fa] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm">
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Total Suppliers</p>
                 <p className="text-[24px] text-gray-700 font-semibold">{Supplier}</p>
