@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
 import { LuNotebookText } from "react-icons/lu";
@@ -24,6 +24,8 @@ import {
 } from "recharts";
 import DashboardSupplier from "./DashboardSupplier";
 
+import { useInventory } from "../../Context/InventoryContext";
+
 export default function DashboardMain() {
   const [period, setPeriod] = useState(" ");
 
@@ -42,12 +44,38 @@ export default function DashboardMain() {
     { month: "Dec", a: 35, b: 26 },
   ];
 
-  const pieDataInventory = [
-    { name: "Raw materials", value: 10, color: "#FBBF24" },
-    { name: "Work in progress", value: 20, color: "#A78BFA" },
-    { name: "Finished goods (FGW)", value: 30, color: "#3B82F6" },
-    { name: "CMW", value: 15, color: "#F87171" },
-  ];
+ 
+  const [pieDataInventory, setPieDataInventory] = useState([]);
+  const { products, getAllProducts } = useInventory();
+
+ useEffect(() => {
+  if (products && products.length > 0) {
+    // Count how many products exist in each category
+    const categoryCounts = products.reduce((acc, p) => {
+      const category = p.category || "Uncategorized";
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Convert to chart format
+    const formatted = Object.entries(categoryCounts).map(
+      ([category, count]) => ({
+        name: category,
+        value: count,
+      })
+    );
+
+    // Assign colors dynamically
+    const colors = ["#FBBF24", "#A78BFA", "#3B82F6", "#F87171", "#10B981"];
+    const coloredData = formatted.map((d, i) => ({
+      ...d,
+      color: colors[i % colors.length],
+    }));
+
+    setPieDataInventory(coloredData);
+  }
+}, [products]);
+
 
   const pieDataStatus = [
     { name: "Completed", value: 124, color: "#3B82F6" },
@@ -222,6 +250,7 @@ export default function DashboardMain() {
                       innerRadius={50}
                       outerRadius={80}
                       dataKey="value"
+                      label
                     >
                       {pieDataInventory.map((d, i) => (
                         <Cell key={i} fill={d.color} />
@@ -230,11 +259,10 @@ export default function DashboardMain() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
+
               </div>
             </div>
 
-            {/* Production Status */}
-            {/* Row: Production Status + Production + Gate Entry */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-4">
               {/* Production Status */}
               <div className="flex-1 min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
