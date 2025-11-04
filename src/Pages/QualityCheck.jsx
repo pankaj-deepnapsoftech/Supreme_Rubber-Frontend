@@ -753,7 +753,7 @@ const QualityCheck = () => {
             </div>
 
             <div className="overflow-x-auto border rounded-lg shadow-inner">
-              <table className="min-w-[800px] text-sm text-left">
+              <table className="w-full min-w-[800px] text-sm text-left table-fixed">
                 <thead>
                   <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white text-xs sm:text-sm uppercase tracking-wide">
                     <th className="px-3 sm:px-4 py-3 text-left">Compound Code</th>
