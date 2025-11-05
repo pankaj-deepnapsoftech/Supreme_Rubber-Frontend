@@ -12,11 +12,11 @@ export const UserRoleProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { token } = useAuth()
-
+  const [page, setPage] = useState(1)
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const { data } = await axiosHandler.get(`/role`);
+      const { data } = await axiosHandler.get(`/role?page=${page}&limit=10`);
       setRoles(data.roles);
     } catch (err) {
       console.error(err);
@@ -74,9 +74,9 @@ export const UserRoleProvider = ({ children }) => {
 
   useEffect(() => {
    if(token){
-     fetchRoles();
+     fetchRoles(page);
    }
-  }, [token]);
+  }, [token, page]);
 
   return (
     <UserRoleContext.Provider
@@ -88,6 +88,8 @@ export const UserRoleProvider = ({ children }) => {
         createRole,
         editRole,
         deleteRole,
+        page,
+        setPage
       }}
     >
       {children}

@@ -3,6 +3,7 @@ import Sidebar from "../Components/Sidebar";
 import Navbar from "../components/Navbar";
 
 const MainLayout = () => {
+  
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar />

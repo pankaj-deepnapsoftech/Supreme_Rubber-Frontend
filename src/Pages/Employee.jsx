@@ -12,11 +12,12 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/Context/AuthContext";
 import { useUserRole } from "@/Context/UserRoleContext"; 
+import Pagination from "@/Components/Pagination/Pagination";
 
 const Employee = () => {
   const { user, allUsers, getAllUsers, getUserById,updateUserRole } = useAuth();
   const { roles, loading: rolesLoading } = useUserRole(); 
-
+  const [page,setPage] = useState(1)
   const [search, setSearch] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,7 @@ const Employee = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      await getAllUsers();
+      await getAllUsers(page);
     } catch (error) {
       console.error("Error fetching employees:", error);
     } finally {
@@ -66,7 +67,7 @@ const handleUpdateRole = async () => {
 };
   useEffect(() => {
     if (user) fetchEmployees();
-  }, [user]);
+  }, [user, page]);
 
   const filteredEmployees = allUsers.filter((emp) =>
     `${emp.first_name || ""} ${emp.last_name || ""}`
@@ -233,6 +234,8 @@ const handleUpdateRole = async () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Pagination page={page} setPage={setPage} hasNextPage={allUsers?.length === 10} />
     </div>
   );
 };

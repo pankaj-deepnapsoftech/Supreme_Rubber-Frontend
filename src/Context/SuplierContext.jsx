@@ -58,10 +58,10 @@ export const SupplierProvider = ({ children }) => {
     };
 
   
-    const getAllSupplier = async () => {
+    const getAllSupplier = async (page) => {
         try {
             setLoading(true);
-            const res = await axiosHandler.get("/supplier/all");
+            const res = await axiosHandler.get(`/supplier/all?page=${page}&limit=10`);
             
             return res.data?.suppliers;
         } catch (error) {

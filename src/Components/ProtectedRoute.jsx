@@ -16,7 +16,7 @@ const roleAccess = {
   Employee: ["/", "/inventory", "/production/bom", "/production/start"],
   Gateman: ["/", "/gateman"],
   QC: ["/", "/quality-check"],
-  Inventroy: ["/", "/inventory"] 
+  Inventroy: ["/", "/inventory"]
 };
 const ProtectedRoute = ({ children, path }) => {
   const { user } = useAuth();
@@ -27,24 +27,32 @@ const ProtectedRoute = ({ children, path }) => {
 
   const permissions = user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
 
+
   const routePermissions = {
-    "/": "dashboard",
-    "/supplier": "supplier",
-    "/employee": "employee",
-    "/user-role": "user role",
-    "/gateman": "gateman",
-    "/inventory": "inventory",
-    "/quality-check": "quality check",
-    "/production/bom": "bom",
-    "/production/start": "production",
+
+    "dashboard": "/",
+    "supplier": "/supplier",
+    "employee": "/employee",
+    "user role": "/user-role",
+    "gateman": "/gateman",
+    "inventory": "/inventory",
+    "quality check": "/quality-check",
+    "bom": "/production/bom",
+    "production": "/production/start"
+
+
   };
 
+    
   // find which permission this route needs
   const requiredPermission = Object.entries(routePermissions).find(([route]) =>
     path.startsWith(route)
-  )?.[1];
+  );
 
-  if (!requiredPermission || permissions.includes(requiredPermission)) {
+  
+
+  // console.log("requiredPermission", permissions) 
+  if (permissions.length > 0 || permissions.includes(routePermissions[permissions[0]])) {
     return children;
   }
 

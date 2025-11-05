@@ -114,9 +114,9 @@ export const AuthProvider = ({ children }) => {
 
  // ========================= USERS =========================
 
-const getAllUsers = async () => {
+const getAllUsers = async (page) => {
   try {
-    const res = await axiosHandler.get("/auth/all");
+    const res = await axiosHandler.get(`/auth/all?page=${page}&limit=10`);
     let users = res?.data?.users || [];
     users = users.filter((u) => !u.isSuper);
     setAllUsers(users);

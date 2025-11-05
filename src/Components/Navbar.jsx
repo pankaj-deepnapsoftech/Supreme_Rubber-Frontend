@@ -7,7 +7,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const { user } = useAuth();
-  console.log(user);
+  // console.log(user);
   // Close menu if user clicks outside
   useEffect(() => {
     const handleClickOutside = (e) => {

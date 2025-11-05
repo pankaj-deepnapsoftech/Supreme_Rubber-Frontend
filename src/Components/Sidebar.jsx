@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -15,7 +15,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 
 const Sidebar = () => {
@@ -41,7 +41,7 @@ const Sidebar = () => {
     { name: "Supplier", path: "/supplier", icon: <Users size={20} /> },
     { name: "Employee", path: "/employee", icon: <User size={20} /> },
     { name: "User Role", path: "/user-role", icon: <Shield size={20} /> },
-    { name: "Purchase Order", path: "/purchase-order", icon:  <ShoppingBag size={20} /> },
+    { name: "Purchase Order", path: "/purchase-order", icon: <ShoppingBag size={20} /> },
     { name: "Gateman", path: "/gateman", icon: <Key size={20} /> },
     { name: "Inventory", path: "/inventory", icon: <Package size={20} /> },
     {
@@ -63,30 +63,42 @@ const Sidebar = () => {
     },
   ];
 
+  // console.log("halooo", allMenu)
 
   const userPermissions = user?.isSuper
     ? allMenu.map((m) => m.name.toLowerCase())
     : user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
 
 
+
+
   const allowedMenu = user?.isSuper
     ? allMenu
     : allMenu.filter((menu) => {
       const menuName = menu.name.toLowerCase();
+
       if (menu.submenus) {
-        // Show main menu if at least one submenu is allowed
+
         const allowedSubs = menu.submenus.filter((sub) =>
           userPermissions.includes(sub.name.toLowerCase())
         );
+
         if (allowedSubs.length > 0) menu.submenus = allowedSubs;
         return allowedSubs.length > 0;
       }
+      console.log("Menu", userPermissions.includes(menuName))
       return userPermissions.includes(menuName);
     });
 
+   const routes = useMemo(() => {
+    return allowedMenu.map((menu) => menu.path);
+   }, [allowedMenu])
 
-
-
+  useEffect(() => {
+    if (!routes.includes(window.location.pathname)) {
+      navigate(allowedMenu[0].path)
+    }
+  }, [window.location.pathname])
 
   return (
     <aside className="w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex flex-col justify-between h-screen">
@@ -118,8 +130,8 @@ const Sidebar = () => {
                   <button
                     onClick={() => handleToggle(item.name)}
                     className={`flex items-center justify-between w-full p-2 rounded-lg transition ${openDropdown === item.name
-                        ? "bg-purple-100 text-purple-700"
-                        : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-purple-100 text-purple-700"
+                      : "text-gray-700 hover:bg-gray-100"
                       }`}
                   >
                     <div className="flex items-center gap-3">

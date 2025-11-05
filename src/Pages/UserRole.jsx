@@ -3,14 +3,15 @@ import { useUserRole } from "@/Context/UserRoleContext";
 import { useState } from "react";
 import { useFormik } from "formik";
 import { Edit, Trash2 } from "lucide-react";
+import Pagination from "@/Components/Pagination/Pagination";
 
 export default function UserRolesManagement() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editRoleId, setEditRoleId] = useState(null);
+ 
+  const { roles, createRole, editRole, deleteRole, loading,page,setPage } = useUserRole();
 
-  const { roles, createRole, editRole, deleteRole, loading } = useUserRole();
 
-  console.log(editRoleId)
 
   const permissionOptions = [
     "dashboard",
@@ -147,7 +148,7 @@ export default function UserRolesManagement() {
         </table>
       </div>
 
-      {/* Drawer */}
+
       {isDrawerOpen && (
         <>
           <div
@@ -242,6 +243,7 @@ export default function UserRolesManagement() {
           </div>
         </>
       )}
+      <Pagination page={page} setPage={setPage} hasNextPage={roles?.length === 10}  />
     </div>
   );
 }
