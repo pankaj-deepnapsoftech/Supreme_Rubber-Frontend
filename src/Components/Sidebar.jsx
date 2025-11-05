@@ -1,4 +1,4 @@
-import { Navigate, NavLink, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -24,6 +24,7 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const [openDropdown, setOpenDropdown] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleToggle = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
@@ -98,15 +99,26 @@ const Sidebar = () => {
       return userPermissions.includes(menuName);
     });
 
-   const routes = useMemo(() => {
-    return allowedMenu.map((menu) => menu.path);
-   }, [allowedMenu])
+  const routes = useMemo(() => {
+    const paths = [];
+    allowedMenu.forEach((menu) => {
+      if (menu.path) paths.push(menu.path);
+      if (menu.submenus) {
+        menu.submenus.forEach((sub) => {
+          if (sub.path) paths.push(sub.path);
+        });
+      }
+    });
+    return paths;
+  }, [allowedMenu])
 
   useEffect(() => {
-    if (!routes.includes(window.location.pathname)) {
-      navigate(allowedMenu[0].path)
+    if (!routes.includes(location.pathname)) {
+      const firstDirect = allowedMenu.find((m) => !!m.path)?.path;
+      const firstSub = allowedMenu.find((m) => m.submenus && m.submenus.length)?.submenus?.[0]?.path;
+      navigate(firstDirect || firstSub || "/");
     }
-  }, [window.location.pathname])
+  }, [location.pathname, routes, allowedMenu, navigate])
 
   return (
     <>
