@@ -690,11 +690,7 @@ const QualityCheck = () => {
                             {po?.items.map((i) => i.item_quantity).join(", ")}
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                            <button className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                              
-                            >
-                              Verified
-                            </button>
+                            {po?.status}
                           </td>
                           <td className="py-3 px-4 text-center border-b">
                             <div className="flex items-center justify-start space-x-3">
