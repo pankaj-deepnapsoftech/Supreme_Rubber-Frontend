@@ -704,36 +704,9 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
               </div>
 
               {/* Quality Check */}
-              <div className="bg-white rounded-2xl h-[300px] p-5 shadow-sm w-full">
-                <div className="flex justify-between">
-                  <h2 className="font-semibold text-gray-800 text-[15px]">Quality Check</h2>
-                  <div className="flex">
-                    <select
-                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
-                      value={qcPeriod}
-                      onChange={(e) => setQcPeriod(e.target.value)}
-                    >
-                      <option className="text-gray-500" value="Weekly">Weekly</option>
-                      <option className="text-gray-500" value="Monthly">Monthly</option>
-                      <option className="text-gray-500" value="Yearly">Yearly</option>
-                    </select>
-                  </div>
-                </div>
-                {qcLoading ? (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">Loading QC...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie data={qcChartData} innerRadius={50} outerRadius={80} dataKey="value" label>
-                        {qcChartData.map((d, i) => (
-                          <Cell key={i} fill={d.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
+
+
+
             </div>
 
             {/* TABLE */}
