@@ -2,9 +2,20 @@ import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
-import { Edit, Eye, Trash2, X, PlusCircle, Trash } from "lucide-react";
+import {
+  Edit,
+  Eye,
+  Trash2,
+  X,
+  PlusCircle,
+  Trash,
+  Search,
+  RefreshCw,
+  Download,
+} from "lucide-react";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { useInventory } from "@/Context/InventoryContext";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const PurchaseOrder = () => {
   const [showModal, setShowModal] = useState(false);
@@ -12,6 +23,8 @@ const PurchaseOrder = () => {
   const [viewMode, setViewMode] = useState(false);
   const [POData, setPOData] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const {
     loading,
@@ -21,7 +34,6 @@ const PurchaseOrder = () => {
     UpdatePurchaseOrder,
     DeletePurchaseOrder,
   } = usePurchanse_Order();
-
 
   const { getAllSupplier } = useSupplierContext();
   const { getAllProducts } = useInventory();
@@ -47,14 +59,12 @@ const PurchaseOrder = () => {
     }),
     onSubmit: async (values) => {
       const payload = { ...values, products };
-
       if (editMode && selectedOrder?._id) {
         await UpdatePurchaseOrder({ _id: selectedOrder._id, ...payload });
       } else {
         await CreatePurchaseOrder(payload);
       }
-
-      await GetAllPurchaseOrders();
+      await GetAllPurchaseOrders(page);
       setShowModal(false);
       setEditMode(false);
       setViewMode(false);
@@ -67,11 +77,11 @@ const PurchaseOrder = () => {
       const inv = await getAllProducts();
       setSupplierData(sup || []);
       setInventoryData(inv?.products || []);
-      const data = await GetAllPurchaseOrders();
+      const data = await GetAllPurchaseOrders(page);
       setPOData(data);
     };
     fetchData();
-  }, []);
+  }, [page]);
 
   const handleAddItem = () => {
     setProducts([
@@ -89,15 +99,13 @@ const PurchaseOrder = () => {
   };
 
   const handleRemoveItem = (index) => {
-    const updated = products.filter((_, i) => i !== index);
-    setProducts(updated);
+    setProducts(products.filter((_, i) => i !== index));
   };
 
   const handleItemChange = (index, e) => {
     const { name, value } = e.target;
     const updated = [...products];
     updated[index][name] = value;
-
     if (name === "item_name") {
       const selected = Inventorydata.find((p) => p._id === value);
       if (selected) {
@@ -112,12 +120,8 @@ const PurchaseOrder = () => {
   const handleView = async (id) => {
     const res = await GetPurchaseOrderDetails(id);
     const po = res?.po || res;
-
     if (po) {
-      formik.setValues({
-        supplier: po.supplier?._id || "",
-      });
-
+      formik.setValues({ supplier: po.supplier?._id || "" });
       const formattedProducts = po.products.map((p) => ({
         item_name:
           p.item_name?._id ||
@@ -147,14 +151,9 @@ const PurchaseOrder = () => {
   const handleEdit = async (id) => {
     const res = await GetPurchaseOrderDetails(id);
     const po = res?.po || res;
-
     if (po) {
       setSelectedOrder(po);
-
-      formik.setValues({
-        supplier: po.supplier?._id || "",
-      });
-
+      formik.setValues({ supplier: po.supplier?._id || "" });
       const formattedProducts = po.products.map((p) => ({
         item_name:
           p.item_name?._id ||
@@ -175,7 +174,6 @@ const PurchaseOrder = () => {
             ?.product_or_service ||
           "",
       }));
-
       setProducts(formattedProducts);
       setEditMode(true);
       setShowModal(true);
@@ -183,55 +181,116 @@ const PurchaseOrder = () => {
   };
 
   const handleDelete = async (_id) => {
-    if (
-      window.confirm("Are you sure you want to delete this purchase order?")
-    ) {
+    if (window.confirm("Are you sure you want to delete this purchase order?")) {
       try {
         await DeletePurchaseOrder(_id);
         setPOData((prev) => ({
           ...prev,
           pos: prev.pos.filter((order) => order._id !== _id),
         }));
-        toast.success("Purchase order deleted successfully");
       } catch (error) {
         console.error(error);
-        toast.error("Failed to delete purchase order");
       }
     }
+  };
+
+  // search + filter
+  const filteredPurchaseOrders = POData?.pos?.filter((po) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      po.po_number?.toLowerCase().includes(query) ||
+      po.supplier?.name?.toLowerCase().includes(query) ||
+      po.products?.some((p) => p.item_name?.toLowerCase().includes(query))
+    );
+  });
+
+  const handleRefresh = async () => {
+    const updated = await GetAllPurchaseOrders(page);
+    setPOData(updated);
+    setSearchQuery("");
+  };
+
+  const handleDownload = () => {
+    if (!POData?.pos?.length) return;
+    const rows = POData.pos.map((po) => ({
+      "PO Number": po.po_number,
+      Supplier: po.supplier?.name,
+      Products: po.products?.map((p) => p.item_name).join(", "),
+      Status: po.status,
+    }));
+    const csv =
+      "data:text/csv;charset=utf-8," +
+      [
+        Object.keys(rows[0]).join(","),
+        ...rows.map((r) => Object.values(r).join(",")),
+      ].join("\n");
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = "purchase_orders.csv";
+    link.click();
   };
 
   return (
     <div className="p-6 font-sans relative">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Purchase Order</h2>
-        <button
-          onClick={() => {
-            setShowModal(true);
-            setEditMode(false);
-            setViewMode(false);
-            formik.resetForm();
-            setProducts([
-              {
-                item_name: "",
-                est_quantity: "",
-                produce_quantity: "",
-                remain_quantity: "",
-                category: "",
-                uom: "",
-                product_type: "",
-              },
-            ]);
-          }}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform"
-        >
-          Add Purchase Order
-        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search Purchase Orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg w-64 text-sm 
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <button
+            onClick={handleRefresh}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+          >
+            <RefreshCw size={16} />
+          </button>
+
+          <button
+            onClick={handleDownload}
+            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+          >
+            <Download size={16} />
+          </button>
+
+          <button
+            onClick={() => {
+              setShowModal(true);
+              setEditMode(false);
+              setViewMode(false);
+              formik.resetForm();
+              setProducts([
+                {
+                  item_name: "",
+                  est_quantity: "",
+                  produce_quantity: "",
+                  remain_quantity: "",
+                  category: "",
+                  uom: "",
+                  product_type: "",
+                },
+              ]);
+            }}
+            className="bg-linear-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform"
+          >
+            Add Purchase Order
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
               {["PO No", "Supplier", "Product Count", "Status", "Actions"].map(
                 (h, i) => (
                   <th key={i} className="py-3 px-4 text-center font-semibold">
@@ -251,8 +310,8 @@ const PurchaseOrder = () => {
                   Loading...
                 </td>
               </tr>
-            ) : POData?.pos?.length > 0 ? (
-              POData.pos.map((order, i) => (
+            ) : filteredPurchaseOrders?.length > 0 ? (
+              filteredPurchaseOrders.map((order, i) => (
                 <tr
                   key={order._id}
                   className={`transition-all ${
@@ -268,14 +327,11 @@ const PurchaseOrder = () => {
                   <td className="py-3 px-4 text-center">
                     {order.products?.length || 0}
                   </td>
-                  
-                  
                   <td className="py-3 px-4 text-center">
                     <span className="bg-green-100 px-3 py-1 text-green-700 rounded-full text-[10px] sm:text-xs font-semibold whitespace-nowrap">
                       {order.status || "--"}
                     </span>
                   </td>
-
                   <td className="py-3 px-4 text-center">
                     <div className="flex justify-center gap-3">
                       <Eye
@@ -300,7 +356,7 @@ const PurchaseOrder = () => {
                   colSpan="5"
                   className="text-center py-6 text-gray-400 italic bg-gray-50"
                 >
-                  No purchase orders found.
+                  No matching purchase orders found.
                 </td>
               </tr>
             )}
@@ -312,7 +368,7 @@ const PurchaseOrder = () => {
         <div className="fixed inset-0 flex justify-end bg-black/40 z-50 transition-opacity">
           <div className="bg-white w-full max-w-2xl h-full shadow-2xl transform transition-all duration-500 ease-out">
             {/* Header */}
-            <div className="flex justify-between items-center p-5 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="flex justify-between items-center p-5 border-b bg-linear-to-r from-blue-50 to-indigo-50">
               <h2 className="text-xl font-semibold text-gray-800">
                 {viewMode
                   ? "View Purchase Order"
@@ -330,7 +386,6 @@ const PurchaseOrder = () => {
 
             <div className="p-6 overflow-y-auto max-h-[85vh]">
               <form onSubmit={formik.handleSubmit} className="space-y-6">
-                {/* Supplier Dropdown */}
                 <div>
                   <label className="block text-gray-700 font-medium mb-1">
                     Select Supplier
@@ -351,7 +406,6 @@ const PurchaseOrder = () => {
                   </select>
                 </div>
 
-                {/* Dynamic Products */}
                 {products.map((item, index) => (
                   <div
                     key={index}
@@ -368,7 +422,6 @@ const PurchaseOrder = () => {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Product Dropdown */}
                       <div>
                         <label className="block text-gray-700 font-medium mb-1">
                           Item
@@ -425,25 +478,23 @@ const PurchaseOrder = () => {
                         />
                       </div>
 
-                      {[
-                        "est_quantity",
-                        "produce_quantity",
-                        "remain_quantity",
-                      ].map((field) => (
-                        <div key={field}>
-                          <label className="block text-gray-700 font-medium mb-1 capitalize">
-                            {field.replace("_", " ")}
-                          </label>
-                          <input
-                            type="number"
-                            name={field}
-                            value={item[field]}
-                            onChange={(e) => handleItemChange(index, e)}
-                            disabled={viewMode}
-                            className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          />
-                        </div>
-                      ))}
+                      {["est_quantity", "produce_quantity", "remain_quantity"].map(
+                        (field) => (
+                          <div key={field}>
+                            <label className="block text-gray-700 font-medium mb-1 capitalize">
+                              {field.replace("_", " ")}
+                            </label>
+                            <input
+                              type="number"
+                              name={field}
+                              value={item[field]}
+                              onChange={(e) => handleItemChange(index, e)}
+                              disabled={viewMode}
+                              className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                 ))}
@@ -463,7 +514,7 @@ const PurchaseOrder = () => {
                 {!viewMode && (
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-lg shadow-md hover:scale-105 transition"
+                    className="w-full bg-linear-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-lg shadow-md hover:scale-105 transition"
                   >
                     {editMode ? "Update" : "Submit"}
                   </button>
@@ -473,6 +524,12 @@ const PurchaseOrder = () => {
           </div>
         </div>
       )}
+
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={POData?.pos?.length === 10}
+      />
     </div>
   );
 };
