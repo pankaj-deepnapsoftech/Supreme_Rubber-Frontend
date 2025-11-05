@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { Search, Bell, Settings, X } from "lucide-react";
 import { LuMessageSquareText } from "react-icons/lu";
 import { useAuth } from "@/Context/AuthContext";
+import { LogOut } from "lucide-react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { logout } = useAuth();
   const menuRef = useRef(null);
   const { user } = useAuth();
   // Close menu if user clicks outside
@@ -23,6 +25,15 @@ const Navbar = () => {
     .map((w) => w[0])
     .join("")
     .toUpperCase();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <header className="flex items-center justify-between px-6 py-3 bg-white shadow-sm border-b border-gray-100 relative">
@@ -86,6 +97,15 @@ const Navbar = () => {
                 </div>
               </div>
               <hr className="my-2" />
+
+              <button
+                className="flex items-center cursor-pointer gap-2 text-red-500 hover:text-red-600 text-sm font-medium w-full mt-2"
+                onClick={() => {
+                  setIsMenuOpen(false), (onClick = handleLogout());
+                }}
+              >
+                <LogOut size={16} /> Logout
+              </button>
 
               <button
                 className="flex items-center cursor-pointer gap-2 text-gray-600 hover:text-gray-800 text-sm font-medium w-full mt-2"

@@ -440,7 +440,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                       </button>
                     ))}
 
-                    {/* 👇 Show Year Select only when 'Yearly' is active */}
+                    {/* Show Year Select only when 'Yearly' is active */}
                     {period === "Yearly" && (
                       <select
                         className="ml-2 border border-gray-300 text-sm rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -515,17 +515,20 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
 
               {/* Inventory */}
               <div className="w-full lg:w-[400px] h-auto lg:h-[400px] bg-white rounded-2xl p-5 shadow-sm">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-3">
+                <div className="flex justify-between">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Inventory
                   </h2>
-                  <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
-                    <option className="text-gray-500">Weekly</option>
-                    <option className="text-gray-500">Monthly</option>
-                    <option className="text-gray-500">Yearly</option>
-                  </select>
+                  <div className="flex">
+                    <select className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]">
+                      <option className="text-gray-500 hover:bg-[#cd9cf2]">
+                        Weekly
+                      </option>
+                      <option className=" hover:bg-[#cd9cf2]">Monthly</option>
+                      <option className=" hover:bg-[#cd9cf2]">Yearly</option>
+                    </select>
+                  </div>
                 </div>
-
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
