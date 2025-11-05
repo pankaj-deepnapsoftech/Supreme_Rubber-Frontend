@@ -7,7 +7,6 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const { user } = useAuth();
-  // console.log(user);
   // Close menu if user clicks outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -30,8 +29,8 @@ const Navbar = () => {
       {/* Left Section */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3 text-gray-700 cursor-pointer">
-          <img className="w-[15px] h-[13px]" src="/Vector.png" alt="png" />
-          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-gray-700">
+          <img className="w-[15px] h-[13px] " src="/Vector.png" alt="png" />
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-gray-700 pl-2">
             <span className="font-medium text-sm sm:text-base">Welcome!</span>
             <span className="font-bold text-sm sm:text-base truncate max-w-[100px] sm:max-w-none">
               {user?.first_name?.toUpperCase() || "USER"}

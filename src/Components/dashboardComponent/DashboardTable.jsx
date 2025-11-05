@@ -3,11 +3,12 @@ import { Edit, Trash2 } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useUserRole } from "@/Context/UserRoleContext";
 import { useInventory } from "@/Context/InventoryContext";
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardTable() {
   const { products, getAllProducts } = useInventory();
-
-  console.log("Dashboard", products);
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,7 +54,7 @@ export default function DashboardTable() {
             </h2>
             <p className="text-xs text-gray-500">{roles.length} Roles found</p>
           </div>
-          <button className="text-sm text-blue-500 hover:underline self-start sm:self-auto">
+          <button className="text-sm text-blue-500 hover:underline self-start cursor-pointer sm:self-auto" onClick={() => navigate("/user-role")}>
             View all
           </button>
         </div>
@@ -131,11 +132,11 @@ export default function DashboardTable() {
             Quality Check
           </h2>
           <div className="flex space-x-2">
-            <select className="border text-gray-500 border-gray-200 text-xs rounded-md px-2 py-1 hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
+            <select className="border text-gray-500 cursor-pointer border-gray-200 text-xs rounded-md px-2 py-1 hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
               <option>CMB</option>
               <option>ABC</option>
             </select>
-            <select className="border text-gray-500 border-gray-200 text-xs rounded-md px-2 py-1 hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
+            <select className="border text-gray-500 cursor-pointer border-gray-200 text-xs rounded-md px-2 py-1 hover:bg-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
               <option>Weekly</option>
               <option>Monthly</option>
             </select>
