@@ -46,19 +46,24 @@ const PurchaseOrder = () => {
       supplier: Yup.string().required("Supplier is required"),
     }),
     onSubmit: async (values) => {
-      const payload = { ...values, products };
+  const payload = { ...values, products };
 
-      if (editMode && selectedOrder?._id) {
-        await UpdatePurchaseOrder({ _id: selectedOrder._id, ...payload });
-      } else {
-        await CreatePurchaseOrder(payload);
-      }
+  if (editMode && selectedOrder?._id) {
+    await UpdatePurchaseOrder({ _id: selectedOrder._id, ...payload });
+  } else {
+    await CreatePurchaseOrder(payload);
+  }
 
-      await GetAllPurchaseOrders();
-      setShowModal(false);
-      setEditMode(false);
-      setViewMode(false);
-    },
+  // ✅ Get the latest data and update UI immediately
+  const updatedData = await GetAllPurchaseOrders();
+  setPOData(updatedData);
+
+  // ✅ Close modal
+  setShowModal(false);
+  setEditMode(false);
+  setViewMode(false);
+},
+
   });
 
   useEffect(() => {

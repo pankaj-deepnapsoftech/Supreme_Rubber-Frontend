@@ -18,8 +18,15 @@ import { useFormik } from "formik";
 import { toast } from "react-toastify";
 
 const Gateman = () => {
-  const { PendingGatemenData, AcceptPOData, PostGatemenData, GetAllPOData, UpdatedGatemenData, DetailsGatemenData, DeleteGatemenData } =
-    useGatemenContext();
+  const {
+    PendingGatemenData,
+    AcceptPOData,
+    PostGatemenData,
+    GetAllPOData,
+    UpdatedGatemenData,
+    DetailsGatemenData,
+    DeleteGatemenData,
+  } = useGatemenContext();
   const { GetAllPurchaseOrders } = usePurchanse_Order();
   const [POData, setPOData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,7 +36,7 @@ const Gateman = () => {
   const [GatemenData, setGatemenData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [edittable,setEditTable] = useState(null)
+  const [edittable, setEditTable] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +46,8 @@ const Gateman = () => {
         setPendingData(pending || []);
 
         const poRes = await GetAllPurchaseOrders();
-        const accepted = poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
+        const accepted =
+          poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
         setPOData(accepted);
 
         const gateData = await GetAllPOData();
@@ -53,7 +61,28 @@ const Gateman = () => {
     fetchData();
   }, []);
 
+  const refreshGatemenData = async () => {
+    setLoading(true);
+    try {
+      const pending = await PendingGatemenData();
+      setPendingData(pending || []);
+
+      const poRes = await GetAllPurchaseOrders();
+      const accepted =
+        poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
+      setPOData(accepted);
+
+      const gateData = await GetAllPOData();
+      setGatemenData(gateData || []);
+    } catch (error) {
+      console.error("Error refreshing Gatemen data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRefresh = async () => {
+    await refreshGatemenData();
     setLoading(true);
     const gateData = await GetAllPOData();
     setGatemenData(gateData || []);
@@ -70,37 +99,35 @@ const Gateman = () => {
     );
   });
 
-   
-  console.log(POData)
+  console.log(POData);
 
   const formik = useFormik({
-    enableReinitialize: true, 
+    enableReinitialize: true,
     initialValues: edittable
       ? {
-        po_ref: edittable.po_ref || "",
-        po_number: edittable.po_number || "",
-        invoice_number: edittable.invoice_number || "",
-        company_name: edittable.company_name || "",
-        items: edittable.items || [{ item_name: "", item_quantity: 1 }],
-        attached_po: null,
-        attached_invoice: null,
-        status: edittable.status || "Entry Created",
-      }
-      : { 
-        po_ref: "",
-        po_number: "",
-        invoice_number: "",
-        company_name: "",
-        items: [{ item_name: "", item_quantity: 1 }],
-        attached_po: null,
-        attached_invoice: null,
-        status: "Entry Created",
-      },
+          po_ref: edittable.po_ref || "",
+          po_number: edittable.po_number || "",
+          invoice_number: edittable.invoice_number || "",
+          company_name: edittable.company_name || "",
+          items: edittable.items || [{ item_name: "", item_quantity: 1 }],
+          attached_po: null,
+          attached_invoice: null,
+          status: edittable.status || "Entry Created",
+        }
+      : {
+          po_ref: "",
+          po_number: "",
+          invoice_number: "",
+          company_name: "",
+          items: [{ item_name: "", item_quantity: 1 }],
+          attached_po: null,
+          attached_invoice: null,
+          status: "Entry Created",
+        },
 
     onSubmit: async (values) => {
       try {
         if (mode === "edit" && edittable?._id) {
-          // JSON payload for update
           const payload = {
             _id: edittable._id,
             po_ref: values.po_ref,
@@ -110,35 +137,41 @@ const Gateman = () => {
             items: values.items,
             status: values.status,
           };
-
           await UpdatedGatemenData(payload);
         } else {
-          // FormData for new entry (with files)
           const formData = new FormData();
           formData.append("po_ref", values.po_ref);
           formData.append("po_number", values.po_number);
           formData.append("invoice_number", values.invoice_number);
           formData.append("company_name", values.company_name);
           formData.append("items", JSON.stringify(values.items));
-          if (values.attached_po) formData.append("attached_po", values.attached_po);
-          if (values.attached_invoice) formData.append("attached_invoice", values.attached_invoice);
+          if (values.attached_po)
+            formData.append("attached_po", values.attached_po);
+          if (values.attached_invoice)
+            formData.append("attached_invoice", values.attached_invoice);
 
           await PostGatemenData(formData);
         }
-         formik.resetForm()
+
+        formik.resetForm();
         setShowModal(false);
-        handleRefresh();
+        await refreshGatemenData(); 
       } catch (error) {
         console.error("Error submitting form:", error);
       }
     },
-
   });
-
 
   const handleDownload = () => {
     if (!GatemenData.length) return;
-    const headers = ["PO Number", "Invoice", "Company Name", "Items", "Quantity", "Status"];
+    const headers = [
+      "PO Number",
+      "Invoice",
+      "Company Name",
+      "Items",
+      "Quantity",
+      "Status",
+    ];
     const rows = GatemenData.map((g) => [
       g.po_number || "",
       g.invoice_number || "",
@@ -158,15 +191,11 @@ const Gateman = () => {
     document.body.removeChild(link);
   };
 
-const handleAccept = async (id) => {
+ const handleAccept = async (id) => {
   try {
     await AcceptPOData(id);
-
-    setPendingData((prev) => prev.filter((po) => po._id !== id));
-
-
-    // Close modal only if you want to 
-     setShowPOModal(false);
+    await refreshGatemenData(); 
+    setShowPOModal(false);      
   } catch (error) {
     console.error(error);
     toast.error("Failed to accept purchase order");
@@ -174,22 +203,22 @@ const handleAccept = async (id) => {
 };
 
 
-
-
   return (
     <div className="p-6 relative w-full">
-     
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Gatemen</h1>
+        <h1 className="text-2xl font-semibold">Gateman</h1>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => { setShowModal(true); setEditTable(null); setMode("mode")}}
+          onClick={() => {
+            setShowModal(true);
+            setEditTable(null);
+            setMode("mode");
+          }}
         >
-          Add Gatemen
+          Add Gateman
         </Button>
       </div>
 
-    
       <div className="flex flex-col sm:flex-row justify-between mb-6 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3">
           <div className="relative">
@@ -234,13 +263,19 @@ const handleAccept = async (id) => {
         <table className="min-w-max w-full text-sm text-left text-gray-600">
           <thead className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs">
             <tr>
-              {["PO Number", "Invoice", "Company", "Items", "Qty", "Status", "Action"].map(
-                (header, i) => (
-                  <th key={i} className="py-3 px-4 text-center font-semibold">
-                    {header}
-                  </th>
-                )
-              )}
+              {[
+                "PO Number",
+                "Invoice",
+                "Company",
+                "Items",
+                "Qty",
+                "Status",
+                "Action",
+              ].map((header, i) => (
+                <th key={i} className="py-3 px-4 text-center font-semibold">
+                  {header}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -257,8 +292,9 @@ const handleAccept = async (id) => {
               filteredGatemen.map((g, i) => (
                 <tr
                   key={g._id || i}
-                  className={`transition-all ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
+                  className={`transition-all ${
+                    i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-blue-50`}
                 >
                   <td className="py-3 px-4 text-center">{g.po_number}</td>
                   <td className="py-3 px-4 text-center">{g.invoice_number}</td>
@@ -278,12 +314,11 @@ const handleAccept = async (id) => {
                         onClick={async () => {
                           const details = await DetailsGatemenData(g?._id);
                           if (details) {
-                            setEditTable(details); 
+                            setEditTable(details);
                             setMode("view");
                             setShowModal(true);
                           }
                         }}
-
                       >
                         <Eye size={16} />
                       </button>
@@ -302,7 +337,10 @@ const handleAccept = async (id) => {
                       <button
                         className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
                         title="Delete"
-                        onClick={() => DeleteGatemenData(g?._id)}
+                        onClick={async () => {
+                          await DeleteGatemenData(g?._id);
+                          await refreshGatemenData();
+                        }}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -324,11 +362,9 @@ const handleAccept = async (id) => {
         </table>
       </div>
 
-
       <AnimatePresence>
         {showModal && (
           <>
-
             <motion.div
               className="fixed inset-0 bg-black/30 z-40"
               initial={{ opacity: 0 }}
@@ -360,9 +396,7 @@ const handleAccept = async (id) => {
                 </button>
               </div>
 
-
               <form onSubmit={formik.handleSubmit} className="space-y-4">
-
                 <div>
                   <label className="block text-sm font-medium">PO Ref.</label>
                   <select
@@ -372,7 +406,9 @@ const handleAccept = async (id) => {
                       const selectedPOId = e.target.value;
                       formik.setFieldValue("po_ref", selectedPOId);
 
-                      const selectedPO = POData?.find((po) => po._id === selectedPOId);
+                      const selectedPO = POData?.find(
+                        (po) => po._id === selectedPOId
+                      );
 
                       if (selectedPO) {
                         formik.setFieldValue("po_number", selectedPO.po_number);
@@ -405,10 +441,7 @@ const handleAccept = async (id) => {
                       <option value="">No PO available</option>
                     )}
                   </select>
-
-
                 </div>
-
 
                 <div>
                   <label className="block text-sm font-medium">PO Number</label>
@@ -419,18 +452,17 @@ const handleAccept = async (id) => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     readOnly={true}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.po_number && formik.errors.po_number
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter PO Number"
                   />
                 </div>
 
-                
-              
-
-               
                 <div>
                   <label className="block text-sm font-medium">
                     Company Name
@@ -442,15 +474,17 @@ const handleAccept = async (id) => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     readOnly={true}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.company_name && formik.errors.company_name
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.company_name && formik.errors.company_name
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Company Name"
                   />
                 </div>
 
-               
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Items
@@ -521,10 +555,14 @@ const handleAccept = async (id) => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number && formik.errors.invoice_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.invoice_number &&
+                      formik.errors.invoice_number
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Invoice Number"
                   />
                 </div>
@@ -560,9 +598,6 @@ const handleAccept = async (id) => {
                   />
                 </div>
 
-      
-
-             
                 {mode !== "view" && (
                   <Button
                     type="submit"
@@ -637,12 +672,13 @@ const handleAccept = async (id) => {
                         </td>
                         <td className="px-4 py-3 font-medium">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
-                              ? "bg-blue-100 text-blue-700"
-                              : po.status === "Approved"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              po.status === "PO Created"
+                                ? "bg-blue-100 text-blue-700"
+                                : po.status === "Approved"
                                 ? "bg-green-100 text-green-700"
                                 : "bg-yellow-100 text-yellow-700"
-                              }`}
+                            }`}
                           >
                             {po.status}
                           </span>
@@ -669,14 +705,12 @@ const handleAccept = async (id) => {
                             <button
                               className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
                               title="View"
-                              onClick={() =>handleAccept(po?._id)}
+                              onClick={() => handleAccept(po?._id)}
                             >
                               Accept
                             </button>
-
                           </div>
                         </td>
-
                       </tr>
                     ))
                   ) : (
@@ -709,5 +743,3 @@ const handleAccept = async (id) => {
 };
 
 export default Gateman;
-
-

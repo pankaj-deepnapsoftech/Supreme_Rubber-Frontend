@@ -257,27 +257,37 @@ const QualityCheck = () => {
           >
             Gateman
           </Button>
-        <Button
-          onClick={async () => {
-            try {
-              // Fetch productions and show only completed
-              const res = await (await import("@/config/axiosconfig")).default.get("/production/all");
-              const list = res?.data?.productions || [];
-              const completed = list
-                .filter((p) => (p?.status || "pending") === "completed" && !p.qc_done && p.ready_for_qc)
-                .map((p) => ({ ...p, __qc_local_status: prodQcStatusMap[p._id] || undefined }));
-              setProdQcList(completed);
-            } catch (e) {
-              console.error("Failed to load productions for QC", e);
-              setProdQcList([]);
-            } finally {
-              setShowProdQcModal(true);
-            }
-          }}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
-        >
-          Production QC
-        </Button>
+          <Button
+            onClick={async () => {
+              try {
+                // Fetch productions and show only completed
+                const res = await (
+                  await import("@/config/axiosconfig")
+                ).default.get("/production/all");
+                const list = res?.data?.productions || [];
+                const completed = list
+                  .filter(
+                    (p) =>
+                      (p?.status || "pending") === "completed" &&
+                      !p.qc_done &&
+                      p.ready_for_qc
+                  )
+                  .map((p) => ({
+                    ...p,
+                    __qc_local_status: prodQcStatusMap[p._id] || undefined,
+                  }));
+                setProdQcList(completed);
+              } catch (e) {
+                console.error("Failed to load productions for QC", e);
+                setProdQcList([]);
+              } finally {
+                setShowProdQcModal(true);
+              }
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+          >
+            Production QC
+          </Button>
         </div>
 
         <div className="flex items-center gap-4 text-gray-600">
@@ -680,12 +690,8 @@ const QualityCheck = () => {
                             {po?.items.map((i) => i.item_quantity).join(", ")}
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
-                            <button
-                              onClick={async () => {
-                                await ChangesStatus(po._id);
-                                await refreshGatemanData();
-                              }}
-                              className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
+                            <button className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                              
                             >
                               Verified
                             </button>
@@ -693,11 +699,12 @@ const QualityCheck = () => {
                           <td className="py-3 px-4 text-center border-b">
                             <div className="flex items-center justify-start space-x-3">
                               <button
-                                className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                                className="px-3 py-1.5 rounded-md bg-green-100 cursor-pointer text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                                 title="View"
                                 onClick={async () => {
                                   await ChangesStatus(po?._id);
                                   await refreshGatemanData();
+                                  setShowGtModal(false);
                                 }}
                               >
                                 Verified
@@ -743,7 +750,9 @@ const QualityCheck = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 mb-6 gap-3">
-              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">Production Quality Check</h2>
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-800">
+                Production Quality Check
+              </h2>
               <button
                 onClick={() => setShowProdQcModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-xl sm:text-2xl"
@@ -756,7 +765,9 @@ const QualityCheck = () => {
               <table className="w-full min-w-[800px] text-sm text-left table-fixed">
                 <thead>
                   <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white text-xs sm:text-sm uppercase tracking-wide">
-                    <th className="px-3 sm:px-4 py-3 text-left">Compound Code</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">
+                      Compound Code
+                    </th>
                     <th className="px-3 sm:px-4 py-3 text-left">Status</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Quantity</th>
                     <th className="px-3 sm:px-4 py-3 text-left">UOM</th>
@@ -767,33 +778,59 @@ const QualityCheck = () => {
                   {prodQcList && prodQcList.length ? (
                     prodQcList.map((prod, index) => {
                       const fg = prod.finished_goods?.[0] || {};
-                      const isRejected = prod.__qc_local_status === 'rejected';
-                      const isApproved = prod.__qc_local_status === 'approved';
+                      const isRejected = prod.__qc_local_status === "rejected";
+                      const isApproved = prod.__qc_local_status === "approved";
                       return (
                         <tr
                           key={prod._id}
-                          className={`border-b hover:bg-gray-50 transition ${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                          className={`border-b hover:bg-gray-50 transition ${
+                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
                         >
-                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">{fg?.compound_code || prod?.bom?.compound_code || prod.production_id}</td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${isRejected ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{isRejected ? 'rejected' : 'completed'}</span>
+                            {fg?.compound_code ||
+                              prod?.bom?.compound_code ||
+                              prod.production_id}
                           </td>
-                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">{fg?.prod_qty || fg?.est_qty || 0}</td>
-                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">{fg?.uom || "-"}</td>
+                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                isRejected
+                                  ? "bg-red-100 text-red-600"
+                                  : "bg-green-100 text-green-600"
+                              }`}
+                            >
+                              {isRejected ? "rejected" : "completed"}
+                            </span>
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                            {fg?.prod_qty || fg?.est_qty || 0}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                            {fg?.uom || "-"}
+                          </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             {isRejected ? (
-                              <div className="text-red-600 text-xs sm:text-sm font-medium">Rejected</div>
+                              <div className="text-red-600 text-xs sm:text-sm font-medium">
+                                Rejected
+                              </div>
                             ) : isApproved ? (
-                              <div className="text-green-600 text-xs sm:text-sm font-medium">Approved</div>
+                              <div className="text-green-600 text-xs sm:text-sm font-medium">
+                                Approved
+                              </div>
                             ) : (
                               <div className="flex items-center gap-3">
                                 <button
                                   className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                                   onClick={async () => {
                                     try {
-                                      await axiosHandler.patch(`/production/${prod._id}/approve`);
+                                      await axiosHandler.patch(
+                                        `/production/${prod._id}/approve`
+                                      );
                                       // Remove from list after approve
-                                      setProdQcList((prev) => prev.filter((p) => p._id !== prod._id));
+                                      setProdQcList((prev) =>
+                                        prev.filter((p) => p._id !== prod._id)
+                                      );
                                     } catch (e) {
                                       console.error(e);
                                     }
@@ -805,9 +842,13 @@ const QualityCheck = () => {
                                   className="px-3 py-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 text-xs sm:text-sm font-medium"
                                   onClick={async () => {
                                     try {
-                                      await axiosHandler.patch(`/production/${prod._id}/reject`);
+                                      await axiosHandler.patch(
+                                        `/production/${prod._id}/reject`
+                                      );
                                       // Remove from list after reject
-                                      setProdQcList((prev) => prev.filter((p) => p._id !== prod._id));
+                                      setProdQcList((prev) =>
+                                        prev.filter((p) => p._id !== prod._id)
+                                      );
                                     } catch (e) {
                                       console.error(e);
                                     }
@@ -823,7 +864,12 @@ const QualityCheck = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="5" className="text-center text-gray-500 py-6 italic">No completed productions found</td>
+                      <td
+                        colSpan="5"
+                        className="text-center text-gray-500 py-6 italic"
+                      >
+                        No completed productions found
+                      </td>
                     </tr>
                   )}
                 </tbody>
