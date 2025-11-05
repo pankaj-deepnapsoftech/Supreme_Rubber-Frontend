@@ -25,10 +25,11 @@ export const PurchanseOrderProvider = ({ children }) => {
         }
     };
 
-    const GetAllPurchaseOrders = async () => {
+    const GetAllPurchaseOrders = async (page) => {
+        console.log("page",page)
         setLoading(true);
         try {
-            const res = await axiosHandler.get("/purchase-order/all");
+            const res = await axiosHandler.get(`/purchase-order/all?page=${page}&limit=10`);
             setPurchaseOrders(res?.data?.data || []);
             return res?.data;
         } catch (error) {

@@ -5,6 +5,7 @@ import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
 import { Edit, Eye, Trash2, X, PlusCircle, Trash } from "lucide-react";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { useInventory } from "@/Context/InventoryContext";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const PurchaseOrder = () => {
   const [showModal, setShowModal] = useState(false);
@@ -12,6 +13,7 @@ const PurchaseOrder = () => {
   const [viewMode, setViewMode] = useState(false);
   const [POData, setPOData] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [page,setPage] = useState(1)
 
   const {
     loading,
@@ -25,7 +27,6 @@ const PurchaseOrder = () => {
 
   const { getAllSupplier } = useSupplierContext();
   const { getAllProducts } = useInventory();
-
   const [supplierData, setSupplierData] = useState([]);
   const [Inventorydata, setInventoryData] = useState([]);
   const [products, setProducts] = useState([
@@ -54,7 +55,7 @@ const PurchaseOrder = () => {
         await CreatePurchaseOrder(payload);
       }
 
-      await GetAllPurchaseOrders();
+      await GetAllPurchaseOrders(page);
       setShowModal(false);
       setEditMode(false);
       setViewMode(false);
@@ -67,11 +68,11 @@ const PurchaseOrder = () => {
       const inv = await getAllProducts();
       setSupplierData(sup || []);
       setInventoryData(inv?.products || []);
-      const data = await GetAllPurchaseOrders();
+      const data = await GetAllPurchaseOrders(page);
       setPOData(data);
     };
     fetchData();
-  }, []);
+  }, [page]);
 
   const handleAddItem = () => {
     setProducts([
@@ -108,7 +109,7 @@ const PurchaseOrder = () => {
     }
     setProducts(updated);
   };
-
+  console.log(POData)
   const handleView = async (id) => {
     const res = await GetPurchaseOrderDetails(id);
     const po = res?.po || res;
@@ -473,6 +474,8 @@ const PurchaseOrder = () => {
           </div>
         </div>
       )}
+
+      <Pagination page={page} setPage={setPage} hasNextPage={POData?.pos?.length === 10}  />
     </div>
   );
 };
