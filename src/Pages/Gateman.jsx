@@ -161,7 +161,6 @@ const Gateman = () => {
 const handleAccept = async (id) => {
   try {
     await AcceptPOData(id);
-
     setPendingData((prev) => prev.filter((po) => po._id !== id));
 
 

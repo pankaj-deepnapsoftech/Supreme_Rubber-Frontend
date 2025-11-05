@@ -139,7 +139,7 @@ const Sidebar = () => {
       <div>
         <div className="flex justify-center ">
           {/* <img src="/CompanyLogo.png" alt="Company Logo" className="h-16" /> */}
-          <h1 className="text-3xl font-extrabold tracking-wide text-gray-900 bg-linear-to-r from-yellow-300 to-amber-400 px-6 py-3 rounded-2xl border-2 border-yellow-600 shadow-md text-center uppercase">
+          <h1 className="mb-3 text-3xl font-extrabold tracking-wide text-gray-900 bg-linear-to-r from-yellow-300 to-amber-400 px-6 py-3 rounded-2xl border-2 border-yellow-600 shadow-md text-center uppercase">
             Supreme Rubber
           </h1>
 
