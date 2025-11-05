@@ -16,10 +16,12 @@ import {
 import { useGatemenContext } from "@/Context/GatemenContext";
 import { useFormik } from "formik";
 import { toast } from "react-toastify";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const Gateman = () => {
   const { PendingGatemenData, AcceptPOData, PostGatemenData, GetAllPOData, UpdatedGatemenData, DetailsGatemenData, DeleteGatemenData } =
     useGatemenContext();
+  const [page, setPage] = useState(1)
   const { GetAllPurchaseOrders } = usePurchanse_Order();
   const [POData, setPOData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,7 +31,7 @@ const Gateman = () => {
   const [GatemenData, setGatemenData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [edittable,setEditTable] = useState(null)
+  const [edittable, setEditTable] = useState(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,7 +44,7 @@ const Gateman = () => {
         const accepted = poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
         setPOData(accepted);
 
-        const gateData = await GetAllPOData();
+        const gateData = await GetAllPOData(page);
         setGatemenData(gateData || []);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -51,7 +53,7 @@ const Gateman = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [page]);
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -70,11 +72,11 @@ const Gateman = () => {
     );
   });
 
-   
-  console.log(POData)
+
+  // console.log(POData)
 
   const formik = useFormik({
-    enableReinitialize: true, 
+    enableReinitialize: true,
     initialValues: edittable
       ? {
         po_ref: edittable.po_ref || "",
@@ -86,7 +88,7 @@ const Gateman = () => {
         attached_invoice: null,
         status: edittable.status || "Entry Created",
       }
-      : { 
+      : {
         po_ref: "",
         po_number: "",
         invoice_number: "",
@@ -125,7 +127,7 @@ const Gateman = () => {
 
           await PostGatemenData(formData);
         }
-         formik.resetForm()
+        formik.resetForm()
         setShowModal(false);
         handleRefresh();
       } catch (error) {
@@ -158,38 +160,38 @@ const Gateman = () => {
     document.body.removeChild(link);
   };
 
-const handleAccept = async (id) => {
-  try {
-    await AcceptPOData(id);
+  const handleAccept = async (id) => {
+    try {
+      await AcceptPOData(id);
 
-    setPendingData((prev) => prev.filter((po) => po._id !== id));
+      setPendingData((prev) => prev.filter((po) => po._id !== id));
 
 
-    // Close modal only if you want to 
-     setShowPOModal(false);
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to accept purchase order");
-  }
-};
+      // Close modal only if you want to 
+      setShowPOModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to accept purchase order");
+    }
+  };
 
 
 
 
   return (
     <div className="p-6 relative w-full">
-     
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Gatemen</h1>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => { setShowModal(true); setEditTable(null); setMode("mode")}}
+          onClick={() => { setShowModal(true); setEditTable(null); setMode("mode") }}
         >
           Add Gatemen
         </Button>
       </div>
 
-    
+
       <div className="flex flex-col sm:flex-row justify-between mb-6 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3">
           <div className="relative">
@@ -278,7 +280,7 @@ const handleAccept = async (id) => {
                         onClick={async () => {
                           const details = await DetailsGatemenData(g?._id);
                           if (details) {
-                            setEditTable(details); 
+                            setEditTable(details);
                             setMode("view");
                             setShowModal(true);
                           }
@@ -349,8 +351,8 @@ const handleAccept = async (id) => {
                   {mode === "add"
                     ? "Add Gate Entry"
                     : mode === "edit"
-                    ? "Edit Gate Entry"
-                    : "Gate Entry Details"}
+                      ? "Edit Gate Entry"
+                      : "Gate Entry Details"}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -427,10 +429,10 @@ const handleAccept = async (id) => {
                   />
                 </div>
 
-                
-              
 
-               
+
+
+
                 <div>
                   <label className="block text-sm font-medium">
                     Company Name
@@ -450,7 +452,7 @@ const handleAccept = async (id) => {
                   />
                 </div>
 
-               
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Items
@@ -560,9 +562,9 @@ const handleAccept = async (id) => {
                   />
                 </div>
 
-      
 
-             
+
+
                 {mode !== "view" && (
                   <Button
                     type="submit"
@@ -615,9 +617,8 @@ const handleAccept = async (id) => {
                     pendingData.map((po, i) => (
                       <tr
                         key={i}
-                        className={`border-b hover:bg-gray-50 transition ${
-                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                        }`}
+                        className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
                       >
                         <td className="px-4 py-3 font-semibold text-gray-800">
                           {po.po_number}
@@ -669,7 +670,7 @@ const handleAccept = async (id) => {
                             <button
                               className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
                               title="View"
-                              onClick={() =>handleAccept(po?._id)}
+                              onClick={() => handleAccept(po?._id)}
                             >
                               Accept
                             </button>
@@ -704,6 +705,8 @@ const handleAccept = async (id) => {
           </div>
         </div>
       )}
+
+      < Pagination page={page} setPage={setPage} hasNextPage={GatemenData?.length === 10  } />
     </div>
   );
 };

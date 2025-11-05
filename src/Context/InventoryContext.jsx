@@ -42,10 +42,10 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  const getAllProducts = async () => {
+  const getAllProducts = async (page) => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get("/product/all");
+      const res = await axiosHandler.get(`/product/all?page=${page}&limit=10`);
       setProducts(res?.data?.products || []);
       return res.data;
     } catch (error) {

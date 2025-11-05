@@ -14,8 +14,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useInventory } from "@/Context/InventoryContext";
 import { useFormik } from "formik";
 import axiosHandler from "@/config/axiosconfig";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const BOM = () => {
+  const [page, setPage] = useState(1)
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBoms] = useState([]);
@@ -101,7 +103,7 @@ const BOM = () => {
   const fetchBoms = async () => {
     try {
       setBomsLoading(true);
-      const res = await axiosHandler.get("/bom/all", { withCredentials: true });
+      const res = await axiosHandler.get(`/bom/all?page=${page}&limit=10`, { withCredentials: true });
       setBoms(res?.data?.boms || []);
     } catch (e) {
       console.error("Error fetching BOMs", e);
@@ -115,7 +117,7 @@ const BOM = () => {
     getAllProducts();
     fetchBoms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   // const handleFilter = () => {};
 
@@ -619,6 +621,7 @@ const BOM = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <Pagination page={page} setPage={setPage} hasNextPage={boms?.length === 10} />
     </div>
   );
 };
@@ -740,6 +743,8 @@ const Section = ({ title, headers, selectOptions, rows, setRows, onRowChange, di
         </button>
       </div>
     )}
+
+    
   </section>
 );
 

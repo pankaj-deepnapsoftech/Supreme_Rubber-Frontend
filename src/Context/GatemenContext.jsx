@@ -28,9 +28,9 @@ export const GatemenContextProvider = ({ children }) => {
         }
     }
 
-    const GetAllPOData = async () => {
+    const GetAllPOData = async (page) => {
         try {
-            const res = await axiosHandler.get(`/gateman/all`)
+            const res = await axiosHandler.get(`/gateman/all?page=${page}&limit=10`)
             return res?.data?.entries
         } catch (error) {
             console.log(error)

@@ -8,12 +8,12 @@ export const QualityCheckProvider = ({ children }) => {
   const [qualityReports, setQualityReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [page, setPage] = useState(1)
   // Fetch all
   const getAllReports = async () => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get("/quality-check", {
+      const res = await axiosHandler.get(`/quality-check?page=${page}&limit=10`, {
         withCredentials: true,
       });
       console.log(res);
@@ -107,7 +107,7 @@ export const QualityCheckProvider = ({ children }) => {
 
   useEffect(() => {
     getAllReports();
-  }, []);
+  }, [page]);
 
   return (
     <QualityCheckContext.Provider
@@ -121,7 +121,9 @@ export const QualityCheckProvider = ({ children }) => {
         updateReport,
         deleteReport,
         setSelectedReport,
-        ChangesStatus
+        ChangesStatus,
+        page,
+        setPage
       }}
     >
       {children}

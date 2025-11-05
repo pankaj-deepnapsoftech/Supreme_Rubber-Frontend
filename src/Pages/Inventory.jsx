@@ -14,8 +14,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useInventory } from "@/Context/InventoryContext";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const Inventory = () => {
+  const [page,setPage] = useState(1)
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -131,8 +133,8 @@ const Inventory = () => {
   };
 
   useEffect(() => {
-    getAllProducts();
-  }, []);
+    getAllProducts(page);
+  }, [page]);
   return (
     <div className="p-6 relative overflow-hidden">
       <div className="flex justify-between items-center mb-6">
@@ -441,6 +443,8 @@ const Inventory = () => {
           </>
         )}
       </AnimatePresence>
+
+      <Pagination page={page} setPage={setPage} hasNextPage={products?.length === 10}  />
     </div>
   );
 };
