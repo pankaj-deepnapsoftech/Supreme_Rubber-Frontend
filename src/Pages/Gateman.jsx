@@ -19,9 +19,15 @@ import { toast } from "react-toastify";
 import Pagination from "@/Components/Pagination/Pagination";
 
 const Gateman = () => {
-  const { PendingGatemenData, AcceptPOData, PostGatemenData, GetAllPOData, UpdatedGatemenData, DetailsGatemenData, DeleteGatemenData } =
-    useGatemenContext();
-  const [page, setPage] = useState(1)
+  const {
+    PendingGatemenData,
+    AcceptPOData,
+    PostGatemenData,
+    GetAllPOData,
+    UpdatedGatemenData,
+    DetailsGatemenData,
+    DeleteGatemenData,
+  } = useGatemenContext();
   const { GetAllPurchaseOrders } = usePurchanse_Order();
   const [POData, setPOData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,7 +37,7 @@ const Gateman = () => {
   const [GatemenData, setGatemenData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [edittable, setEditTable] = useState(null)
+  const [edittable, setEditTable] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,7 +47,8 @@ const Gateman = () => {
         setPendingData(pending || []);
 
         const poRes = await GetAllPurchaseOrders();
-        const accepted = poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
+        const accepted =
+          poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
         setPOData(accepted);
 
         const gateData = await GetAllPOData(page);
@@ -55,7 +62,28 @@ const Gateman = () => {
     fetchData();
   }, [page]);
 
+  const refreshGatemenData = async () => {
+    setLoading(true);
+    try {
+      const pending = await PendingGatemenData();
+      setPendingData(pending || []);
+
+      const poRes = await GetAllPurchaseOrders();
+      const accepted =
+        poRes?.pos?.filter((i) => i?.status === "Accepted") || [];
+      setPOData(accepted);
+
+      const gateData = await GetAllPOData();
+      setGatemenData(gateData || []);
+    } catch (error) {
+      console.error("Error refreshing Gatemen data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRefresh = async () => {
+    await refreshGatemenData();
     setLoading(true);
     const gateData = await GetAllPOData();
     setGatemenData(gateData || []);
@@ -72,37 +100,35 @@ const Gateman = () => {
     );
   });
 
-
-  // console.log(POData)
+  console.log(POData);
 
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: edittable
       ? {
-        po_ref: edittable.po_ref || "",
-        po_number: edittable.po_number || "",
-        invoice_number: edittable.invoice_number || "",
-        company_name: edittable.company_name || "",
-        items: edittable.items || [{ item_name: "", item_quantity: 1 }],
-        attached_po: null,
-        attached_invoice: null,
-        status: edittable.status || "Entry Created",
-      }
+          po_ref: edittable.po_ref || "",
+          po_number: edittable.po_number || "",
+          invoice_number: edittable.invoice_number || "",
+          company_name: edittable.company_name || "",
+          items: edittable.items || [{ item_name: "", item_quantity: 1 }],
+          attached_po: null,
+          attached_invoice: null,
+          status: edittable.status || "Entry Created",
+        }
       : {
-        po_ref: "",
-        po_number: "",
-        invoice_number: "",
-        company_name: "",
-        items: [{ item_name: "", item_quantity: 1 }],
-        attached_po: null,
-        attached_invoice: null,
-        status: "Entry Created",
-      },
+          po_ref: "",
+          po_number: "",
+          invoice_number: "",
+          company_name: "",
+          items: [{ item_name: "", item_quantity: 1 }],
+          attached_po: null,
+          attached_invoice: null,
+          status: "Entry Created",
+        },
 
     onSubmit: async (values) => {
       try {
         if (mode === "edit" && edittable?._id) {
-          // JSON payload for update
           const payload = {
             _id: edittable._id,
             po_ref: values.po_ref,
@@ -112,35 +138,41 @@ const Gateman = () => {
             items: values.items,
             status: values.status,
           };
-
           await UpdatedGatemenData(payload);
         } else {
-          // FormData for new entry (with files)
           const formData = new FormData();
           formData.append("po_ref", values.po_ref);
           formData.append("po_number", values.po_number);
           formData.append("invoice_number", values.invoice_number);
           formData.append("company_name", values.company_name);
           formData.append("items", JSON.stringify(values.items));
-          if (values.attached_po) formData.append("attached_po", values.attached_po);
-          if (values.attached_invoice) formData.append("attached_invoice", values.attached_invoice);
+          if (values.attached_po)
+            formData.append("attached_po", values.attached_po);
+          if (values.attached_invoice)
+            formData.append("attached_invoice", values.attached_invoice);
 
           await PostGatemenData(formData);
         }
-        formik.resetForm()
+
+        formik.resetForm();
         setShowModal(false);
-        handleRefresh();
+        await refreshGatemenData(); 
       } catch (error) {
         console.error("Error submitting form:", error);
       }
     },
-
   });
-
 
   const handleDownload = () => {
     if (!GatemenData.length) return;
-    const headers = ["PO Number", "Invoice", "Company Name", "Items", "Quantity", "Status"];
+    const headers = [
+      "PO Number",
+      "Invoice",
+      "Company Name",
+      "Items",
+      "Quantity",
+      "Status",
+    ];
     const rows = GatemenData.map((g) => [
       g.po_number || "",
       g.invoice_number || "",
@@ -160,11 +192,12 @@ const Gateman = () => {
     document.body.removeChild(link);
   };
 
-  const handleAccept = async (id) => {
-    try {
-      await AcceptPOData(id);
-
-      setPendingData((prev) => prev.filter((po) => po._id !== id));
+ const handleAccept = async (id) => {
+  try {
+    await AcceptPOData(id);
+    await refreshGatemenData(); 
+    setShowPOModal(false);      
+    setPendingData((prev) => prev.filter((po) => po._id !== id));
 
 
       // Close modal only if you want to 
@@ -176,21 +209,21 @@ const Gateman = () => {
   };
 
 
-
-
   return (
     <div className="p-6 relative w-full">
-
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Gatemen</h1>
+        <h1 className="text-2xl font-semibold">Gateman</h1>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => { setShowModal(true); setEditTable(null); setMode("mode") }}
+          onClick={() => {
+            setShowModal(true);
+            setEditTable(null);
+            setMode("mode");
+          }}
         >
-          Add Gatemen
+          Add Entry
         </Button>
       </div>
-
 
       <div className="flex flex-col sm:flex-row justify-between mb-6 space-y-3 sm:space-y-0">
         <div className="flex items-center space-x-3">
@@ -236,13 +269,19 @@ const Gateman = () => {
         <table className="min-w-max w-full text-sm text-left text-gray-600">
           <thead className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs">
             <tr>
-              {["PO Number", "Invoice", "Company", "Items", "Qty", "Status", "Action"].map(
-                (header, i) => (
-                  <th key={i} className="py-3 px-4 text-center font-semibold">
-                    {header}
-                  </th>
-                )
-              )}
+              {[
+                "PO Number",
+                "Invoice",
+                "Company",
+                "Items",
+                "Qty",
+                "Status",
+                "Action",
+              ].map((header, i) => (
+                <th key={i} className="py-3 px-4 text-center font-semibold">
+                  {header}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -259,8 +298,9 @@ const Gateman = () => {
               filteredGatemen.map((g, i) => (
                 <tr
                   key={g._id || i}
-                  className={`transition-all ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
+                  className={`transition-all ${
+                    i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-blue-50`}
                 >
                   <td className="py-3 px-4 text-center">{g.po_number}</td>
                   <td className="py-3 px-4 text-center">{g.invoice_number}</td>
@@ -285,7 +325,6 @@ const Gateman = () => {
                             setShowModal(true);
                           }
                         }}
-
                       >
                         <Eye size={16} />
                       </button>
@@ -304,7 +343,10 @@ const Gateman = () => {
                       <button
                         className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
                         title="Delete"
-                        onClick={() => DeleteGatemenData(g?._id)}
+                        onClick={async () => {
+                          await DeleteGatemenData(g?._id);
+                          await refreshGatemenData();
+                        }}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -326,11 +368,9 @@ const Gateman = () => {
         </table>
       </div>
 
-
       <AnimatePresence>
         {showModal && (
           <>
-
             <motion.div
               className="fixed inset-0 bg-black/30 z-40"
               initial={{ opacity: 0 }}
@@ -362,9 +402,7 @@ const Gateman = () => {
                 </button>
               </div>
 
-
               <form onSubmit={formik.handleSubmit} className="space-y-4">
-
                 <div>
                   <label className="block text-sm font-medium">PO Ref.</label>
                   <select
@@ -374,7 +412,9 @@ const Gateman = () => {
                       const selectedPOId = e.target.value;
                       formik.setFieldValue("po_ref", selectedPOId);
 
-                      const selectedPO = POData?.find((po) => po._id === selectedPOId);
+                      const selectedPO = POData?.find(
+                        (po) => po._id === selectedPOId
+                      );
 
                       if (selectedPO) {
                         formik.setFieldValue("po_number", selectedPO.po_number);
@@ -382,7 +422,7 @@ const Gateman = () => {
                           "items",
                           selectedPO.products?.map((p) => ({
                             item_name: p.item_name,
-                            item_quantity: p.est_quantity || 1,
+                            item_quantity: p.quantity || 1,
                           })) || []
                         );
                         formik.setFieldValue(
@@ -407,10 +447,7 @@ const Gateman = () => {
                       <option value="">No PO available</option>
                     )}
                   </select>
-
-
                 </div>
-
 
                 <div>
                   <label className="block text-sm font-medium">PO Number</label>
@@ -421,17 +458,16 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     readOnly={true}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.po_number && formik.errors.po_number
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter PO Number"
                   />
                 </div>
-
-
-
-
 
                 <div>
                   <label className="block text-sm font-medium">
@@ -444,14 +480,16 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     readOnly={true}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.company_name && formik.errors.company_name
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.company_name && formik.errors.company_name
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Company Name"
                   />
                 </div>
-
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -472,7 +510,7 @@ const Gateman = () => {
                         placeholder="Item Name"
                         className="flex-1 border rounded-md px-2 py-1"
                       />
-                      <input
+                      {/* <input
                         type="number"
                         name={`items[${index}].item_quantity`}
                         value={item.item_quantity}
@@ -481,8 +519,8 @@ const Gateman = () => {
                         readOnly={true}
                         placeholder="Qty"
                         className="w-20 border rounded-md px-2 py-1"
-                      />
-                      {mode !== "view" && (
+                      /> */}
+                      {/* {mode !== "view" && (
                         <button
                           type="button"
                           onClick={() => {
@@ -494,10 +532,10 @@ const Gateman = () => {
                         >
                           <Trash2 size={16} />
                         </button>
-                      )}
+                      )} */}
                     </div>
                   ))}
-                  {mode !== "view" && (
+                  {/* {mode !== "view" && (
                     <Button
                       type="button"
                       onClick={() =>
@@ -510,7 +548,7 @@ const Gateman = () => {
                     >
                       <Plus size={16} /> Add Item
                     </Button>
-                  )}
+                  )} */}
                 </div>
                 <div>
                   <label className="block text-sm font-medium">
@@ -523,10 +561,14 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number && formik.errors.invoice_number
-                      ? "border-red-500 focus:ring-red-200"
-                      : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.invoice_number &&
+                      formik.errors.invoice_number
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Invoice Number"
                   />
                 </div>
@@ -561,9 +603,6 @@ const Gateman = () => {
                     className="w-full border rounded-md px-3 py-2 mt-1"
                   />
                 </div>
-
-
-
 
                 {mode !== "view" && (
                   <Button
@@ -638,12 +677,13 @@ const Gateman = () => {
                         </td>
                         <td className="px-4 py-3 font-medium">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
-                              ? "bg-blue-100 text-blue-700"
-                              : po.status === "Approved"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              po.status === "PO Created"
+                                ? "bg-blue-100 text-blue-700"
+                                : po.status === "Approved"
                                 ? "bg-green-100 text-green-700"
                                 : "bg-yellow-100 text-yellow-700"
-                              }`}
+                            }`}
                           >
                             {po.status}
                           </span>
@@ -657,11 +697,11 @@ const Gateman = () => {
                               <span className="font-medium text-gray-800">
                                 {p.item_name}
                               </span>{" "}
-                              - {p.est_quantity} {p.uom}
-                              <div className="text-xs text-gray-500">
+                              - {p.quantity} {p.uom}
+                              {/* <div className="text-xs text-gray-500">
                                 Remain: {p.remain_quantity}, Produced:{" "}
                                 {p.produce_quantity}
-                              </div>
+                              </div> */}
                             </div>
                           ))}
                         </td>
@@ -674,10 +714,8 @@ const Gateman = () => {
                             >
                               Accept
                             </button>
-
                           </div>
                         </td>
-
                       </tr>
                     ))
                   ) : (
@@ -712,5 +750,3 @@ const Gateman = () => {
 };
 
 export default Gateman;
-
-
