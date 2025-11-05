@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const Supplier = () => {
   const { createSupplier, getAllSupplier, updateSupplier, deleteSupplier } =
@@ -24,11 +25,13 @@ const Supplier = () => {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [mode, setMode] = useState("add");
   const [searchQuery, setSearchQuery] = useState("");
+  const [page,setPage] = useState(1)
+
 
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const res = await getAllSupplier();
+      const res = await getAllSupplier(page);
       setSuppliers(res || []);
     } catch (error) {
       console.error("Error fetching suppliers:", error);
@@ -39,9 +42,9 @@ const Supplier = () => {
 
   useEffect(() => {
     fetchSuppliers();
-  }, []);
+  }, [page]);
 
-  // ✅ Formik setup
+
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -397,6 +400,8 @@ const Supplier = () => {
           </>
         )}
       </AnimatePresence>
+
+      <Pagination page={page} setPage={setPage} hasNextPage={suppliers?.length === 10} />
     </div>
   );
 };

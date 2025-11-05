@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -17,13 +17,14 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const [openDropdown, setOpenDropdown] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleToggle = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
@@ -49,7 +50,7 @@ const Sidebar = () => {
     { name: "Supplier", path: "/supplier", icon: <Users size={20} /> },
     { name: "Employee", path: "/employee", icon: <User size={20} /> },
     { name: "User Role", path: "/user-role", icon: <Shield size={20} /> },
-    { name: "Purchase Order", path: "/purchase-order", icon:  <ShoppingBag size={20} /> },
+    { name: "Purchase Order", path: "/purchase-order", icon: <ShoppingBag size={20} /> },
     { name: "Gateman", path: "/gateman", icon: <Key size={20} /> },
     { name: "Inventory", path: "/inventory", icon: <Package size={20} /> },
     {
@@ -71,30 +72,53 @@ const Sidebar = () => {
     },
   ];
 
+  // console.log("halooo", allMenu)
 
   const userPermissions = user?.isSuper
     ? allMenu.map((m) => m.name.toLowerCase())
     : user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
 
 
+
+
   const allowedMenu = user?.isSuper
     ? allMenu
     : allMenu.filter((menu) => {
       const menuName = menu.name.toLowerCase();
+
       if (menu.submenus) {
-        // Show main menu if at least one submenu is allowed
+
         const allowedSubs = menu.submenus.filter((sub) =>
           userPermissions.includes(sub.name.toLowerCase())
         );
+
         if (allowedSubs.length > 0) menu.submenus = allowedSubs;
         return allowedSubs.length > 0;
       }
+      console.log("Menu", userPermissions.includes(menuName))
       return userPermissions.includes(menuName);
     });
 
+  const routes = useMemo(() => {
+    const paths = [];
+    allowedMenu.forEach((menu) => {
+      if (menu.path) paths.push(menu.path);
+      if (menu.submenus) {
+        menu.submenus.forEach((sub) => {
+          if (sub.path) paths.push(sub.path);
+        });
+      }
+    });
+    return paths;
+  }, [allowedMenu])
 
-
-
+  useEffect(() => {
+    if (!routes.includes(location.pathname)) {
+      const firstDirect = allowedMenu.find((m) => !!m.path)?.path;
+      const firstSub = allowedMenu.find((m) => m.submenus && m.submenus.length)?.submenus?.[0]?.path;
+      navigate(firstDirect || firstSub || "/");
+    }
+  }, [location.pathname, routes, allowedMenu, navigate])
 
   return (
     <>
@@ -139,8 +163,8 @@ const Sidebar = () => {
                   <button
                     onClick={() => handleToggle(item.name)}
                     className={`flex items-center justify-between w-full p-2 rounded-lg transition ${openDropdown === item.name
-                        ? "bg-purple-100 text-purple-700"
-                        : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-purple-100 text-purple-700"
+                      : "text-gray-700 hover:bg-gray-100"
                       }`}
                   >
                     <div className="flex items-center gap-3">

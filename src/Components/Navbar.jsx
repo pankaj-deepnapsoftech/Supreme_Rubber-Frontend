@@ -9,7 +9,6 @@ const Navbar = () => {
   const { logout } = useAuth();
   const menuRef = useRef(null);
   const { user } = useAuth();
-
   // Close menu if user clicks outside
   useEffect(() => {
     const handleClickOutside = (e) => {
