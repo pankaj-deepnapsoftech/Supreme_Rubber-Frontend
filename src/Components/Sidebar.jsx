@@ -138,7 +138,7 @@ const Sidebar = () => {
       {/* --- Top section (Logo + menu) --- */}
       <div>
         <div className="flex justify-center ">
-          <img src="/CompanyLogo.png" alt="Company Logo" className="h-16" />
+          <img src="./supremeRubberLOGO.jpeg" alt="Company Logo" className="h-30 w-40 mb-3" />
         </div>
 
         <nav className="flex flex-col gap-1">

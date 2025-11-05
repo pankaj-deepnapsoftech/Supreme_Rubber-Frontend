@@ -196,6 +196,11 @@ const Gateman = () => {
     await AcceptPOData(id);
     await refreshGatemenData(); 
     setShowPOModal(false);      
+    setPendingData((prev) => prev.filter((po) => po._id !== id));
+
+
+    // Close modal only if you want to 
+     setShowPOModal(false);
   } catch (error) {
     console.error(error);
     toast.error("Failed to accept purchase order");
@@ -215,7 +220,7 @@ const Gateman = () => {
             setMode("mode");
           }}
         >
-          Add Gateman
+          Add Entry
         </Button>
       </div>
 

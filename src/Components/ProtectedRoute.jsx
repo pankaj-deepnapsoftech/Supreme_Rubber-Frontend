@@ -1,29 +1,15 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const roleAccess = {
-  Admin: [
-    "/",
-    "/supplier",
-    "/employee",
-    "/user-role",
-    "/gateman",
-    "/inventory",
-    "/quality-check",
-    "/production/bom",
-    "/production/start",
-  ],
-  Employee: ["/", "/inventory", "/production/bom", "/production/start"],
-  Gateman: ["/", "/gateman"],
-  QC: ["/", "/quality-check"],
-  Inventroy: ["/", "/inventory"]
-};
+
 const ProtectedRoute = ({ children, path }) => {
   const { user } = useAuth();
+  
+  // console.log("children",children)
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (user.isSuper) return children;
+  if (user?.isSuper) return children; 
 
   const permissions = user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
 
@@ -43,13 +29,6 @@ const ProtectedRoute = ({ children, path }) => {
 
   };
 
-    
-  // find which permission this route needs
-  const requiredPermission = Object.entries(routePermissions).find(([route]) =>
-    path.startsWith(route)
-  );
-
-  
 
   // console.log("requiredPermission", permissions) 
   if (permissions.length > 0 || permissions.includes(routePermissions[permissions[0]])) {
