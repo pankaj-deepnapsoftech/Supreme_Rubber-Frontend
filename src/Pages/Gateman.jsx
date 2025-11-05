@@ -185,7 +185,7 @@ const handleAccept = async (id) => {
           className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => { setShowModal(true); setEditTable(null); setMode("mode")}}
         >
-          Add Gatemen
+          Add Entry
         </Button>
       </div>
 
