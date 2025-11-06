@@ -416,10 +416,15 @@ const QualityCheck = () => {
                             }
                           }}
                         />
+                        <Download
+                          className="h-4 w-4 text-green-700 cursor-pointer"
+                          onClick={()=>{}}
+                        />
                         <Eye
                           className="h-4 w-4 text-gray-600 cursor-pointer"
                           onClick={() => getReportById(item._id)}
                         />
+                        
                       </div>
                     </td>
                   </tr>
@@ -543,6 +548,8 @@ const QualityCheck = () => {
                             </h4>
                             <p className="text-sm text-gray-600">
                               Available Quantity: {item.available_quantity}
+
+                              {console.log("helloworld", formData)}
                             </p>
                           </div>
 
@@ -606,6 +613,16 @@ const QualityCheck = () => {
                       ))}
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium">Attach Gateman</label>
+                  <input
+                    type="file"
+                    name="attached_po"
+                    onChange={()=>{}}
+                    className="w-full border rounded-md px-3 py-2 mt-1"
+                  />
                 </div>
 
                 <button
@@ -677,9 +694,6 @@ const QualityCheck = () => {
                           </td>
                           <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
                             {po?.invoice_number || "—"}
-                            {/* <div className="text-xs text-gray-500 truncate">
-                            {po.supplier?.name} ({po.supplier?.email})
-                          </div> */}
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             {po?.company_name}
@@ -702,9 +716,36 @@ const QualityCheck = () => {
                                   await ChangesStatus(po?._id);
                                   await refreshGatemanData();
                                   setShowGtModal(false);
+                                  setShowModal(true);
+
+                                  // Auto-fill the selected Gateman Entry in the form
+                                  const selectedEntry = getData.find(
+                                    (entry) => entry._id === po._id
+                                  );
+
+                                  if (selectedEntry && selectedEntry.items) {
+                                    const itemsArray = selectedEntry.items.map(
+                                      (item) => ({
+                                        item_id: item._id,
+                                        item_name: item.item_name,
+                                        available_quantity: item.item_quantity,
+                                        approved_quantity: "",
+                                        rejected_quantity: "",
+                                      })
+                                    );
+
+                                    setFormData({
+                                      ...formData,
+                                      gateman_entry_id: po._id,
+                                      items: itemsArray,
+                                    });
+
+                                    setSelectedEntryItems(selectedEntry.items);
+                                    setSelectedItem(null);
+                                  }
                                 }}
                               >
-                                Verified
+                                Accept
                               </button>
                             </div>
                           </td>
