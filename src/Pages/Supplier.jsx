@@ -210,7 +210,7 @@ const Supplier = () => {
         <div className="overflow-auto max-h-[70vh] rounded-lg">
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
+              <tr className="bg-gradient-to-r text-center from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
                 {[
                   "Supplier Id",
                   "Name",
@@ -246,7 +246,7 @@ const Supplier = () => {
                 filteredSuppliers.map((s, i) => (
                   <tr
                     key={s._id || i}
-                    className={`transition-all duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    className={`transition-all text-center duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-blue-50`}
                   >
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
@@ -275,26 +275,28 @@ const Supplier = () => {
                     <td className="py-3 px-4 text-center border-b">
                       <div className="flex items-center justify-center space-x-3">
                         <button
-                          className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
-                          title="View"
-                          onClick={() => handleView(s)}
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                          className="h-4 w-4 text-blue-500 cursor-pointer"
                           title="Edit"
                           onClick={() => handleEdit(s)}
                         >
                           <Edit size={16} />
                         </button>
-                        <button
-                          className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                         <button
+                         className="h-4 w-4 text-red-500 cursor-pointer"
                           title="Delete"
                           onClick={() => handleDelete(s._id)}
                         >
                           <Trash2 size={16} />
                         </button>
+                        <button
+                          className="h-4 w-4 text-gray-600 cursor-pointer"
+                          title="View"
+                          onClick={() => handleView(s)}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        
+                       
                       </div>
                     </td>
                   </tr>

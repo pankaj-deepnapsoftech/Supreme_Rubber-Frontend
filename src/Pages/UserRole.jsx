@@ -470,14 +470,14 @@ export default function UserRolesManagement() {
                   <td className="py-3 px-4 border-b text-center">
                     <div className="flex justify-center space-x-3">
                       <button
-                        className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 transition"
+                       className="h-4 w-4 text-blue-500 cursor-pointer"
                         title="Edit"
                         onClick={() => handleEdit(r)}
                       >
                         <Edit size={16} />
                       </button>
                       <button
-                        className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition"
+                        className="h-4 w-4 text-red-500 cursor-pointer"
                         title="Delete"
                         onClick={() => handleDelete(r._id)}
                       >
