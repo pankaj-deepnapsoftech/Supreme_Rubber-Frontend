@@ -7,6 +7,8 @@ import {
   Edit,
   Trash2,
   Eye,
+  Plus,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 // eslint-disable-next-line no-unused-vars
@@ -17,7 +19,7 @@ import axiosHandler from "@/config/axiosconfig";
 import Pagination from "@/Components/Pagination/Pagination";
 
 const BOM = () => {
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBoms] = useState([]);
@@ -27,58 +29,71 @@ const BOM = () => {
   // eslint-disable-next-line no-unused-vars
   const [selectedBom, setSelectedBom] = useState(null);
   const [viewMode, setViewMode] = useState(false);
-  const [compoundingRows, setCompoundingRows] = useState([
-    { compoundId: "", compoundName: "", compoundCode: "", hardness: "", partName: "" },
+
+  // New state for arrays
+  const [compoundCodes, setCompoundCodes] = useState([""]);
+  const [compoundName, setCompoundName] = useState("");
+  const [partNames, setPartNames] = useState([""]);
+  const [hardnesses, setHardnesses] = useState([""]);
+  const [finishedGoods, setFinishedGoods] = useState([
+    {
+      finished_good_id_name: "",
+      tolerances: [""],
+      quantities: [""],
+      comments: [""],
+    },
   ]);
-  const [rawMaterialRows, setRawMaterialRows] = useState([
-    { rawMaterialId: "", rawMaterialName: "", rawMaterialCode: "", weight: "", tolerance: "" },
+  const [rawMaterials, setRawMaterials] = useState([
+    {
+      raw_material_id: "",
+      raw_material_name: "",
+      tolerances: [""],
+      quantities: [""],
+      comments: [""],
+    },
   ]);
-  const [processRows, setProcessRows] = useState(["", "", "", ""]);
+  const [processRows, setProcessRows] = useState([""]);
 
   const {
     products,
     getAllProducts,
   } = useInventory();
 
-  const finishedGoods = (products || []).filter((p) =>
+  const finishedGoodsOptions = (products || []).filter((p) =>
     (p?.category || "").toLowerCase().includes("finished")
   );
-  const rawMaterials = (products || []).filter((p) =>
+  const rawMaterialsOptions = (products || []).filter((p) =>
     (p?.category || "").toLowerCase().includes("raw")
   );
 
   const formik = useFormik({
     initialValues: {
       _id: "",
-      compoundCode: "",
-      compoundName: "",
-      compoundId: "",
-      partName: "",
-      compoundingStandardHardness: "",
-      rawMaterialName: "",
-      rawMaterialId: "",
-      rawMaterialWeight: "",
-      rawMaterialTolerance: "",
-      rawMaterialCode: "",
-      process1: "",
-      process2: "",
-      process3: "",
-      process4: "",
     },
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        const firstComp = compoundingRows && compoundingRows[0] ? compoundingRows[0] : {};
         const payload = {
           ...values,
-          // ensure top-level mirrors first row for backend consistency
-          compoundId: values.compoundId || firstComp.compoundId || "",
-          compoundName: values.compoundName || firstComp.compoundName || "",
-          compoundCode: values.compoundCode || firstComp.compoundCode || "",
-          partName: values.partName || firstComp.partName || "",
-          compoundingStandards: compoundingRows,
-          rawMaterials: rawMaterialRows,
-          processes: (processRows || []).filter((p) => (p || "").trim() !== ""),
+          compound_codes: compoundCodes.filter(c => c && c.trim() !== ""),
+          compound_name: (compoundName || "").trim(),
+          part_names: partNames.filter(p => p && p.trim() !== ""),
+          hardnesses: hardnesses.filter(h => h && h.trim() !== ""),
+          finished_goods: finishedGoods.map(fg => ({
+            finished_good_id_name: fg.finished_good_id_name || "",
+            tolerances: fg.tolerances.filter(t => t && t.trim() !== ""),
+            quantities: fg.quantities.filter(q => q && q.trim() !== "").map(q => Number(q)).filter(q => !isNaN(q)),
+            comments: fg.comments.filter(c => c && c.trim() !== ""),
+          })),
+          raw_materials: rawMaterials.map(rm => ({
+            raw_material_id: rm.raw_material_id || "",
+            raw_material_name: rm.raw_material_name || "",
+            tolerances: rm.tolerances.filter(t => t && t.trim() !== ""),
+            quantities: rm.quantities.filter(q => q && q.trim() !== "").map(q => Number(q)).filter(q => !isNaN(q)),
+            comments: rm.comments.filter(c => c && c.trim() !== ""),
+          })),
+          processes: processRows.filter((p) => (p || "").trim() !== ""),
         };
+        
         if (editMode) {
           await axiosHandler.put("/bom", payload, { withCredentials: true });
         } else {
@@ -89,9 +104,7 @@ const BOM = () => {
         setShowModal(false);
         setEditMode(false);
         setSelectedBom(null);
-        setCompoundingRows([{ compoundId: "", compoundName: "", compoundCode: "", hardness: "", partName: "" }]);
-        setRawMaterialRows([{ rawMaterialId: "", rawMaterialName: "", rawMaterialCode: "", weight: "", tolerance: "" }]);
-        setProcessRows(["", "", "", ""]);
+        resetAllFields();
       } catch (e) {
         console.error("Error creating BOM", e);
       } finally {
@@ -99,6 +112,31 @@ const BOM = () => {
       }
     },
   });
+
+  const resetAllFields = () => {
+    setCompoundCodes([""]);
+    setCompoundName("");
+    setPartNames([""]);
+    setHardnesses([""]);
+    setFinishedGoods([
+      {
+        finished_good_id_name: "",
+        tolerances: [""],
+        quantities: [""],
+        comments: [""],
+      },
+    ]);
+    setRawMaterials([
+      {
+        raw_material_id: "",
+        raw_material_name: "",
+        tolerances: [""],
+        quantities: [""],
+        comments: [""],
+      },
+    ]);
+    setProcessRows([""]);
+  };
 
   const fetchBoms = async () => {
     try {
@@ -119,20 +157,16 @@ const BOM = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  // const handleFilter = () => {};
-
   const handleDownload = () => {
     const headers = [
-      "Compound Code",
-      "Compound Name",
-      "Part Name",
+      "Compound Codes",
+      "Part Names",
       "Created Date",
     ];
     const source = filteredBoms.length ? filteredBoms : boms;
     const rows = source.map((b) => [
-      b.compound_code || "",
-      b.compound_name || "",
-      b.part_name || "",
+      (b.compound_codes || []).join(", ") || "",
+      (b.part_names || []).join(", ") || "",
       b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
     ]);
     const csvContent =
@@ -142,6 +176,62 @@ const BOM = () => {
     link.href = encodeURI(csvContent);
     link.download = "boms.csv";
     link.click();
+  };
+
+  const loadBomForEdit = async (bomId) => {
+    try {
+      const res = await axiosHandler.get(`/bom/${bomId}`, { withCredentials: true });
+      const bom = res?.data?.bom || {};
+      
+      formik.setValues({
+        _id: bom._id || "",
+      });
+
+      setCompoundCodes(bom.compound_codes && bom.compound_codes.length > 0 ? bom.compound_codes : [""]); 
+      setCompoundName(bom.compound_name || "");
+      setPartNames(bom.part_names && bom.part_names.length > 0 ? bom.part_names : [""]);
+      setHardnesses(bom.hardnesses && bom.hardnesses.length > 0 ? bom.hardnesses : [""]);
+      
+      setFinishedGoods(
+        bom.finished_goods && bom.finished_goods.length > 0
+          ? bom.finished_goods.map(fg => ({
+              finished_good_id_name: fg.finished_good_id_name || "",
+              tolerances: fg.tolerances && fg.tolerances.length > 0 ? fg.tolerances : [""],
+              quantities: fg.quantities && fg.quantities.length > 0 ? fg.quantities.map(q => String(q)) : [""],
+              comments: fg.comments && fg.comments.length > 0 ? fg.comments : [""],
+            }))
+          : [{
+              finished_good_id_name: "",
+              tolerances: [""],
+              quantities: [""],
+              comments: [""],
+            }]
+      );
+
+      setRawMaterials(
+        bom.raw_materials && bom.raw_materials.length > 0
+          ? bom.raw_materials.map(rm => ({
+              raw_material_id: rm.raw_material_id?._id || rm.raw_material_id || "",
+              raw_material_name: rm.raw_material_name || rm.raw_material_id?.name || "",
+              tolerances: rm.tolerances && rm.tolerances.length > 0 ? rm.tolerances : [""],
+              quantities: rm.quantities && rm.quantities.length > 0 ? rm.quantities.map(q => String(q)) : [""],
+              comments: rm.comments && rm.comments.length > 0 ? rm.comments : [""],
+            }))
+          : [{
+              raw_material_id: "",
+              raw_material_name: "",
+              tolerances: [""],
+              quantities: [""],
+              comments: [""],
+            }]
+      );
+
+      setProcessRows(
+        bom.processes && bom.processes.length > 0 ? bom.processes : [""]
+      );
+    } catch (e) {
+      console.error("Error loading BOM details", e);
+    }
   };
 
   return (
@@ -155,9 +245,7 @@ const BOM = () => {
             setEditMode(false);
             setViewMode(false);
             formik.resetForm();
-            setCompoundingRows([{ compoundId: "", compoundName: "", compoundCode: "", hardness: "", partName: "" }]);
-            setRawMaterialRows([{ rawMaterialId: "", rawMaterialName: "", rawMaterialCode: "", weight: "", tolerance: "" }]);
-            setProcessRows(["", "", "", ""]);
+            resetAllFields();
             setShowModal(true);
           }}
         >
@@ -204,9 +292,8 @@ const BOM = () => {
         <table className="w-full min-w-[700px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
-              <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
-              <th className="px-4 sm:px-6 py-3 font-medium">Part Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Compound Codes</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Part Names</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Created Date</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
                 Action
@@ -216,7 +303,7 @@ const BOM = () => {
           <tbody>
             {bomsLoading ? (
               <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
+                <td colSpan="4" className="text-center py-6 text-gray-500">
                   Loading BOMs...
                 </td>
               </tr>
@@ -224,11 +311,9 @@ const BOM = () => {
               (filteredBoms.length ? filteredBoms : boms)
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
-                  return (
-                    (item.compound_name || "").toLowerCase().includes(q) ||
-                    (item.compound_code || "").toLowerCase().includes(q) ||
-                    (item.part_name || "").toLowerCase().includes(q)
-                  );
+                  const compoundCodesStr = (item.compound_codes || []).join(" ").toLowerCase();
+                  const partNamesStr = (item.part_names || []).join(" ").toLowerCase();
+                  return compoundCodesStr.includes(q) || partNamesStr.includes(q);
                 })
                 .map((item, index) => (
                   <tr
@@ -237,92 +322,22 @@ const BOM = () => {
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 sm:px-6 py-3">{item.compound_code}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.compound_name}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.part_name}</td>
-                    <td className="px-4 sm:px-6 py-3">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {(item.compound_codes || []).join(", ") || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {(item.part_names || []).join(", ") || "-"}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}
+                    </td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit className="h-4 w-4 text-blue-500 cursor-pointer" onClick={async () => {
-                          try {
-                            const res = await axiosHandler.get(`/bom/${item._id}`, { withCredentials: true });
-                            const bom = res?.data?.bom || {};
-                            setSelectedBom(bom);
-                            formik.setValues({
-                              _id: bom._id || "",
-                              compoundId: bom.compound || "",
-                              compoundName: bom.compound_name || "",
-                              compoundCode: bom.compound_code || "",
-                              compoundingStandardHardness: bom.hardness || "",
-                              partName: bom.part_name || "",
-                              rawMaterialId: bom.raw_material || "",
-                              rawMaterialName: bom.raw_material_name || "",
-                              rawMaterialCode: bom.raw_material_code || "",
-                              rawMaterialWeight: bom.raw_material_weight || "",
-                              rawMaterialTolerance: bom.raw_material_tolerance || "",
-                              process1: bom.process1 || (Array.isArray(bom.processes) ? bom.processes[0] || "" : ""),
-                              process2: bom.process2 || (Array.isArray(bom.processes) ? bom.processes[1] || "" : ""),
-                              process3: bom.process3 || (Array.isArray(bom.processes) ? bom.processes[2] || "" : ""),
-                              process4: bom.process4 || (Array.isArray(bom.processes) ? bom.processes[3] || "" : ""),
-                            });
-                            setProcessRows(
-                              Array.isArray(bom.processes) && bom.processes.length
-                                ? [...bom.processes]
-                                : [
-                                    bom.process1 || "",
-                                    bom.process2 || "",
-                                    bom.process3 || "",
-                                    bom.process4 || "",
-                                  ]
-                            );
-                            // initialize rows if arrays exist on bom (future-proof)
-                            if (Array.isArray(bom.compoundingStandards) && bom.compoundingStandards.length) {
-                              setCompoundingRows(
-                                bom.compoundingStandards.map((r) => ({
-                                  compoundId: r.compoundId || r.compound || "",
-                                  compoundName: r.compoundName || "",
-                                  compoundCode: r.compoundCode || "",
-                                  hardness: r.hardness || "",
-                                  partName: r.partName || "",
-                                }))
-                              );
-                            } else {
-                              setCompoundingRows([
-                                {
-                                  compoundId: bom.compound || "",
-                                  compoundName: bom.compound_name || "",
-                                  compoundCode: bom.compound_code || "",
-                                  hardness: bom.hardness || "",
-                                  partName: bom.part_name || "",
-                                },
-                              ]);
-                            }
-                            if (Array.isArray(bom.rawMaterials) && bom.rawMaterials.length) {
-                              setRawMaterialRows(
-                                bom.rawMaterials.map((r) => ({
-                                  rawMaterialId: r.rawMaterialId || r.raw_material || "",
-                                  rawMaterialName: r.rawMaterialName || "",
-                                  rawMaterialCode: r.rawMaterialCode || "",
-                                  weight: r.weight || r.raw_material_weight || "",
-                                  tolerance: r.tolerance || r.raw_material_tolerance || "",
-                                }))
-                              );
-                            } else {
-                              setRawMaterialRows([
-                                {
-                                  rawMaterialId: bom.raw_material || "",
-                                  rawMaterialName: bom.raw_material_name || "",
-                                  rawMaterialCode: bom.raw_material_code || "",
-                                  weight: bom.raw_material_weight || "",
-                                  tolerance: bom.raw_material_tolerance || "",
-                                },
-                              ]);
-                            }
-                            setEditMode(true);
-                            setShowModal(true);
-                          } catch (e) {
-                            console.error("Error loading BOM details", e);
-                          }
+                          await loadBomForEdit(item._id);
+                          setEditMode(true);
+                          setViewMode(false);
+                          setShowModal(true);
                         }} />
                         <Trash2 className="h-4 w-4 text-red-500 cursor-pointer" onClick={async () => {
                           if (!window.confirm("Delete this BOM?")) return;
@@ -334,84 +349,10 @@ const BOM = () => {
                           }
                         }} />
                         <Eye className="h-4 w-4 text-gray-600 cursor-pointer" onClick={async () => {
-                          try {
-                            const res = await axiosHandler.get(`/bom/${item._id}`, { withCredentials: true });
-                            const bom = res?.data?.bom || {};
-                            formik.setValues({
-                              _id: bom._id || "",
-                              compoundId: bom.compound || "",
-                              compoundName: bom.compound_name || "",
-                              compoundCode: bom.compound_code || "",
-                              compoundingStandardHardness: bom.hardness || "",
-                              partName: bom.part_name || "",
-                              rawMaterialId: bom.raw_material || "",
-                              rawMaterialName: bom.raw_material_name || "",
-                              rawMaterialCode: bom.raw_material_code || "",
-                              rawMaterialWeight: bom.raw_material_weight || "",
-                              rawMaterialTolerance: bom.raw_material_tolerance || "",
-                              process1: bom.process1 || (Array.isArray(bom.processes) ? bom.processes[0] || "" : ""),
-                              process2: bom.process2 || (Array.isArray(bom.processes) ? bom.processes[1] || "" : ""),
-                              process3: bom.process3 || (Array.isArray(bom.processes) ? bom.processes[2] || "" : ""),
-                              process4: bom.process4 || (Array.isArray(bom.processes) ? bom.processes[3] || "" : ""),
-                            });
-                            setProcessRows(
-                              Array.isArray(bom.processes) && bom.processes.length
-                                ? [...bom.processes]
-                                : [
-                                    bom.process1 || "",
-                                    bom.process2 || "",
-                                    bom.process3 || "",
-                                    bom.process4 || "",
-                                  ]
-                            );
-                            if (Array.isArray(bom.compoundingStandards) && bom.compoundingStandards.length) {
-                              setCompoundingRows(
-                                bom.compoundingStandards.map((r) => ({
-                                  compoundId: r.compoundId || r.compound || "",
-                                  compoundName: r.compoundName || "",
-                                  compoundCode: r.compoundCode || "",
-                                  hardness: r.hardness || "",
-                                  partName: r.partName || "",
-                                }))
-                              );
-                            } else {
-                              setCompoundingRows([
-                                {
-                                  compoundId: bom.compound || "",
-                                  compoundName: bom.compound_name || "",
-                                  compoundCode: bom.compound_code || "",
-                                  hardness: bom.hardness || "",
-                                  partName: bom.part_name || "",
-                                },
-                              ]);
-                            }
-                            if (Array.isArray(bom.rawMaterials) && bom.rawMaterials.length) {
-                              setRawMaterialRows(
-                                bom.rawMaterials.map((r) => ({
-                                  rawMaterialId: r.rawMaterialId || r.raw_material || "",
-                                  rawMaterialName: r.rawMaterialName || "",
-                                  rawMaterialCode: r.rawMaterialCode || "",
-                                  weight: r.weight || r.raw_material_weight || "",
-                                  tolerance: r.tolerance || r.raw_material_tolerance || "",
-                                }))
-                              );
-                            } else {
-                              setRawMaterialRows([
-                                {
-                                  rawMaterialId: bom.raw_material || "",
-                                  rawMaterialName: bom.raw_material_name || "",
-                                  rawMaterialCode: bom.raw_material_code || "",
-                                  weight: bom.raw_material_weight || "",
-                                  tolerance: bom.raw_material_tolerance || "",
-                                },
-                              ]);
-                            }
-                            setEditMode(false);
-                            setViewMode(true);
-                            setShowModal(true);
-                          } catch (e) {
-                            console.error("Error loading BOM details", e);
-                          }
+                          await loadBomForEdit(item._id);
+                          setEditMode(false);
+                          setViewMode(true);
+                          setShowModal(true);
                         }} />
                       </div>
                     </td>
@@ -419,7 +360,7 @@ const BOM = () => {
                 ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center py-6 text-gray-500">
+                <td colSpan="4" className="text-center py-6 text-gray-500">
                   No BOM found.
                 </td>
               </tr>
@@ -451,9 +392,7 @@ const BOM = () => {
                   setEditMode(false);
                   setViewMode(false);
                   formik.resetForm();
-                  setCompoundingRows([{ compoundId: "", compoundName: "", compoundCode: "", hardness: "", partName: "" }]);
-                  setRawMaterialRows([{ rawMaterialId: "", rawMaterialName: "", rawMaterialCode: "", weight: "", tolerance: "" }]);
-                  setProcessRows(["", "", "", ""]);
+                  resetAllFields();
                 }}
                 className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
               >
@@ -466,131 +405,628 @@ const BOM = () => {
               </h1>
               <hr className="border-gray-300 mb-6" />
 
-              {/* BOM Id & Name */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Compound Code
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter BOM Id..."
-                    name="compoundCode"
-                    value={formik.values.compoundCode}
-                    onChange={formik.handleChange}
-                    disabled={viewMode}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                  />
-                </div>
+              {/* Compound Name + Compound Codes, Part Names, Hardnesses */}
+              <div className="mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+                  Compound Name, Compound Codes, Part Names & Hardnesses
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Compound Name */}
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Compound Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter compound name"
+                      value={compoundName}
+                      onChange={(e) => setCompoundName(e.target.value)}
+                      disabled={viewMode}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                    />
+                  </div>
+                  {/* Compound Codes */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Compound Codes
+                    </label>
+                    {compoundCodes.map((code, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          placeholder="Enter compound code"
+                          value={code}
+                          onChange={(e) => {
+                            const next = [...compoundCodes];
+                            next[idx] = e.target.value;
+                            setCompoundCodes(next);
+                          }}
+                          disabled={viewMode}
+                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                        />
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              if (compoundCodes.length > 1) {
+                                setCompoundCodes(compoundCodes.filter((_, i) => i !== idx));
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {/* We can re-enable add-more if required later */}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Compound Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter BOM Name"
-                    name="compoundName"
-                    value={formik.values.compoundName}
-                    onChange={formik.handleChange}
-                    disabled={viewMode}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                  />
+                  {/* Part Names */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Part Names
+                    </label>
+                    {partNames.map((name, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          placeholder="Enter part name"
+                          value={name}
+                          onChange={(e) => {
+                            const next = [...partNames];
+                            next[idx] = e.target.value;
+                            setPartNames(next);
+                          }}
+                          disabled={viewMode}
+                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                        />
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              if (partNames.length > 1) {
+                                setPartNames(partNames.filter((_, i) => i !== idx));
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {!viewMode && (
+                      <button
+                        onClick={() => setPartNames([...partNames, ""])}
+                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                      >
+                        {/* <Plus className="h-4 w-4" /> Add More */}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Hardnesses */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Hardnesses
+                    </label>
+                    {hardnesses.map((hardness, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2">
+                        <input
+                          type="text"
+                          placeholder="Enter hardness"
+                          value={hardness}
+                          onChange={(e) => {
+                            const next = [...hardnesses];
+                            next[idx] = e.target.value;
+                            setHardnesses(next);
+                          }}
+                          disabled={viewMode}
+                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                        />
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              if (hardnesses.length > 1) {
+                                setHardnesses(hardnesses.filter((_, i) => i !== idx));
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {!viewMode && (
+                      <button
+                        onClick={() => setHardnesses([...hardnesses, ""])}
+                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
+                      >
+                        <Plus className="h-4 w-4" /> Add More
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Sections */}
-              <Section
-                title="Compounding Standard"
-                headers={[
-                  "Compound Name",
-                  "Compound Code",
-                  "Hardness",
-                  "Part Name",
-                ]}
-                selectOptions={finishedGoods.map((fg) => ({
-                  label: `${fg.name} (${fg.product_id})`,
-                  value: fg._id,
-                  code: fg.product_id,
-                  name: fg.name,
-                }))}
-                rows={compoundingRows}
-                setRows={setCompoundingRows}
-                onRowChange={(idx, field, val) => {
-                  const next = [...compoundingRows];
-                  next[idx][field] = val;
-                  setCompoundingRows(next);
-                  if (idx === 0) {
-                    // keep first row in single-value fields for backward compatibility
-                    if (field === "compoundId") formik.setFieldValue("compoundId", val);
-                    if (field === "compoundCode") formik.setFieldValue("compoundCode", val);
-                    if (field === "hardness") formik.setFieldValue("compoundingStandardHardness", val);
-                    if (field === "partName") formik.setFieldValue("partName", val);
-                    if (field === "compoundName") formik.setFieldValue("compoundName", val);
-                  }
-                }}
-                disabled={viewMode}
-              />
+              {/* Finished Goods Section */}
+              <div className="mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+                  Finished Goods
+                </h2>
+                {finishedGoods.map((fg, fgIdx) => (
+                  <div key={fgIdx} className="border rounded-lg p-4 mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="font-medium">Finished Good #{fgIdx + 1}</h3>
+                      {!viewMode && (
+                        <button
+                          onClick={() => {
+                            if (finishedGoods.length > 1) {
+                              setFinishedGoods(finishedGoods.filter((_, i) => i !== fgIdx));
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Finished Good (ID + Name)
+                      </label>
+                      <select
+                        value={fg.finished_good_id_name}
+                        onChange={(e) => {
+                          const next = [...finishedGoods];
+                          next[fgIdx].finished_good_id_name = e.target.value;
+                          setFinishedGoods(next);
+                        }}
+                        disabled={viewMode}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                      >
+                        <option value="">Select Finished Good...</option>
+                        {finishedGoodsOptions.map((fgOption) => (
+                          <option key={fgOption._id} value={`${fgOption._id}-${fgOption.name}`}>
+                            {fgOption.name} ({fgOption.product_id})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-              <Section
-                title="Raw Material"
-                headers={[
-                  "Raw Material Name",
-                  "Weight",
-                  "Tolerance",
-                  "Code No.",
-                ]}
-                selectOptions={rawMaterials.map((rm) => ({
-                  label: `${rm.name} (${rm.product_id})`,
-                  value: rm._id,
-                  code: rm.product_id,
-                  name: rm.name,
-                }))}
-                rows={rawMaterialRows}
-                setRows={setRawMaterialRows}
-                onRowChange={(idx, field, val) => {
-                  const next = [...rawMaterialRows];
-                  next[idx][field] = val;
-                  setRawMaterialRows(next);
-                  if (idx === 0) {
-                    if (field === "rawMaterialId") formik.setFieldValue("rawMaterialId", val);
-                    if (field === "weight") formik.setFieldValue("rawMaterialWeight", val);
-                    if (field === "tolerance") formik.setFieldValue("rawMaterialTolerance", val);
-                    if (field === "rawMaterialCode") formik.setFieldValue("rawMaterialCode", val);
-                    if (field === "rawMaterialName") formik.setFieldValue("rawMaterialName", val);
-                  }
-                }}
-                disabled={viewMode}
-              />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Tolerances */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tolerances
+                        </label>
+                        {fg.tolerances.map((tol, tolIdx) => (
+                          <div key={tolIdx} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Tolerance"
+                              value={tol}
+                              onChange={(e) => {
+                                const next = [...finishedGoods];
+                                next[fgIdx].tolerances[tolIdx] = e.target.value;
+                                setFinishedGoods(next);
+                              }}
+                              disabled={viewMode}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                            />
+                            {!viewMode && (
+                              <button
+                                onClick={() => {
+                                  const next = [...finishedGoods];
+                                  if (next[fgIdx].tolerances.length > 1) {
+                                    next[fgIdx].tolerances = next[fgIdx].tolerances.filter((_, i) => i !== tolIdx);
+                                  } else {
+                                    next[fgIdx].tolerances[0] = "";
+                                  }
+                                  setFinishedGoods(next);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              const next = [...finishedGoods];
+                              next[fgIdx].tolerances.push("");
+                              setFinishedGoods(next);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Add Tolerance
+                          </button>
+                        )}
+                      </div>
 
+                      {/* Quantities */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Quantities
+                        </label>
+                        {fg.quantities.map((qty, qtyIdx) => (
+                          <div key={qtyIdx} className="flex gap-2 mb-2">
+                            <input
+                              type="number"
+                              placeholder="Quantity"
+                              value={qty}
+                              onChange={(e) => {
+                                const next = [...finishedGoods];
+                                next[fgIdx].quantities[qtyIdx] = e.target.value;
+                                setFinishedGoods(next);
+                              }}
+                              disabled={viewMode}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                            />
+                            {!viewMode && (
+                              <button
+                                onClick={() => {
+                                  const next = [...finishedGoods];
+                                  if (next[fgIdx].quantities.length > 1) {
+                                    next[fgIdx].quantities = next[fgIdx].quantities.filter((_, i) => i !== qtyIdx);
+                                  } else {
+                                    next[fgIdx].quantities[0] = "";
+                                  }
+                                  setFinishedGoods(next);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              const next = [...finishedGoods];
+                              next[fgIdx].quantities.push("");
+                              setFinishedGoods(next);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Add Quantity
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Comments */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Comments
+                        </label>
+                        {fg.comments.map((comment, commentIdx) => (
+                          <div key={commentIdx} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Comment"
+                              value={comment}
+                              onChange={(e) => {
+                                const next = [...finishedGoods];
+                                next[fgIdx].comments[commentIdx] = e.target.value;
+                                setFinishedGoods(next);
+                              }}
+                              disabled={viewMode}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                            />
+                            {!viewMode && (
+                              <button
+                                onClick={() => {
+                                  const next = [...finishedGoods];
+                                  if (next[fgIdx].comments.length > 1) {
+                                    next[fgIdx].comments = next[fgIdx].comments.filter((_, i) => i !== commentIdx);
+                                  } else {
+                                    next[fgIdx].comments[0] = "";
+                                  }
+                                  setFinishedGoods(next);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              const next = [...finishedGoods];
+                              next[fgIdx].comments.push("");
+                              setFinishedGoods(next);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Add Comment
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {!viewMode && (
+                  <button
+                    onClick={() => {
+                      setFinishedGoods([
+                        ...finishedGoods,
+                        {
+                          finished_good_id_name: "",
+                          tolerances: [""],
+                          quantities: [""],
+                          comments: [""],
+                        },
+                      ]);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
+                  >
+                    Add Finished Good
+                  </button>
+                )}
+              </div>
+
+              {/* Raw Materials Section */}
+              <div className="mb-8">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+                  Raw Materials
+                </h2>
+                {rawMaterials.map((rm, rmIdx) => (
+                  <div key={rmIdx} className="border rounded-lg p-4 mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="font-medium">Raw Material #{rmIdx + 1}</h3>
+                      {!viewMode && (
+                        <button
+                          onClick={() => {
+                            if (rawMaterials.length > 1) {
+                              setRawMaterials(rawMaterials.filter((_, i) => i !== rmIdx));
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Raw Material
+                      </label>
+                      <select
+                        value={rm.raw_material_id}
+                        onChange={(e) => {
+                          const next = [...rawMaterials];
+                          const selected = rawMaterialsOptions.find(opt => opt._id === e.target.value);
+                          next[rmIdx].raw_material_id = e.target.value;
+                          next[rmIdx].raw_material_name = selected ? selected.name : "";
+                          setRawMaterials(next);
+                        }}
+                        disabled={viewMode}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                      >
+                        <option value="">Select Raw Material...</option>
+                        {rawMaterialsOptions.map((rmOption) => (
+                          <option key={rmOption._id} value={rmOption._id}>
+                            {rmOption.name} ({rmOption.product_id})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Tolerances */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Tolerances
+                        </label>
+                        {rm.tolerances.map((tol, tolIdx) => (
+                          <div key={tolIdx} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Tolerance"
+                              value={tol}
+                              onChange={(e) => {
+                                const next = [...rawMaterials];
+                                next[rmIdx].tolerances[tolIdx] = e.target.value;
+                                setRawMaterials(next);
+                              }}
+                              disabled={viewMode}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                            />
+                            {!viewMode && (
+                              <button
+                                onClick={() => {
+                                  const next = [...rawMaterials];
+                                  if (next[rmIdx].tolerances.length > 1) {
+                                    next[rmIdx].tolerances = next[rmIdx].tolerances.filter((_, i) => i !== tolIdx);
+                                  } else {
+                                    next[rmIdx].tolerances[0] = "";
+                                  }
+                                  setRawMaterials(next);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              const next = [...rawMaterials];
+                              next[rmIdx].tolerances.push("");
+                              setRawMaterials(next);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Add Tolerance
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Quantities */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Quantities
+                        </label>
+                        {rm.quantities.map((qty, qtyIdx) => (
+                          <div key={qtyIdx} className="flex gap-2 mb-2">
+                            <input
+                              type="number"
+                              placeholder="Quantity"
+                              value={qty}
+                              onChange={(e) => {
+                                const next = [...rawMaterials];
+                                next[rmIdx].quantities[qtyIdx] = e.target.value;
+                                setRawMaterials(next);
+                              }}
+                              disabled={viewMode}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                            />
+                            {!viewMode && (
+                              <button
+                                onClick={() => {
+                                  const next = [...rawMaterials];
+                                  if (next[rmIdx].quantities.length > 1) {
+                                    next[rmIdx].quantities = next[rmIdx].quantities.filter((_, i) => i !== qtyIdx);
+                                  } else {
+                                    next[rmIdx].quantities[0] = "";
+                                  }
+                                  setRawMaterials(next);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              const next = [...rawMaterials];
+                              next[rmIdx].quantities.push("");
+                              setRawMaterials(next);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Add Quantity
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Comments */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Comments
+                        </label>
+                        {rm.comments.map((comment, commentIdx) => (
+                          <div key={commentIdx} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Comment"
+                              value={comment}
+                              onChange={(e) => {
+                                const next = [...rawMaterials];
+                                next[rmIdx].comments[commentIdx] = e.target.value;
+                                setRawMaterials(next);
+                              }}
+                              disabled={viewMode}
+                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                            />
+                            {!viewMode && (
+                              <button
+                                onClick={() => {
+                                  const next = [...rawMaterials];
+                                  if (next[rmIdx].comments.length > 1) {
+                                    next[rmIdx].comments = next[rmIdx].comments.filter((_, i) => i !== commentIdx);
+                                  } else {
+                                    next[rmIdx].comments[0] = "";
+                                  }
+                                  setRawMaterials(next);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        {!viewMode && (
+                          <button
+                            onClick={() => {
+                              const next = [...rawMaterials];
+                              next[rmIdx].comments.push("");
+                              setRawMaterials(next);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Add Comment
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {!viewMode && (
+                  <button
+                    onClick={() => {
+                      setRawMaterials([
+                        ...rawMaterials,
+                        {
+                          raw_material_id: "",
+                          raw_material_name: "",
+                          tolerances: [""],
+                          quantities: [""],
+                          comments: [""],
+                        },
+                      ]);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
+                  >
+                    Add Raw Material
+                  </button>
+                )}
+              </div>
+
+              {/* Processes Section */}
               <section className="mb-8">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
                   Processes
                 </h2>
-                <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 bg-blue-600 text-white rounded-md px-3 py-2 text-xs sm:text-sm font-medium">
-                  {['Process 1','Process 2','Process 3','Process 4'].map((h, i) => (
-                    <span key={i} className="truncate text-center">{h}</span>
-                  ))}
-                </div>
-                <div className="flex flex-col gap-3 mt-3">
+                <div className="flex flex-col gap-3">
                   {processRows.map((proc, idx) => (
-                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div key={idx} className="flex gap-2">
                       <input
-                        placeholder={idx === 0 ? "e.g., Mixing" : idx === 1 ? "e.g., Kneading" : idx === 2 ? "e.g., Curing" : "e.g., Finishing"}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                        placeholder={`Process ${idx + 1}`}
+                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                         value={proc}
                         onChange={(e) => {
                           const next = [...processRows];
                           next[idx] = e.target.value;
                           setProcessRows(next);
-                          // keep first four in legacy fields
-                          if (idx === 0) formik.setFieldValue('process1', e.target.value);
-                          if (idx === 1) formik.setFieldValue('process2', e.target.value);
-                          if (idx === 2) formik.setFieldValue('process3', e.target.value);
-                          if (idx === 3) formik.setFieldValue('process4', e.target.value);
                         }}
                         disabled={viewMode}
                       />
+                      {!viewMode && (
+                        <button
+                          onClick={() => {
+                            if (processRows.length > 1) {
+                              setProcessRows(processRows.filter((_, i) => i !== idx));
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -599,11 +1035,10 @@ const BOM = () => {
                     <button
                       className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
                       onClick={() => {
-                        if (processRows.length > 49) return;
                         setProcessRows([...processRows, ""]);
                       }}
                     >
-                      Add More
+                      Add More Process
                     </button>
                   </div>
                 )}
@@ -625,127 +1060,5 @@ const BOM = () => {
     </div>
   );
 };
-
-/* Reusable Section Component */
-const Section = ({ title, headers, selectOptions, rows, setRows, onRowChange, disabled = false }) => (
-  <section className="mb-8">
-    {/* Section Title */}
-    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
-      {title}
-    </h2>
-
-    {/* Header Row */}
-    <div className="hidden sm:grid grid-cols-2 sm:grid-cols-4 bg-blue-600 text-white rounded-md px-3 py-2 text-xs sm:text-sm font-medium">
-      {headers.map((h, i) => (
-        <span key={i} className="truncate text-center">
-          {h}
-        </span>
-      ))}
-    </div>
-
-    {/* Input Row(s) */}
-    {rows && Array.isArray(rows) ? (
-      <div className="flex flex-col gap-3 mt-3">
-        {rows.map((row, idx) => (
-          <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            {selectOptions ? (
-              <select
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                value={row.compoundId || row.rawMaterialId || ""}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const isCompound = Object.prototype.hasOwnProperty.call(row, "compoundId");
-                  onRowChange && onRowChange(idx, isCompound ? "compoundId" : "rawMaterialId", val);
-                  const found = selectOptions.find((o) => o.value === val);
-                  if (isCompound) {
-                    onRowChange && onRowChange(idx, "compoundName", found?.name || "");
-                    onRowChange && onRowChange(idx, "compoundCode", found?.code || "");
-                  } else {
-                    onRowChange && onRowChange(idx, "rawMaterialName", found?.name || "");
-                    onRowChange && onRowChange(idx, "rawMaterialCode", found?.code || "");
-                  }
-                }}
-                disabled={disabled}
-              >
-                <option value="">Select...</option>
-                {selectOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                placeholder={`Enter ${headers[0]}`}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                value={row[headers[0]] || ""}
-                onChange={(e) => onRowChange && onRowChange(idx, headers[0], e.target.value)}
-                disabled={disabled}
-              />
-            )}
-
-            <input
-              placeholder={`Enter ${headers[1]}`}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-              value={row.compoundCode ?? row.weight ?? ""}
-              onChange={(e) => {
-                const isCompound = Object.prototype.hasOwnProperty.call(row, "compoundCode");
-                onRowChange && onRowChange(idx, isCompound ? "compoundCode" : "weight", e.target.value);
-              }}
-              disabled={disabled}
-            />
-            <input
-              placeholder={`Enter ${headers[2]}`}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-              value={row.hardness ?? row.tolerance ?? ""}
-              onChange={(e) => {
-                const isCompound = Object.prototype.hasOwnProperty.call(row, "hardness");
-                onRowChange && onRowChange(idx, isCompound ? "hardness" : "tolerance", e.target.value);
-              }}
-              disabled={disabled}
-            />
-            <input
-              placeholder={`Enter ${headers[3]}`}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-              value={row.partName ?? row.rawMaterialCode ?? ""}
-              onChange={(e) => {
-                const isCompound = typeof row.partName !== "undefined";
-                onRowChange && onRowChange(idx, isCompound ? "partName" : "rawMaterialCode", e.target.value);
-              }}
-              disabled={disabled}
-            />
-          </div>
-        ))}
-      </div>
-    ) : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-        {/* Fallback single-row mode (not used now) */}
-      </div>
-    )}
-
-    {/* Add More Button */}
-    {!disabled && setRows && onRowChange && (
-      <div className="flex justify-end mt-4">
-        <button
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
-          onClick={() => {
-            if (rows && Array.isArray(rows)) {
-              if (rows.length > 49) return; // simple guard
-              const isCompound = rows[0] && typeof rows[0].compoundId !== "undefined";
-              const blank = isCompound
-                ? { compoundId: "", compoundName: "", compoundCode: "", hardness: "", partName: "" }
-                : { rawMaterialId: "", rawMaterialName: "", rawMaterialCode: "", weight: "", tolerance: "" };
-              setRows([...rows, blank]);
-            }
-          }}
-        >
-          Add More
-        </button>
-      </div>
-    )}
-
-    
-  </section>
-);
 
 export default BOM;

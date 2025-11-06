@@ -210,7 +210,7 @@ const Supplier = () => {
         <div className="overflow-auto max-h-[70vh] rounded-lg">
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
+              <tr className="bg-gradient-to-r text-center from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
                 {[
                   "Supplier Id",
                   "Name",
@@ -246,7 +246,7 @@ const Supplier = () => {
                 filteredSuppliers.map((s, i) => (
                   <tr
                     key={s._id || i}
-                    className={`transition-all duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    className={`transition-all text-center duration-200 ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-blue-50`}
                   >
                     <td className="py-3 px-4 text-center text-gray-800 border-b">

@@ -149,6 +149,25 @@ const updateUserRole = async (id, role) => {
   }
 };
 
+const deleteUser = async (id) => {
+  try {
+    const res = await axiosHandler.delete("/auth/user", {
+      data: { _id: id }, 
+    });
+
+    toast.success(res?.data?.message || "User deleted successfully!");
+    await getAllUsers(); // refresh user list after deletion
+  } catch (error) {
+    console.error("Error deleting user:", error.response?.data || error);
+    toast.error(error.response?.data?.message || "Failed to delete user");
+  }
+};
+
+
+
+
+
+
 
   // ========================= PROVIDER =========================
 
@@ -170,6 +189,7 @@ const updateUserRole = async (id, role) => {
         allUsers, 
         setAllUsers,
         updateUserRole,
+        deleteUser,
         token
       }}
     >

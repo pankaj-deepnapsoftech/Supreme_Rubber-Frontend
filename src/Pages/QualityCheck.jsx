@@ -19,7 +19,6 @@ import axiosHandler from "@/config/axiosconfig";
 import Pagination from "@/Components/Pagination/Pagination";
 
 const QualityCheck = () => {
-
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
@@ -51,7 +50,8 @@ const QualityCheck = () => {
     setSelectedReport,
     loading,
     ChangesStatus,
-    page, setPage
+    page,
+    setPage,
   } = useQualityCheck();
 
   useEffect(() => {
@@ -345,7 +345,7 @@ const QualityCheck = () => {
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
-            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-center text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">PO Number</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Company</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
@@ -380,8 +380,9 @@ const QualityCheck = () => {
                 .map((item, i) => (
                   <tr
                     key={item._id || i}
-                    className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      }`}
+                    className={`border-t text-center ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
                   >
                     <td className="px-4 sm:px-6 py-3">
                       {item?.gateman_entry_id?.po_number || "-"}
@@ -398,7 +399,22 @@ const QualityCheck = () => {
                     <td className="px-4 sm:px-6 py-3">
                       {item?.rejected_quantity}
                     </td>
-                    <td className="px-4 sm:px-6 py-3">{item?.status || "-"}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                          item?.status === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : item?.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : item?.status === "Rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {item?.status || "-"}
+                      </span>
+                    </td>
+
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit
@@ -432,13 +448,12 @@ const QualityCheck = () => {
                         />
                         <Download
                           className="h-4 w-4 text-green-700 cursor-pointer"
-                          onClick={() => { }}
+                          onClick={() => {}}
                         />
                         <Eye
                           className="h-4 w-4 text-gray-600 cursor-pointer"
                           onClick={() => handleView(item?._id)}
                         />
-
                       </div>
                     </td>
                   </tr>
@@ -566,7 +581,6 @@ const QualityCheck = () => {
                             </h4>
                             <p className="text-sm text-gray-600">
                               Available Quantity: {item.available_quantity}
-
                               {console.log("helloworld", formData)}
                             </p>
                           </div>
@@ -626,11 +640,11 @@ const QualityCheck = () => {
                           {(parseInt(item.approved_quantity) || 0) +
                             (parseInt(item.rejected_quantity) || 0) >
                             parseInt(item.available_quantity) && (
-                              <p className="text-xs text-red-500 mt-1">
-                                Total quantity cannot exceed available quantity (
-                                {item.available_quantity})
-                              </p>
-                            )}
+                            <p className="text-xs text-red-500 mt-1">
+                              Total quantity cannot exceed available quantity (
+                              {item.available_quantity})
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -638,11 +652,13 @@ const QualityCheck = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">Attach Gateman</label>
+                  <label className="block text-sm font-medium">
+                    Attach Gateman
+                  </label>
                   <input
                     type="file"
                     name="attached_po"
-                    onChange={() => { }}
+                    onChange={() => {}}
                     className="w-full border rounded-md px-3 py-2 mt-1"
                   />
                 </div>
@@ -707,8 +723,9 @@ const QualityCheck = () => {
                       .map((po, i) => (
                         <tr
                           key={i}
-                          className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                            }`}
+                          className={`border-b hover:bg-gray-50 transition ${
+                            i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
                         >
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             {po?.po_number}
@@ -944,7 +961,11 @@ const QualityCheck = () => {
           </div>
         </div>
       )}
-      <Pagination page={page} setPage={setPage} hasNextPage={qualityReports?.length === 10} />
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={qualityReports?.length === 10}
+      />
     </div>
   );
 };

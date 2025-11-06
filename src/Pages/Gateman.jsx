@@ -308,7 +308,31 @@ const Gateman = () => {
                   <td className="py-3 px-4 text-center">
                     {g.items?.map((i) => i.item_quantity).join(", ")}
                   </td>
-                  <td className="py-3 px-4 text-center">{g.status}</td>
+                  <td className="py-3 px-4 text-center"><span className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                          g?.status === "Verified"
+                            ? "bg-green-100 text-green-700"
+                            : g?.status === "Entry Created"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : g?.status === "Rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}>{g?.status || "-"}</span> </td>
+
+                  {/* <td className="px-3 py-2">
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                          item?.status === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : item?.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : item?.status === "Rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {item?.status || "-"}
+                      </span>
+                    </td> */}
                   <td className="py-3 px-4 text-center border-b">
                     <div className="flex items-center justify-center space-x-3">
                       <button

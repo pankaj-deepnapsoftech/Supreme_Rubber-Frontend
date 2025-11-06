@@ -11,20 +11,26 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/Context/AuthContext";
-import { useUserRole } from "@/Context/UserRoleContext"; 
+import { useUserRole } from "@/Context/UserRoleContext";
 import Pagination from "@/Components/Pagination/Pagination";
 
 const Employee = () => {
-  const { user, allUsers, getAllUsers, getUserById,updateUserRole } = useAuth();
-  const { roles, loading: rolesLoading } = useUserRole(); 
-  const [page,setPage] = useState(1)
+  const {
+    user,
+    allUsers,
+    getAllUsers,
+    getUserById,
+    updateUserRole,
+    deleteUser,
+  } = useAuth();
+  const { roles, loading: rolesLoading } = useUserRole();
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [updating, setUpdating] = useState(false);
-
 
   const fetchEmployees = async () => {
     try {
@@ -49,22 +55,33 @@ const Employee = () => {
     }
   };
 
-const handleUpdateRole = async () => {
-  if (!selectedEmployee?._id || !selectedRole) {
-    alert("Please select a role before updating.");
-    return;
-  }
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      try {
+        await deleteUser(id);
+        fetchEmployees(); // refresh list
+      } catch (error) {
+        console.error("Error deleting employee:", error);
+      }
+    }
+  };
 
-  try {
-    setUpdating(true);
-    await updateUserRole(selectedEmployee._id, selectedRole);
-    setShowModal(false);
-  } catch (error) {
-    console.error("Error updating role:", error);
-  } finally {
-    setUpdating(false);
-  }
-};
+  const handleUpdateRole = async () => {
+    if (!selectedEmployee?._id || !selectedRole) {
+      alert("Please select a role before updating.");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      await updateUserRole(selectedEmployee._id, selectedRole);
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error updating role:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
   useEffect(() => {
     if (user) fetchEmployees();
   }, [user, page]);
@@ -77,8 +94,9 @@ const handleUpdateRole = async () => {
 
   return (
     <div className="p-6 relative overflow-hidden">
+      <h1 className="text-2xl font-semibold">Employee</h1>
       {/* Search + Actions */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 mt-6">
         <div className="flex items-center border rounded-lg px-3 py-2 w-64">
           <Search size={18} className="text-gray-400 mr-2" />
           <input
@@ -95,24 +113,25 @@ const handleUpdateRole = async () => {
           <Plus size={18} className="cursor-pointer" />
           <RefreshCw
             size={18}
-            className={`cursor-pointer ${loading ? "animate-spin text-blue-500" : ""}`}
+            className={`cursor-pointer ${
+              loading ? "animate-spin text-blue-500" : ""
+            }`}
             onClick={fetchEmployees}
           />
           <Download size={18} className="cursor-pointer" />
         </div>
       </div>
 
-      
       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-gradient-to-r from-blue-600 to-sky-500 text-white text-sm uppercase tracking-wide">
-              <th className="py-3 px-4 text-left rounded-tl-2xl">Name</th>
-              <th className="py-3 px-4 text-left">Employee ID</th>
-              <th className="py-3 px-4 text-left">Email</th>
-              <th className="py-3 px-4 text-left">Phone</th>
-              <th className="py-3 px-4 text-left">Verified</th>
-              <th className="py-3 px-4 text-left rounded-tr-2xl">Action</th>
+            <tr className="bg-gradient-to-r text-center from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
+              <th className="py-3 px-4  ">Name</th>
+              <th className="py-3 px-4">Employee ID</th>
+              <th className="py-3 px-4">Email</th>
+              <th className="py-3 px-4">Phone</th>
+              <th className="py-3 px-4">Verified</th>
+              <th className="py-3 px-4">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -120,15 +139,18 @@ const handleUpdateRole = async () => {
               filteredEmployees.map((emp, index) => (
                 <tr
                   key={emp._id}
-                  className={`text-sm transition-all duration-200 ${index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
+                  className={`text-sm transition-all text-center duration-200 ${
+                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-blue-50`}
                 >
                   <td className="py-3 px-4 font-medium text-gray-800">
                     {emp.first_name} {emp.last_name}
                   </td>
                   <td className="py-3 px-4 text-gray-600">{emp.employeeId}</td>
                   <td className="py-3 px-4 text-gray-600">{emp.email}</td>
-                  <td className="py-3 px-4 text-gray-600">{emp.phone || "—"}</td>
+                  <td className="py-3 px-4 text-gray-600">
+                    {emp.phone || "—"}
+                  </td>
                   <td className="py-3 px-4">
                     {emp.isVerified ? (
                       <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
@@ -140,7 +162,7 @@ const handleUpdateRole = async () => {
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-4 flex items-center space-x-3">
+                  <td className="py-3 px-4 flex justify-center space-x-3">
                     <Edit
                       size={16}
                       className="text-blue-500 cursor-pointer hover:text-blue-700 transition-colors"
@@ -149,6 +171,7 @@ const handleUpdateRole = async () => {
                     <Trash2
                       size={16}
                       className="text-red-500 cursor-pointer hover:text-red-700 transition-colors"
+                      onClick={() => handleDelete(emp._id)}
                     />
                   </td>
                 </tr>
@@ -166,7 +189,6 @@ const handleUpdateRole = async () => {
           </tbody>
         </table>
       </div>
-
 
       {/* Drawer */}
       <AnimatePresence>
@@ -235,7 +257,11 @@ const handleUpdateRole = async () => {
         )}
       </AnimatePresence>
 
-      <Pagination page={page} setPage={setPage} hasNextPage={allUsers?.length === 10} />
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={allUsers?.length === 10}
+      />
     </div>
   );
 };
