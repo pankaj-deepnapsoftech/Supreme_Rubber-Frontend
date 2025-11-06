@@ -511,7 +511,25 @@ const Production_Start = () => {
                     <td className="px-4 sm:px-6 py-3">{fg?.prod_qty || fg?.est_qty || 0}</td>
                     <td className="px-4 sm:px-6 py-3">{fg?.uom || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
-                      <div className="flex justify-center space-x-3">
+                      <div className="flex justify-center items-center space-x-3">
+                        {(() => {
+                          const fgQty = parseFloat(fg?.prod_qty) || 0;
+                          const usedTotal = (prod?.raw_materials || []).reduce(
+                            (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
+                            0
+                          );
+                          const isMatched = Math.abs(usedTotal - fgQty) <= 1e-6;
+                          return (
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                isMatched ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                              }`}
+                              title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                            >
+                              {isMatched ? "Quantity matched" : "Quantity mismatched"}
+                            </span>
+                          );
+                        })()}
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"
                           onClick={async () => {
@@ -607,6 +625,23 @@ const Production_Start = () => {
                           if (alreadySent) return (
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">Waiting for QC</span>
                           );
+                          // Block sending to QC until quantities match
+                          const fgQty = parseFloat(fg?.prod_qty) || 0;
+                          const usedTotal = (prod?.raw_materials || []).reduce(
+                            (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
+                            0
+                          );
+                          const isMatched = Math.abs(usedTotal - fgQty) <= 1e-6;
+                          if (!isMatched) {
+                            return (
+                              <span
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600"
+                                title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                              >
+                                Quantity mismatched
+                              </span>
+                            );
+                          }
                           return (
                             <button
                               className="px-3 py-1 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 text-xs"

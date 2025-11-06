@@ -1,14 +1,17 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, KeyRound, Factory, Loader2 } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useAuth } from "@/Context/AuthContext";
+import { toast } from "react-toastify";
 
 const VerifyEmail = () => {
-  const { verifyEmail } = useAuth();
+  const { verifyEmail, resendOtp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [resendBusy, setResendBusy] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -32,6 +35,22 @@ const VerifyEmail = () => {
       }
     },
   });
+
+  // Prefill email from navigation state, query params, or localStorage
+  useEffect(() => {
+    try {
+      const stateEmail = location?.state?.email;
+      const queryEmail = (() => {
+        const params = new URLSearchParams(location.search || "");
+        return params.get("email");
+      })();
+      const storedEmail = localStorage.getItem("pendingEmail");
+      const nextEmail = stateEmail || queryEmail || storedEmail || "";
+      if (nextEmail) {
+        formik.setFieldValue("email", nextEmail, false);
+      }
+    } catch (_) {}
+  }, [location]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-900 via-slate-900 to-indigo-900 overflow-hidden text-white">
@@ -103,6 +122,28 @@ const VerifyEmail = () => {
             {formik.touched.otp && formik.errors.otp && (
               <p className="text-xs text-red-400 mt-1">{formik.errors.otp}</p>
             )}
+          {/* Resend OTP */}
+          <button
+            type="button"
+            className="text-cyan-400 mt-2 text-sm hover:underline"
+            onClick={async () => {
+              if (!formik.values.email) {
+                toast.error("Please enter your email to resend OTP");
+                return;
+              }
+              try {
+                setResendBusy(true);
+                await resendOtp(formik.values.email);
+              } catch (err) {
+                // toast handled in context
+              } finally {
+                setResendBusy(false);
+              }
+            }}
+            disabled={resendBusy}
+          >
+            {resendBusy ? "Sending..." : "Resend OTP"}
+          </button>
           </div>
 
           {/* Button */}
