@@ -155,7 +155,7 @@ const Gateman = () => {
 
         formik.resetForm();
         setShowModal(false);
-        await refreshGatemenData(); 
+        await refreshGatemenData();
       } catch (error) {
         console.error("Error submitting form:", error);
       }
@@ -191,22 +191,20 @@ const Gateman = () => {
     document.body.removeChild(link);
   };
 
- const handleAccept = async (id) => {
-  try {
-    await AcceptPOData(id);
-    await refreshGatemenData(); 
-    setShowPOModal(false);      
-    setPendingData((prev) => prev.filter((po) => po._id !== id));
+  const handleAccept = async (id) => {
+    try {
+      await AcceptPOData(id);
+      await refreshGatemenData();
+      setShowPOModal(false);
+      setPendingData((prev) => prev.filter((po) => po._id !== id));
 
-
-    // Close modal only if you want to 
-     setShowPOModal(false);
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to accept purchase order");
-  }
-};
-
+      // Close modal only if you want to
+      setShowPOModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to accept purchase order");
+    }
+  };
 
   return (
     <div className="p-6 relative w-full">
@@ -314,21 +312,7 @@ const Gateman = () => {
                   <td className="py-3 px-4 text-center border-b">
                     <div className="flex items-center justify-center space-x-3">
                       <button
-                        className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
-                        title="View"
-                        onClick={async () => {
-                          const details = await DetailsGatemenData(g?._id);
-                          if (details) {
-                            setEditTable(details);
-                            setMode("view");
-                            setShowModal(true);
-                          }
-                        }}
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                        className="h-4 w-4 text-blue-500 cursor-pointer"
                         title="Edit"
                         onClick={() => {
                           setEditTable(g);
@@ -340,7 +324,7 @@ const Gateman = () => {
                       </button>
 
                       <button
-                        className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                        className="h-4 w-4 text-red-500 cursor-pointer"
                         title="Delete"
                         onClick={async () => {
                           await DeleteGatemenData(g?._id);
@@ -348,6 +332,21 @@ const Gateman = () => {
                         }}
                       >
                         <Trash2 size={16} />
+                      </button>
+
+                      <button
+                        className="h-4 w-4 text-gray-600 cursor-pointer"
+                        title="View"
+                        onClick={async () => {
+                          const details = await DetailsGatemenData(g?._id);
+                          if (details) {
+                            setEditTable(details);
+                            setMode("view");
+                            setShowModal(true);
+                          }
+                        }}
+                      >
+                        <Eye size={16} />
                       </button>
                     </div>
                   </td>
@@ -709,8 +708,37 @@ const Gateman = () => {
                           <div className="flex items-center justify-start space-x-3">
                             <button
                               className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
-                              title="View"
-                              onClick={() => handleAccept(po?._id)}
+                              title="Accept"
+                              onClick={async () => {
+                                await handleAccept(po?._id); // updates status etc.
+                                await refreshGatemenData(); // refresh data
+                                setShowPOModal(false); // close PO list modal
+                                setShowModal(true); // open Gate Entry modal
+
+                                // Auto-fill Gate Entry Form with selected PO details
+                                const selectedPO = pendingData.find(
+                                  (entry) => entry._id === po._id
+                                );
+
+                                if (selectedPO) {
+                                  formik.setValues({
+                                    po_ref: selectedPO._id,
+                                    po_number: selectedPO.po_number || "",
+                                    invoice_number: "",
+                                    company_name:
+                                      selectedPO?.supplier?.company_name || "",
+                                    items: selectedPO.products?.map((p) => ({
+                                      item_name: p.item_name,
+                                      item_quantity: p.est_quantity || 1,
+                                    })) || [
+                                      { item_name: "", item_quantity: 1 },
+                                    ],
+                                    attached_po: null,
+                                    attached_invoice: null,
+                                    status: "Entry Created",
+                                  });
+                                }
+                              }}
                             >
                               Accept
                             </button>

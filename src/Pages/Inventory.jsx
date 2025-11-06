@@ -262,26 +262,28 @@ const Inventory = () => {
                     <td className="py-3 px-4 text-center border-b">
                       <div className="flex items-center justify-center space-x-3">
                         <button
-                          className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
-                          title="View"
-                          onClick={() => handleView(item._id)}
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          className="p-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200"
+                          className="h-4 w-4 text-blue-500 cursor-pointer"
                           title="Edit"
                           onClick={() => handleEdit(item._id)}
                         >
                           <Edit size={16} />
                         </button>
                         <button
-                          className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                          className="h-4 w-4 text-red-500 cursor-pointer"
                           title="Delete"
                           onClick={() => handleDelete(item._id)}
                         >
                           <Trash2 size={16} />
                         </button>
+                        <button
+                          className="h-4 w-4 text-gray-600 cursor-pointer"
+                          title="View"
+                          onClick={() => handleView(item._id)}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        
+                        
                       </div>
                     </td>
                   </tr>
