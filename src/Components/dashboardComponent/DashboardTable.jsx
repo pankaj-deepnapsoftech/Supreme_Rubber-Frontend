@@ -161,12 +161,12 @@ export default function DashboardTable() {
         <h2 className="font-semibold text-gray-800 text-[15px]">Quality Check</h2>
         <div className="flex">
           <select
-            className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/20 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+            className="border border-gray-200 cursor-pointer text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
             value={qcPeriod}
             onChange={(e) => setQcPeriod(e.target.value)}
           >
             <option value="Weekly">Weekly</option>
-            <option value="Monthly">Monthly</option>
+            <option value="Monthly">Monthly</option>   
             <option value="Yearly">Yearly</option>
           </select>
         </div>
