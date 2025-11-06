@@ -238,7 +238,7 @@ const QualityCheck = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Quality Check</h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white w-full sm:w-auto"
           onClick={() => {
             setSelectedReport(null);
             setSelectedEntryItems([]);
@@ -270,7 +270,7 @@ const QualityCheck = () => {
 
           <Button
             onClick={() => setShowGtModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+            className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
             Gateman
           </Button>
@@ -301,15 +301,16 @@ const QualityCheck = () => {
                 setShowProdQcModal(true);
               }
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+            className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
             Production QC
           </Button>
         </div>
 
         <div className="flex items-center gap-4 text-gray-600">
-          <div className="relative group">
-            <Filter className="cursor-pointer hover:text-gray-800" />
+          {/* <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            <div className="relative group">
+            <Filter className="cursor-pointer hover:text-gray-800" size={16}/>
             <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
               <p
                 onClick={() => handleFilter("All")}
@@ -330,15 +331,21 @@ const QualityCheck = () => {
               )}
             </div>
           </div>
-
-          <RefreshCcw
-            className="cursor-pointer hover:text-gray-800"
+          </button> */}
+          
+          <button
+            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
             onClick={getAllReports}
-          />
-          <Download
-            className="cursor-pointer hover:text-gray-800"
+          >
+            <RefreshCcw size={16} />
+          </button>
+
+          <button
+            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
             onClick={handleDownload}
-          />
+          >
+            <Download size={16} />
+          </button>
         </div>
       </div>
 
@@ -487,7 +494,7 @@ const QualityCheck = () => {
               transition={{ duration: 0.4 }}
             >
               <div className="flex items-center space-x-2 mb-6">
-                <button onClick={handleClose}>
+                <button className="cursor-pointer" onClick={handleClose}>
                   <X className="h-5 w-5 text-gray-700" />
                 </button>
                 <h2 className="text-lg sm:text-xl font-semibold">
@@ -544,7 +551,7 @@ const QualityCheck = () => {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                     required
                   >
-                    <option value="">Select Gateman Entry</option>
+                    <option value="" className="cursor-pointer">Select Gateman Entry</option>
                     {getData
                       ?.filter((entry) => entry.status === "Verified")
                       .map((entry) => (

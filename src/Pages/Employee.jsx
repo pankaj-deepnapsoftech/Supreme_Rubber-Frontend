@@ -31,6 +31,8 @@ const Employee = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterVerified, setFilterVerified] = useState("All");
 
   const fetchEmployees = async () => {
     try {
@@ -86,11 +88,26 @@ const Employee = () => {
     if (user) fetchEmployees();
   }, [user, page]);
 
-  const filteredEmployees = allUsers.filter((emp) =>
-    `${emp.first_name || ""} ${emp.last_name || ""}`
+  // const filteredEmployees = allUsers.filter((emp) =>
+  //   `${emp.first_name || ""} ${emp.last_name || ""}`
+  //     .toLowerCase()
+  //     .includes(search.toLowerCase())
+  // );
+
+  const filteredEmployees = allUsers.filter((emp) => {
+    const nameMatch = `${emp.first_name || ""} ${emp.last_name || ""}`
       .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+      .includes(search.toLowerCase());
+
+    const verifyMatch =
+      filterVerified === "All"
+        ? true
+        : filterVerified === "Yes"
+        ? emp.isVerified
+        : !emp.isVerified;
+
+    return nameMatch && verifyMatch;
+  });
 
   return (
     <div className="p-6 relative overflow-hidden">
@@ -109,16 +126,53 @@ const Employee = () => {
         </div>
 
         <div className="flex items-center space-x-4 text-gray-500">
-          <Filter size={18} className="cursor-pointer" />
-          <Plus size={18} className="cursor-pointer" />
-          <RefreshCw
-            size={18}
-            className={`cursor-pointer ${
-              loading ? "animate-spin text-blue-500" : ""
-            }`}
-            onClick={fetchEmployees}
-          />
-          <Download size={18} className="cursor-pointer" />
+          <div className="relative group">
+            <button
+             onClick={() => setFilterOpen(!filterOpen)}
+             className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 text-gray-800 border border-gray-300 hover:bg-gray-100 transition">
+            <Filter
+              size={16}
+              className="cursor-pointer hover:text-gray-800"
+            />
+            {filterOpen && (
+              <div className="absolute right-0 top-6 bg-white border shadow-md rounded-md w-32 z-10">
+                {["All", "Yes", "No"].map((option) => (
+                  <p
+                    key={option}
+                    onClick={() => {
+                      setFilterVerified(option);
+                      setFilterOpen(false);
+                    }}
+                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
+                      filterVerified === option
+                        ? "bg-blue-100 text-blue-600 font-medium"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {option === "All"
+                      ? "All Employees"
+                      : option === "Yes"
+                      ? "Verified"
+                      : "Not Verified"}
+                  </p>
+                ))}
+              </div>
+            )}
+            </button>
+          </div>
+
+          <button className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            <RefreshCw
+              size={16}
+              className={`cursor-pointer ${
+                loading ? "animate-spin text-blue-500" : ""
+              }`}
+              onClick={fetchEmployees}
+            />
+          </button>
+          <button className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            <Download size={16} className="cursor-pointer" />
+          </button>
         </div>
       </div>
 
