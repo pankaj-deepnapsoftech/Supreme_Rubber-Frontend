@@ -444,7 +444,7 @@ const BOM = () => {
                           disabled={viewMode}
                           className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
                         />
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               if (compoundCodes.length > 1) {
@@ -455,7 +455,7 @@ const BOM = () => {
                           >
                             <X className="h-5 w-5" />
                           </button>
-                        )}
+                        )} */}
                       </div>
                     ))}
                     {/* We can re-enable add-more if required later */}
@@ -480,7 +480,7 @@ const BOM = () => {
                           disabled={viewMode}
                           className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
                         />
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               if (partNames.length > 1) {
@@ -491,7 +491,7 @@ const BOM = () => {
                           >
                             <X className="h-5 w-5" />
                           </button>
-                        )}
+                        )} */}
                       </div>
                     ))}
                     {!viewMode && (
@@ -523,7 +523,7 @@ const BOM = () => {
                           disabled={viewMode}
                           className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
                         />
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               if (hardnesses.length > 1) {
@@ -534,17 +534,17 @@ const BOM = () => {
                           >
                             <X className="h-5 w-5" />
                           </button>
-                        )}
+                        )} */}
                       </div>
                     ))}
-                    {!viewMode && (
+                    {/* {!viewMode && (
                       <button
                         onClick={() => setHardnesses([...hardnesses, ""])}
                         className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
                       >
                         <Plus className="h-4 w-4" /> Add More
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
@@ -615,7 +615,7 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {!viewMode && (
+                            {/* {!viewMode && (
                               <button
                                 onClick={() => {
                                   const next = [...finishedGoods];
@@ -630,10 +630,10 @@ const BOM = () => {
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...finishedGoods];
@@ -644,7 +644,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Tolerance
                           </button>
-                        )}
+                        )} */}
                       </div>
 
                       {/* Quantities */}
@@ -666,7 +666,7 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {!viewMode && (
+                            {/* {!viewMode && (
                               <button
                                 onClick={() => {
                                   const next = [...finishedGoods];
@@ -681,10 +681,10 @@ const BOM = () => {
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...finishedGoods];
@@ -695,7 +695,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Quantity
                           </button>
-                        )}
+                        )} */}
                       </div>
 
                       {/* Comments */}
@@ -717,7 +717,7 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {!viewMode && (
+                            {/* {!viewMode && (
                               <button
                                 onClick={() => {
                                   const next = [...finishedGoods];
@@ -732,10 +732,10 @@ const BOM = () => {
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...finishedGoods];
@@ -746,7 +746,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Comment
                           </button>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>
@@ -839,7 +839,7 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {!viewMode && (
+                            {/* {!viewMode && (
                               <button
                                 onClick={() => {
                                   const next = [...rawMaterials];
@@ -854,10 +854,10 @@ const BOM = () => {
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...rawMaterials];
@@ -868,7 +868,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Tolerance
                           </button>
-                        )}
+                        )} */}
                       </div>
 
                       {/* Quantities */}
@@ -890,7 +890,7 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {!viewMode && (
+                            {/* {!viewMode && (
                               <button
                                 onClick={() => {
                                   const next = [...rawMaterials];
@@ -905,10 +905,10 @@ const BOM = () => {
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...rawMaterials];
@@ -919,7 +919,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Quantity
                           </button>
-                        )}
+                        )} */}
                       </div>
 
                       {/* Comments */}
@@ -941,7 +941,7 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {!viewMode && (
+                            {/* {!viewMode && (
                               <button
                                 onClick={() => {
                                   const next = [...rawMaterials];
@@ -956,10 +956,10 @@ const BOM = () => {
                               >
                                 <X className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...rawMaterials];
@@ -970,7 +970,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Comment
                           </button>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>

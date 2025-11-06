@@ -288,7 +288,7 @@ const PurchaseOrder = () => {
                 },
               ]);
             }}
-            className="bg-linear-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded shadow-lg hover:scale-105 transition-transform"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             Add Purchase Order
           </button>
