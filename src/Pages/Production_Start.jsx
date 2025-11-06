@@ -625,6 +625,23 @@ const Production_Start = () => {
                           if (alreadySent) return (
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">Waiting for QC</span>
                           );
+                          // Block sending to QC until quantities match
+                          const fgQty = parseFloat(fg?.prod_qty) || 0;
+                          const usedTotal = (prod?.raw_materials || []).reduce(
+                            (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
+                            0
+                          );
+                          const isMatched = Math.abs(usedTotal - fgQty) <= 1e-6;
+                          if (!isMatched) {
+                            return (
+                              <span
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600"
+                                title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                              >
+                                Quantity mismatched
+                              </span>
+                            );
+                          }
                           return (
                             <button
                               className="px-3 py-1 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 text-xs"
