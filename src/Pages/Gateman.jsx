@@ -3,6 +3,7 @@ import { Button } from "@/Components/ui/button";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePurchanse_Order } from "@/Context/PurchaseOrderContext";
+import { Funnel } from "lucide-react";
 import {
   DownloadIcon,
   RefreshCcw,
@@ -38,7 +39,17 @@ const Gateman = () => {
   const [pendingData, setPendingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [edittable, setEditTable] = useState(null);
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(1);
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
+  const handleFilter = (status) => {
+  setSelectedStatus(status);
+};
+
+
+
+
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -91,14 +102,19 @@ const Gateman = () => {
   };
 
   // Filter Gatemen data based on search
-  const filteredGatemen = GatemenData?.filter((entry) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      entry?.po_number?.toLowerCase().includes(query) ||
-      entry?.company_name?.toLowerCase().includes(query) ||
-      entry?.items?.some((i) => i.item_name.toLowerCase().includes(query))
-    );
-  });
+ const filteredGatemen = GatemenData?.filter((entry) => {
+  const query = searchQuery.toLowerCase();
+  const matchesSearch =
+    entry?.po_number?.toLowerCase().includes(query) ||
+    entry?.company_name?.toLowerCase().includes(query) ||
+    entry?.items?.some((i) => i.item_name.toLowerCase().includes(query));
+
+  const matchesStatus =
+    selectedStatus === "All" ||
+    entry?.status?.toLowerCase() === selectedStatus.toLowerCase();
+
+  return matchesSearch && matchesStatus;
+});
 
   console.log(POData);
 
@@ -106,25 +122,25 @@ const Gateman = () => {
     enableReinitialize: true,
     initialValues: edittable
       ? {
-        po_ref: edittable.po_ref || "",
-        po_number: edittable.po_number || "",
-        invoice_number: edittable.invoice_number || "",
-        company_name: edittable.company_name || "",
-        items: edittable.items || [{ item_name: "", item_quantity: 1 }],
-        attached_po: null,
-        attached_invoice: null,
-        status: edittable.status || "Entry Created",
-      }
+          po_ref: edittable.po_ref || "",
+          po_number: edittable.po_number || "",
+          invoice_number: edittable.invoice_number || "",
+          company_name: edittable.company_name || "",
+          items: edittable.items || [{ item_name: "", item_quantity: 1 }],
+          attached_po: null,
+          attached_invoice: null,
+          status: edittable.status || "Entry Created",
+        }
       : {
-        po_ref: "",
-        po_number: "",
-        invoice_number: "",
-        company_name: "",
-        items: [{ item_name: "", item_quantity: 1 }],
-        attached_po: null,
-        attached_invoice: null,
-        status: "Entry Created",
-      },
+          po_ref: "",
+          po_number: "",
+          invoice_number: "",
+          company_name: "",
+          items: [{ item_name: "", item_quantity: 1 }],
+          attached_po: null,
+          attached_invoice: null,
+          status: "Entry Created",
+        },
 
     onSubmit: async (values) => {
       try {
@@ -244,20 +260,44 @@ const Gateman = () => {
           </Button>
         </div>
 
-        <div className="flex items-center space-x-3 text-gray-600">
+        <div className="flex items-center space-x-3 text-gray-800">
+
+          {/* Filter Dropdown */}
+
+          
+          <div className="relative group">
+            <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            <Funnel className="cursor-pointer hover:text-gray-800" size={16} />
+
+            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-44">
+              {["All", "Verified", "Completed", "Entry Created"].map((status) => (
+                <p
+                  key={status}
+                  onClick={() => handleFilter(status)}
+                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm text-gray-700"
+                >
+                  {status}
+                </p>
+              ))}
+            </div>
+            </button>
+          </div>
+          
+
           <button
             onClick={handleRefresh}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
             title="Refresh"
           >
-            <RefreshCcw className="h-5 w-5" />
+            <RefreshCcw size={16} />
           </button>
+
           <button
             onClick={handleDownload}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
             title="Download"
           >
-            <DownloadIcon className="h-5 w-5" />
+            <DownloadIcon size={16} />
           </button>
         </div>
       </div>
@@ -296,8 +336,9 @@ const Gateman = () => {
               filteredGatemen.map((g, i) => (
                 <tr
                   key={g._id || i}
-                  className={`transition-all ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
+                  className={`transition-all ${
+                    i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  } hover:bg-blue-50`}
                 >
                   <td className="py-3 px-4 text-center">{g.po_number}</td>
                   <td className="py-3 px-4 text-center">{g.invoice_number}</td>
@@ -308,15 +349,23 @@ const Gateman = () => {
                   <td className="py-3 px-4 text-center">
                     {g.items?.map((i) => i.item_quantity).join(", ")}
                   </td>
-                  <td className="py-3 px-4 text-center"><span className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
-                          g?.status === "Verified"
-                            ? "bg-green-100 text-green-700"
-                            : g?.status === "Entry Created"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : g?.status === "Rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}>{g?.status || "-"}</span> </td>
+                  <td className="py-3 px-4 text-center">
+                    <span
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                        g?.status === "Verified"
+                          ? "bg-green-100 text-green-700"
+                          : g?.status === "Completed"
+                          ? "bg-yellow-100 text-green-700"                          
+                          : g?.status === "Entry Created"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : g?.status === "Rejected"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {g?.status || "-"}
+                    </span>{" "}
+                  </td>
 
                   {/* <td className="px-3 py-2">
                       <span
@@ -413,8 +462,8 @@ const Gateman = () => {
                   {mode === "add"
                     ? "Add Gate Entry"
                     : mode === "edit"
-                      ? "Edit Gate Entry"
-                      : "Gate Entry Details"}
+                    ? "Edit Gate Entry"
+                    : "Gate Entry Details"}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -480,11 +529,13 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     readOnly={true}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.po_number && formik.errors.po_number
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.po_number && formik.errors.po_number
                         ? "border-red-500 focus:ring-red-200"
                         : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter PO Number"
                   />
                 </div>
@@ -500,11 +551,13 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     readOnly={true}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.company_name && formik.errors.company_name
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.company_name && formik.errors.company_name
                         ? "border-red-500 focus:ring-red-200"
                         : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Company Name"
                   />
                 </div>
@@ -579,12 +632,14 @@ const Gateman = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     disabled={mode === "view"}
-                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${formik.touched.invoice_number &&
-                        formik.errors.invoice_number
+                    className={`w-full border rounded-md px-3 py-2 mt-1 outline-none focus:ring-2 ${
+                      formik.touched.invoice_number &&
+                      formik.errors.invoice_number
                         ? "border-red-500 focus:ring-red-200"
                         : "focus:ring-blue-200"
-                      } ${mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
-                      }`}
+                    } ${
+                      mode === "view" ? "bg-gray-100 cursor-not-allowed" : ""
+                    }`}
                     placeholder="Enter Invoice Number"
                   />
                 </div>
@@ -672,8 +727,9 @@ const Gateman = () => {
                     pendingData.map((po, i) => (
                       <tr
                         key={i}
-                        className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          }`}
+                        className={`border-b hover:bg-gray-50 transition ${
+                          i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                        }`}
                       >
                         <td className="px-4 py-3 font-semibold text-gray-800">
                           {po.po_number}
@@ -693,12 +749,13 @@ const Gateman = () => {
                         </td>
                         <td className="px-4 py-3 font-medium">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${po.status === "PO Created"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              po.status === "PO Created"
                                 ? "bg-blue-100 text-blue-700"
                                 : po.status === "Approved"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}
+                                ? "bg-green-100 text-green-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
                           >
                             {po.status}
                           </span>
@@ -788,7 +845,11 @@ const Gateman = () => {
         </div>
       )}
 
-      <Pagination page={page} setPage={setPage} hasNextPage={GatemenData?.length === 10} />
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={GatemenData?.length === 10}
+      />
     </div>
   );
 };
