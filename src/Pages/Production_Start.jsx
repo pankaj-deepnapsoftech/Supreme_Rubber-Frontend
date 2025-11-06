@@ -310,6 +310,17 @@ const Production_Start = () => {
       return;
     }
 
+    // Validate: sum(rawMaterials.used_qty) must equal finishedGood.prod_qty
+    const prodQtyNum = parseFloat(finishedGood.prod_qty) || 0;
+    const usedSum = (rawMaterials || []).reduce(
+      (sum, rm) => sum + (parseFloat(rm.used_qty) || 0),
+      0
+    );
+    if (Math.abs(usedSum - prodQtyNum) > 1e-6) {
+      toast.warning("Raw Material Quantities is not matching with the finished good quantity");
+      // continue submission
+    }
+
     try {
       setSubmitting(true);
       const payload = {
