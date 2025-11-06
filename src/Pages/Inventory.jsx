@@ -38,21 +38,20 @@ const Inventory = () => {
 
   const formik = useFormik({
     initialValues: {
-      inventory_category: "",
+     
       name: "",
       uom: "",
       category: "",
+      item_type: "",
       current_stock: "",
       price: "",
-      item_type: "",
-      product_or_service: "",
       sub_category: "",
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Product name is required"),
-      inventory_category: Yup.string().required(
-        "Inventory category is required"
-      ),
+      // inventory_category: Yup.string().required(
+      //   "Inventory category is required"
+      // ),
       current_stock: Yup.number()
         .typeError("Stock must be a number")
         .required("Stock is required"),
@@ -344,7 +343,7 @@ const Inventory = () => {
 
                     // Dropdown options for specific fields
                     const dropdownOptions = {
-                      category: ["Finished Goods", "Raw Material"],
+                      category: ["Finished Goods", "Raw Material","FMB","CMB"],
                       uom: [
                         "Kg",
                         "Litre",
@@ -354,9 +353,9 @@ const Inventory = () => {
                         "Dozen",
                         "Pack",
                       ],
-                      product_or_service: ["Product", "Service"],
+                      // product_or_service: ["Product", "Service"],
                       item_type: ["Buy","Sell"],
-                      inventory_category:["Direct"]
+                      // inventory_category:["Direct"]
                     };
 
                     const isSelect = Object.keys(dropdownOptions).includes(key);
@@ -367,7 +366,7 @@ const Inventory = () => {
                           {label}
                         </label>
 
-                        {/* Dropdown Field */}
+                      
                         {isSelect ? (
                           <select
                             name={key}
