@@ -43,7 +43,7 @@ const PurchaseOrder = () => {
   const [products, setProducts] = useState([
     {
       item_name: "",
-      est_quantity: "",
+      quantity: "",
       produce_quantity: "",
       remain_quantity: "",
       category: "",
@@ -94,7 +94,7 @@ const PurchaseOrder = () => {
       ...products,
       {
         item_name: "",
-        est_quantity: "",
+        quantity: "",
         produce_quantity: "",
         remain_quantity: "",
         category: "",
@@ -133,7 +133,7 @@ const PurchaseOrder = () => {
           p.item_name?._id ||
           Inventorydata.find((i) => i.name === p.item_name)?._id ||
           p.item_name,
-        est_quantity: p.est_quantity || "",
+        quantity: p.quantity || "",
         produce_quantity: p.produce_quantity || "",
         remain_quantity: p.remain_quantity || "",
         category:
@@ -165,7 +165,7 @@ const PurchaseOrder = () => {
           p.item_name?._id ||
           Inventorydata.find((i) => i.name === p.item_name)?._id ||
           p.item_name,
-        est_quantity: p.est_quantity || "",
+        quantity: p.quantity || "",
         produce_quantity: p.produce_quantity || "",
         remain_quantity: p.remain_quantity || "",
         category:
@@ -279,7 +279,7 @@ const PurchaseOrder = () => {
               setProducts([
                 {
                   item_name: "",
-                  est_quantity: "",
+                  quantity: "",
                   produce_quantity: "",
                   remain_quantity: "",
                   category: "",
@@ -441,7 +441,7 @@ const PurchaseOrder = () => {
                   >
                     <option value="">Select supplier</option>
                     {supplierData?.map((s) => (
-                      <option key={s._id} value={s._id}>
+                      <option key={s._id} value={s._id} className="capitalize">
                         {s.name}
                       </option>
                     ))}
@@ -520,25 +520,42 @@ const PurchaseOrder = () => {
                         />
                       </div>
 
-                      {[
-                        "est_quantity",
-                        "produce_quantity",
-                        "remain_quantity",
-                      ].map((field) => (
-                        <div key={field}>
-                          <label className="block text-gray-700 font-medium mb-1 capitalize">
-                            {field.replace("_", " ")}
-                          </label>
-                          <input
-                            type="number"
-                            name={field}
-                            value={item[field]}
-                            onChange={(e) => handleItemChange(index, e)}
-                            disabled={viewMode}
-                            className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                          />
-                        </div>
-                      ))}
+                      {/* ["quantity", "produce_quantity", "remain_quantity"].map(
+                        (field) => (
+                          <div key={field}>
+                            <label className="block text-gray-700 font-medium mb-1 capitalize">
+                              {field.replace("_", " ")}
+                            </label>
+                            <input
+                              type="number"
+                              name={field}
+                              value={item[field]}
+                              onChange={(e) => handleItemChange(index, e)}
+                              disabled={viewMode}
+                              className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                          </div>
+                        )
+                      )} */}
+
+                       { ["quantity"].map(
+                        (field) => (
+                          <div key={field}>
+                            <label className="block text-gray-700 font-medium mb-1 capitalize">
+                              {field.replace("_", " ")}
+                            </label>
+                            <input
+                              type="number"
+                              name={field}
+                              value={item[field]}
+                              onChange={(e) => handleItemChange(index, e)}
+                              disabled={viewMode}
+                              className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                          </div>
+                        )
+                      ) }
+
                     </div>
                   </div>
                 ))}

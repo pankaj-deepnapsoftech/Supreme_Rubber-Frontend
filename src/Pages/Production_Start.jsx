@@ -13,6 +13,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useInventory } from "@/Context/InventoryContext";
 import axiosHandler from "@/config/axiosconfig";
 import { toast } from "react-toastify";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const Production_Start = () => {
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +29,7 @@ const Production_Start = () => {
   const [boms, setBoms] = useState([]);
   const [selectedBomId, setSelectedBomId] = useState("");
   const [_selectedBom, setSelectedBom] = useState(null);
-
+  const [page,setPage] = useState(1)
   // Finished Goods data
   const [finishedGood, setFinishedGood] = useState({
     compound_code: "",
@@ -53,7 +54,7 @@ const Production_Start = () => {
   const fetchProductions = async () => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get("/production/all");
+      const res = await axiosHandler.get(`/production/all?page=${page}&limit=10`);
       setProductions(res?.data?.productions || []);
     } catch (e) {
       console.error("Error fetching productions", e);
@@ -66,7 +67,7 @@ const Production_Start = () => {
   // Fetch all BOMs
   const fetchBoms = async () => {
     try {
-      const res = await axiosHandler.get("/bom/all");
+      const res = await axiosHandler.get(`/bom/all`);
       setBoms(res?.data?.boms || []);
     } catch (e) {
       console.error("Error fetching BOMs", e);
@@ -81,7 +82,7 @@ const Production_Start = () => {
     fetchBoms();
     fetchProductions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
   // Handle BOM selection
   const handleBomSelect = async (bomId) => {
@@ -1012,6 +1013,8 @@ const Production_Start = () => {
           </Motion.div>
         )}
       </AnimatePresence>
+
+      <Pagination page={page} setPage={setPage} hasNextPage={productions?.length === 10} />
     </div>
   );
 };

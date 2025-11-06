@@ -16,8 +16,10 @@ import { useQualityCheck } from "@/Context/QualityCheckContext";
 import { toast } from "react-toastify";
 import { useInventory } from "@/Context/InventoryContext";
 import axiosHandler from "@/config/axiosconfig";
+import Pagination from "@/Components/Pagination/Pagination";
 
 const QualityCheck = () => {
+  
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
@@ -49,6 +51,7 @@ const QualityCheck = () => {
     setSelectedReport,
     loading,
     ChangesStatus,
+    page,setPage
   } = useQualityCheck();
 
   useEffect(() => {
@@ -303,7 +306,7 @@ const QualityCheck = () => {
               {[...new Set(qualityReports?.map((p) => p.category) || [])].map(
                 (cat) => (
                   <p
-                    key={cat}
+                    key={cat?._id}
                     onClick={() => handleFilter(cat)}
                     className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
                   >
@@ -363,9 +366,8 @@ const QualityCheck = () => {
                 .map((item, i) => (
                   <tr
                     key={item._id || i}
-                    className={`border-t ${
-                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    }`}
+                    className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      }`}
                   >
                     <td className="px-4 sm:px-6 py-3">
                       {item?.gateman_entry_id?.po_number || "-"}
@@ -602,11 +604,11 @@ const QualityCheck = () => {
                           {(parseInt(item.approved_quantity) || 0) +
                             (parseInt(item.rejected_quantity) || 0) >
                             parseInt(item.available_quantity) && (
-                            <p className="text-xs text-red-500 mt-1">
-                              Total quantity cannot exceed available quantity (
-                              {item.available_quantity})
-                            </p>
-                          )}
+                              <p className="text-xs text-red-500 mt-1">
+                                Total quantity cannot exceed available quantity (
+                                {item.available_quantity})
+                              </p>
+                            )}
                         </div>
                       ))}
                     </div>
@@ -631,8 +633,8 @@ const QualityCheck = () => {
                   {loading
                     ? "Submitting..."
                     : selectedReport
-                    ? "Update"
-                    : "Submit"}
+                      ? "Update"
+                      : "Submit"}
                 </button>
               </form>
             </Motion.div>
@@ -684,9 +686,8 @@ const QualityCheck = () => {
                       .map((po, i) => (
                         <tr
                           key={i}
-                          className={`border-b hover:bg-gray-50 transition ${
-                            i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          }`}
+                          className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                            }`}
                         >
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             {po?.po_number}
@@ -924,6 +925,7 @@ const QualityCheck = () => {
           </div>
         </div>
       )}
+      <Pagination page={page} setPage={setPage} hasNextPage={qualityReports?.length === 10} />
     </div>
   );
 };

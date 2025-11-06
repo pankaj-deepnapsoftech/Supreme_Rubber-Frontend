@@ -137,9 +137,18 @@ const Sidebar = () => {
       <aside className="hidden md:flex w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex-col justify-between h-screen">
       {/* --- Top section (Logo + menu) --- */}
       <div>
-        <div className="flex justify-center ">
-          <img src="./supremeRubberLOGO.jpeg" alt="Company Logo" className="h-30 w-40 mb-3" />
-        </div>
+          <div className="flex justify-center items-center mb-4 mr-7">
+            <div className="text-lg font-semibold uppercase 
+        bg-gradient-to-r from-blue-400 via-sky-500 to-indigo-600 
+        text-transparent bg-clip-text 
+        border border-blue-600 rounded-lg px-3 py-1 
+        transition-all duration-300 hover:scale-105">
+              <span className="mr-1">Supreme</span>
+              <span className="text-white bg-blue-600 px-2 py-0.5 rounded-md text-sm">
+                Rubber
+              </span>
+            </div>
+          </div>
 
         <nav className="flex flex-col gap-1">
           {allowedMenu.map((item) => (

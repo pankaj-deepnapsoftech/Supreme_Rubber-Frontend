@@ -7,11 +7,11 @@ export const BomProvider = ({ children }) => {
   const [boms, setBoms] = useState([]);
   const [filteredBoms, setFilteredBoms] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const fetchBoms = async () => {
+  
+  const fetchBoms = async (page) => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get("/bom/all", { withCredentials: true });
+      const res = await axiosHandler.get(`/bom/all`, { withCredentials: true });
       const data = res?.data?.boms || [];
       setBoms(data);
       setFilteredBoms(data);
