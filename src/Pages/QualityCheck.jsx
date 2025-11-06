@@ -905,15 +905,13 @@ const QualityCheck = () => {
                                   className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                                   onClick={async () => {
                                     try {
-                                      await axiosHandler.patch(
-                                        `/production/${prod._id}/approve`
-                                      );
+                                      await axiosHandler.patch(`/production/${prod._id}/approve`);
+                                      toast.success("Production approved");
                                       // Remove from list after approve
-                                      setProdQcList((prev) =>
-                                        prev.filter((p) => p._id !== prod._id)
-                                      );
+                                      setProdQcList((prev) => prev.filter((p) => p._id !== prod._id));
                                     } catch (e) {
                                       console.error(e);
+                                      toast.error("Failed to approve production");
                                     }
                                   }}
                                 >
