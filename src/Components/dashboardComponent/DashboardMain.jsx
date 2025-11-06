@@ -627,7 +627,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
 
               {/* Production */}
 
-              <div className="bg-white rounded-2xl p-5 h-[300px] shadow-sm w-full">
+              {/* <div className="bg-white rounded-2xl p-5 h-[300px] shadow-sm w-full">
                 <div className="flex justify-between">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Production
@@ -658,7 +658,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                     </BarChart>
                   </ResponsiveContainer>
                 )}
-              </div>
+              </div> */}
 
               {/* Gate Entry */}
               <div className="bg-white rounded-2xl h-[300px] p-5 shadow-sm w-full">
