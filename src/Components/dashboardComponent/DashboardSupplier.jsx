@@ -13,9 +13,7 @@ export default function DashboardSupplier() {
     const fetchSuppliers = async () => {
       try {
         const res = await getAllSupplier();
-        const data = Array.isArray(res)
-          ? res
-          : res?.suppliers || [];
+        const data = Array.isArray(res) ? res : res?.suppliers || [];
 
         setSuppliers(data);
       } catch (error) {
@@ -57,10 +55,15 @@ export default function DashboardSupplier() {
         <div>
           <h2 className="font-semibold text-gray-800 text-[15px]">Suppliers</h2>
           <p className="text-xs text-gray-500">
-            {`${suppliers.length} Supplier${suppliers.length !== 1 ? "s" : ""} found`}
+            {`${suppliers.length} Supplier${
+              suppliers.length !== 1 ? "s" : ""
+            } found`}
           </p>
         </div>
-        <button className="text-sm text-blue-500 hover:underline cursor-pointer" onClick={() => navigate("/supplier")}>
+        <button
+          className="text-sm text-blue-500 hover:underline cursor-pointer"
+          onClick={() => navigate("/supplier")}
+        >
           View all
         </button>
       </div>
@@ -70,33 +73,28 @@ export default function DashboardSupplier() {
         <div className="overflow-auto max-h-[70vh] rounded-lg">
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">
-              <tr className="bg-gray-200 text-gray-800 uppercase text-xs tracking-wide">
-                {[
-                  "ID",
-                  "Name",
-                  "Phone",
-                  "Email",
-                  "Address",
-                  "Actions",
-                ].map((header, i) => (
-                  <th
-                    key={i}
-                    className={`py-3 px-4 text-center font-semibold ${
-                      i === 0 ? "rounded-tl-2xl" : ""
-                    } ${i === 7 ? "rounded-tr-2xl" : ""}`}
-                  >
-                    {header}
-                  </th>
-                ))}
+              <tr className="bg-gray-200 text-gray-800 text-center uppercase text-xs tracking-wide">
+                {["ID", "Name", "Phone", "Actions"].map(
+                  (header, i) => (
+                    <th
+                      key={i}
+                      className={`py-3 px-4 text-center font-semibold ${
+                        i === 0 ? "rounded-tl-2xl" : ""
+                      } ${i === 7 ? "rounded-tr-2xl" : ""}`}
+                    >
+                      {header}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
 
             <tbody>
               {suppliers.length > 0 ? (
-                suppliers.map((s, i) => (
+                suppliers.slice(0, 4).map((s, i) => (
                   <tr
                     key={s._id || i}
-                    className={`transition-all duration-200 ${
+                    className={`transition-all duration-200 text-center ${
                       i % 2 === 0 ? "bg-gray-50" : "bg-white"
                     } hover:bg-blue-50`}
                   >
@@ -109,13 +107,13 @@ export default function DashboardSupplier() {
                     <td className="py-3 px-4 text-gray-700 border-b">
                       {s.phone || "—"}
                     </td>
-                    <td className="py-3 px-4 text-gray-700 border-b">
+                    {/* <td className="py-3 px-4 text-gray-700 border-b">
                       {s.email || "—"}
                     </td>
-                    
+
                     <td className="py-3 px-4 text-gray-700 border-b truncate max-w-[200px]">
                       {s.address || "—"}
-                    </td>
+                    </td> */}
                     <td className="py-3 px-4 text-center border-b">
                       <div className="flex items-center justify-center space-x-3">
                         {/* <button

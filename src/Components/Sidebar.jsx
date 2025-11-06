@@ -138,13 +138,13 @@ const Sidebar = () => {
       {/* --- Top section (Logo + menu) --- */}
       <div>
           <div className="flex justify-center items-center mb-4 mr-7">
-            <div className="text-lg font-semibold uppercase 
+            <div className="text-lg font-semibold uppercase flex justify-center items-center
         bg-gradient-to-r from-blue-400 via-sky-500 to-indigo-600 
         text-transparent bg-clip-text 
         border border-blue-600 rounded-lg px-3 py-1 
         transition-all duration-300 hover:scale-105">
-              <span className="mr-1">Supreme</span>
-              <span className="text-white bg-blue-600 px-2 py-0.5 rounded-md text-sm">
+              <span className="mr-1 text-center">Supreme</span>
+              <span className="text-white text-center bg-blue-600 px-2 py-0.5 rounded-md text-sm">
                 Rubber
               </span>
             </div>
@@ -159,7 +159,7 @@ const Sidebar = () => {
                   end
                   className={({ isActive }) =>
                     `flex items-center gap-3 p-2 rounded-lg transition ${isActive
-                      ? "bg-purple-100 text-purple-700"
+                      ? "bg-purple-100 text-[#155dfc]"
                       : "text-gray-700 hover:bg-gray-100"
                     }`
                   }
@@ -172,7 +172,7 @@ const Sidebar = () => {
                   <button
                     onClick={() => handleToggle(item.name)}
                     className={`flex items-center justify-between w-full p-2 rounded-lg transition ${openDropdown === item.name
-                      ? "bg-purple-100 text-purple-700"
+                      ? "bg-purple-100 text-[#155dfc]"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}
                   >
@@ -196,7 +196,7 @@ const Sidebar = () => {
                           end
                           className={({ isActive }) =>
                             `flex items-center gap-2 p-2 rounded-md text-sm transition ${isActive
-                              ? "bg-purple-100 text-purple-700"
+                              ? "bg-purple-100 text-[#155dfc]"
                               : "text-gray-600 hover:bg-gray-50"
                             }`
                           }
