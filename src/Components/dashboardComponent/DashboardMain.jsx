@@ -594,13 +594,13 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </h2>
                   <div className="flex">
                     <select
-                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
                       value={statusPeriod}
                       onChange={(e) => setStatusPeriod(e.target.value)}
                     >
-                      <option className="text-gray-500 hover:bg-[#cd9cf2]" value="Weekly">Weekly</option>
-                      <option className=" hover:bg-[#cd9cf2]" value="Monthly">Monthly</option>
-                      <option className=" hover:bg-[#cd9cf2]" value="Yearly">Yearly</option>
+                      <option className="text-gray-500" value="Weekly">Weekly</option>
+                      <option value="Monthly">Monthly</option>
+                      <option  value="Yearly">Yearly</option>
                     </select>
                   </div>
                 </div>
@@ -634,7 +634,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </h2>
                   <div className="flex">
                     <select
-                      className="border border-gray-200 text-xs cursor-pointer hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
                       value={prodBarPeriod}
                       onChange={(e) => setProdBarPeriod(e.target.value)}
                     >
@@ -668,7 +668,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </h2>
                   <div className="flex">
                     <select
-                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
                       value={gatePeriod}
                       onChange={(e) => setGatePeriod(e.target.value)}
                     >

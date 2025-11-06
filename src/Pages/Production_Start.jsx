@@ -30,6 +30,9 @@ const Production_Start = () => {
   const [selectedBomId, setSelectedBomId] = useState("");
   const [_selectedBom, setSelectedBom] = useState(null);
   const [page,setPage] = useState(1)
+  // Searchable BOM selector state
+  const [bomSearch, setBomSearch] = useState("");
+  const [showBomResults, setShowBomResults] = useState(false);
   // Finished Goods data
   const [finishedGood, setFinishedGood] = useState({
     compound_code: "",
@@ -39,7 +42,7 @@ const Production_Start = () => {
     prod_qty: "",
     remain_qty: "",
     category: "",
-    total_cost: "",
+    comment: "",
   });
 
   // Raw Materials data
@@ -110,57 +113,63 @@ const Production_Start = () => {
 
       setSelectedBom(bom);
       console.log("Selected BOM:", bom);
-      console.log("Raw Materials:", bom.rawMaterials);
+      console.log("Raw Materials:", bom.raw_materials);
 
       // Get first compound from compoundingStandards or use top-level
-      const compound =
-        bom.compoundingStandards?.[0] ||
-        {
-          compound_code: bom.compound_code,
-          compound_name: bom.compound_name,
-          product_snapshot: bom.compound,
-        };
+      const firstCode = Array.isArray(bom.compound_codes) ? bom.compound_codes[0] : "";
 
       // Auto-fill Finished Goods
+      // Try to resolve uom/category for finished good
+      const firstFinishedGood = Array.isArray(bom.finished_goods) && bom.finished_goods.length > 0 ? bom.finished_goods[0] : null;
+      const fgId = typeof firstFinishedGood?.finished_good_id_name === "string" ? firstFinishedGood.finished_good_id_name.split("-")[0] : null;
+      const productById = (products || []).find((p) => p?._id === fgId);
+      const productMatch = (products || []).find(
+        (p) => p?.product_id === firstCode || p?.name === (bom.compound_name || "")
+      );
+      const fgSnap = firstFinishedGood?.product_snapshot || null;
+      // Get first quantity from finished_goods if available
+      const firstEstQty = firstFinishedGood && Array.isArray(firstFinishedGood.quantities) && firstFinishedGood.quantities.length > 0
+        ? String(firstFinishedGood.quantities[0])
+        : "";
       setFinishedGood({
-        compound_code: compound.compound_code || bom.compound_code || "",
-        compound_name: compound.compound_name || bom.compound_name || "",
-        est_qty: "",
-        uom: compound.product_snapshot?.uom || bom.compound?.uom || "",
+        compound_code: firstCode || "",
+        compound_name: bom.compound_name || "",
+        est_qty: firstEstQty,
+        uom: fgSnap?.uom || productById?.uom || productMatch?.uom || "",
         prod_qty: "",
-        remain_qty: "",
-        category: compound.product_snapshot?.category || bom.compound?.category || "",
-        total_cost: "",
+        remain_qty: firstEstQty || "",
+        category: fgSnap?.category || productById?.category || productMatch?.category || "",
+        comment: "",
       });
 
       // Auto-fill Raw Materials from BOM
       let rms = [];
       
       // Check if rawMaterials array exists and has data
-      if (bom.rawMaterials && Array.isArray(bom.rawMaterials) && bom.rawMaterials.length > 0) {
-        rms = bom.rawMaterials.map((rm) => {
-          // Handle populated raw_material object
-          const rawMaterialPopulated = rm.raw_material && typeof rm.raw_material === 'object' ? rm.raw_material : null;
-          
+      if (bom.raw_materials && Array.isArray(bom.raw_materials) && bom.raw_materials.length > 0) {
+        rms = bom.raw_materials.map((rm) => {
+          const rawPop = rm.raw_material_id && typeof rm.raw_material_id === 'object' ? rm.raw_material_id : null;
+          const snap = rm.product_snapshot || null;
+          // Get first quantity from quantities array
+          const firstQtyStr = Array.isArray(rm.quantities) && rm.quantities.length > 0 ? String(rm.quantities[0]) : "0";
+          const firstQtyNum = parseFloat(firstQtyStr) || 0;
+          const fgBase = parseFloat(firstEstQty) || 1; // initial FG qty from BOM (fallback 1)
+          const perUnitBase = fgBase ? firstQtyNum / fgBase : 0; // RM per 1 FG unit
+          const initialEst = firstQtyStr; // show exactly BOM value on first load
           return {
-            raw_material_id: rawMaterialPopulated?._id || rm.raw_material || null,
-            raw_material_name: rm.raw_material_name || rawMaterialPopulated?.name || "",
-            raw_material_code: rm.raw_material_code || rawMaterialPopulated?.product_id || "",
-            // Use BOM weight as default estimated quantity
-            est_qty: (rm.weight !== undefined && rm.weight !== null && rm.weight !== "")
-              ? parseFloat(rm.weight) || 0
-              : 0,
-            uom: rm.uom || rawMaterialPopulated?.uom || rm.product_snapshot?.uom || "",
+            raw_material_id: rawPop?._id || rm.raw_material_id || null,
+            raw_material_name: rm.raw_material_name || rawPop?.name || snap?.name || "",
+            raw_material_code: rawPop?.product_id || snap?.product_id || "",
+            est_qty: initialEst,
+            base_qty: perUnitBase,
+            uom: rawPop?.uom || snap?.uom || "",
             used_qty: "",
-            // Initialize remain equal to est by default
-            remain_qty: (rm.weight !== undefined && rm.weight !== null && rm.weight !== "")
-              ? parseFloat(rm.weight) || 0
-              : 0,
-            category: rm.category || rawMaterialPopulated?.category || rm.product_snapshot?.category || "",
-            total_cost: "",
-            weight: rm.weight || "",
-            tolerance: rm.tolerance || "",
-            code_no: rm.code_no || "",
+            remain_qty: initialEst,
+            category: rawPop?.category || snap?.category || "",
+            comment: "",
+            weight: "",
+            tolerance: (Array.isArray(rm.tolerances) && rm.tolerances[0]) || "",
+            code_no: "",
           };
         });
       }
@@ -234,48 +243,26 @@ const Production_Start = () => {
   const handleFinishedGoodChange = (field, value) => {
     setFinishedGood((prev) => {
       const updated = { ...prev, [field]: value };
-      // Calculate remain_qty
-      if (field === "est_qty" || field === "prod_qty") {
+      // Calculate remain_qty and (if est changes) we'll scale RMs below
+      if (field === "prod_qty" || field === "est_qty") {
         const est = parseFloat(field === "est_qty" ? value : updated.est_qty) || 0;
         const prod = parseFloat(field === "prod_qty" ? value : updated.prod_qty) || 0;
         updated.remain_qty = (est - prod).toFixed(2);
       }
-      // Calculate total_cost = est_qty * price (price from Inventory product)
-      if (field === "est_qty" || field === "prod_qty") {
-        const est = parseFloat(updated.est_qty) || 0;
-        // Try to find the finished good product by code or name
-        const productMatch = (products || []).find(
-          (p) => p?.product_id === updated.compound_code || p?.name === updated.compound_name
-        );
-        const unitPrice =
-          (typeof productMatch?.updated_price === "number" ? productMatch.updated_price : undefined) ??
-          (typeof productMatch?.latest_price === "number" ? productMatch.latest_price : undefined) ??
-          (typeof productMatch?.price === "number" ? productMatch.price : 0);
-        updated.total_cost = (est * (unitPrice || 0)).toFixed(2);
-      }
       return updated;
     });
-
-    // If compound estimated qty changes, scale each RM est_qty = weight * compound_est
+    // When est_qty changes, scale raw materials: rm.est_qty = rm.base_qty * est_qty
     if (field === "est_qty") {
-      const estMultiplier = parseFloat(value) || 0;
+      const multiplier = parseFloat(value) || 0;
       setRawMaterials((prev) =>
         (prev || []).map((rm) => {
-          const baseWeight = parseFloat(rm.weight) || 0;
-          const nextEst = baseWeight * estMultiplier;
+          const base = parseFloat(rm.base_qty) || 0;
+          const nextEst = base * multiplier;
           const used = parseFloat(rm.used_qty) || 0;
-          const productMatch = (products || []).find(
-            (p) => p?._id === rm.raw_material_id || p?.product_id === rm.raw_material_code || p?.name === rm.raw_material_name
-          );
-          const unitPrice =
-            (typeof productMatch?.updated_price === "number" ? productMatch.updated_price : undefined) ??
-            (typeof productMatch?.latest_price === "number" ? productMatch.latest_price : undefined) ??
-            (typeof productMatch?.price === "number" ? productMatch.price : 0);
           return {
             ...rm,
-            est_qty: nextEst,
-            remain_qty: (nextEst - used).toFixed(2),
-            total_cost: (nextEst * (unitPrice || 0)).toFixed(2),
+            est_qty: String(nextEst),
+            remain_qty: String((nextEst - used).toFixed(2)),
           };
         })
       );
@@ -293,18 +280,7 @@ const Production_Start = () => {
         const used = parseFloat(field === "used_qty" ? value : next[idx].used_qty) || 0;
         next[idx].remain_qty = (est - used).toFixed(2);
       }
-      // Recalculate total_cost = est_qty * price when est or identity fields change
-      if (field === "est_qty" || field === "raw_material_id" || field === "raw_material_code" || field === "raw_material_name") {
-        const est = parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
-        const productMatch = (products || []).find(
-          (p) => p?._id === next[idx].raw_material_id || p?.product_id === next[idx].raw_material_code || p?.name === next[idx].raw_material_name
-        );
-        const unitPrice =
-          (typeof productMatch?.updated_price === "number" ? productMatch.updated_price : undefined) ??
-          (typeof productMatch?.latest_price === "number" ? productMatch.latest_price : undefined) ??
-          (typeof productMatch?.price === "number" ? productMatch.price : 0);
-        next[idx].total_cost = (est * (unitPrice || 0)).toFixed(2);
-      }
+      // no cost calculation; using comments instead
       return next;
     });
   };
@@ -347,7 +323,7 @@ const Production_Start = () => {
             prod_qty: parseFloat(finishedGood.prod_qty) || 0,
             remain_qty: parseFloat(finishedGood.remain_qty) || 0,
             category: finishedGood.category,
-            total_cost: parseFloat(finishedGood.total_cost) || 0,
+            comment: finishedGood.comment || "",
           },
         ],
         raw_materials: rawMaterials.map((rm) => ({
@@ -359,7 +335,7 @@ const Production_Start = () => {
           used_qty: parseFloat(rm.used_qty) || 0,
           remain_qty: parseFloat(rm.remain_qty) || 0,
           category: rm.category,
-          total_cost: parseFloat(rm.total_cost) || 0,
+          comment: rm.comment || "",
           weight: rm.weight || "",
           tolerance: rm.tolerance || "",
           code_no: rm.code_no || "",
@@ -406,7 +382,7 @@ const Production_Start = () => {
       prod_qty: "",
       remain_qty: "",
       category: "",
-      total_cost: "",
+      comment: "",
     });
     setRawMaterials([]);
     setProcesses([]);
@@ -697,7 +673,7 @@ const Production_Start = () => {
                     </h2>
                   </div>
 
-                  <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+              <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
                     {[
                       "Compound Details",
                       "EST. QTY",
@@ -705,7 +681,7 @@ const Production_Start = () => {
                       "PROD. QTY",
                       "Remain QTY",
                       "Category",
-                      "Total Cost",
+                  "Comment",
                     ].map((head) => (
                       <div key={head} className="p-2 text-center truncate">
                         {head}
@@ -714,20 +690,55 @@ const Production_Start = () => {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
-                    <select
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
-                      value={selectedBomId}
-                      onChange={(e) => handleBomSelect(e.target.value)}
-                      required
-                    >
-                      <option value="">Select Compound</option>
-                      {boms.map((b) => (
-                        <option key={b._id} value={b._id}>
-                          {b.compound_name || "Unnamed"}
-                          {b.compound_code ? ` (${b.compound_code})` : ""}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search Compound"
+                        value={bomSearch}
+                        onChange={(e) => {
+                          setBomSearch(e.target.value);
+                          setShowBomResults(true);
+                        }}
+                        onFocus={() => setShowBomResults(true)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      />
+                      {showBomResults && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
+                          {boms
+                            .filter((b) => {
+                              const q = (bomSearch || "").toLowerCase();
+                              const name = (b.compound_name || "").toLowerCase();
+                              const code = ((Array.isArray(b.compound_codes) && b.compound_codes[0]) ? b.compound_codes[0] : "").toLowerCase();
+                              return !q || name.includes(q) || code.includes(q);
+                            })
+                            .slice(0, 50)
+                            .map((b) => {
+                              const label = `${b.compound_name || "Unnamed"}${(Array.isArray(b.compound_codes) && b.compound_codes[0]) ? ` (${b.compound_codes[0]})` : ""}`;
+                              return (
+                                <div
+                                  key={b._id}
+                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${selectedBomId === b._id ? "bg-gray-50" : ""}`}
+                                  onMouseDown={(e) => {
+                                    // prevent input blur before click handler
+                                    e.preventDefault();
+                                  }}
+                                  onClick={() => {
+                                    setSelectedBomId(b._id);
+                                    setBomSearch(label);
+                                    setShowBomResults(false);
+                                    handleBomSelect(b._id);
+                                  }}
+                                >
+                                  {label}
+                                </div>
+                              );
+                            })}
+                          {boms.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500">No BOMs</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <input
                       type="number"
                       placeholder="Enter Quantity"
@@ -763,13 +774,13 @@ const Production_Start = () => {
                       readOnly
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
-                    <input
-                      type="number"
-                      placeholder="Total Cost"
-                      value={finishedGood.total_cost}
-                      readOnly
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
-                    />
+                <input
+                  type="text"
+                  placeholder="Comment"
+                  value={finishedGood.comment}
+                  onChange={(e) => handleFinishedGoodChange("comment", e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+                />
                   </div>
                 </section>
 
@@ -791,7 +802,7 @@ const Production_Start = () => {
                           "Used QTY",
                           "Remain QTY",
                           "Category",
-                          "Total Cost",
+                          "Comment",
                         ].map((head) => (
                           <div key={head} className="p-2 text-center truncate">
                             {head}
@@ -810,8 +821,8 @@ const Production_Start = () => {
                             type="number"
                             placeholder="EST. QTY"
                             value={rm.est_qty}
-                            onChange={(e) => handleRawMaterialChange(idx, "est_qty", e.target.value)}
-                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
                           <input
                             type="text"
@@ -842,10 +853,10 @@ const Production_Start = () => {
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
                           <input
-                            type="number"
-                            placeholder="Total Cost"
-                            value={rm.total_cost}
-                            onChange={(e) => handleRawMaterialChange(idx, "total_cost", e.target.value)}
+                            type="text"
+                            placeholder="Comment"
+                            value={rm.comment || ""}
+                            onChange={(e) => handleRawMaterialChange(idx, "comment", e.target.value)}
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                         </div>

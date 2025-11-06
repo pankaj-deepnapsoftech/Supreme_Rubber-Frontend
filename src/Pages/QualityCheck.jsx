@@ -19,7 +19,6 @@ import axiosHandler from "@/config/axiosconfig";
 import Pagination from "@/Components/Pagination/Pagination";
 
 const QualityCheck = () => {
-  
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredReports, setFilteredReports] = useState([]);
@@ -35,7 +34,7 @@ const QualityCheck = () => {
     items: [],
     attached_report: null,
   });
-
+  const [modalMode, setModalMode] = useState("add"); 
   const { getAllProducts } = useInventory();
 
   const { GetAllPOData } = useGatemenContext();
@@ -51,7 +50,8 @@ const QualityCheck = () => {
     setSelectedReport,
     loading,
     ChangesStatus,
-    page,setPage
+    page,
+    setPage,
   } = useQualityCheck();
 
   useEffect(() => {
@@ -74,40 +74,41 @@ const QualityCheck = () => {
     setGetData(filter);
   };
 
-  useEffect(() => {
-    if (selectedReport) {
-      const gatemanEntry = getData.find(
-        (entry) => entry._id === selectedReport.gateman_entry_id
-      );
+  console.log(selectedReport)
 
-      if (gatemanEntry && gatemanEntry.items) {
-        setSelectedEntryItems(gatemanEntry.items);
+    useEffect(() => {
+    if (!selectedReport) return;
 
-        if (selectedReport.item_id) {
-          const item = gatemanEntry.items.find(
-            (item) => item._id === selectedReport.item_id
-          );
-          setSelectedItem(item);
+    const gatemanEntry = getData.find(
+      (entry) => entry._id === selectedReport.gateman_entry_id?._id
+    );
+  
+    if (!gatemanEntry) return;
 
-          const itemsArray = [
-            {
-              item_id: selectedReport.item_id,
-              item_name: item ? item.item_name : "",
-              available_quantity: item ? item.item_quantity : 0,
-              approved_quantity: selectedReport.approved_quantity || "",
-              rejected_quantity: selectedReport.rejected_quantity || "",
-            },
-          ];
+    const item = gatemanEntry.items?.find(
+      (itm) => itm._id === selectedReport.item_id
+    );
 
-          setFormData({
-            gateman_entry_id: selectedReport.gateman_entry_id || "",
-            items: itemsArray,
-            attached_report: null,
-          });
-        }
-      }
-    }
+    setSelectedEntryItems(gatemanEntry.items || []);
+    setSelectedItem(item || null);
+
+    const itemsArray = [
+      {
+        item_id: selectedReport.item_id,
+        item_name: item?.item_name || "",
+        available_quantity: item?.item_quantity || 0,
+        approved_quantity: selectedReport.approved_quantity || "",
+        rejected_quantity: selectedReport.rejected_quantity || "",
+      },
+    ];
+
+    setFormData({
+      gateman_entry_id: selectedReport.gateman_entry_id?._id || "",
+      items: itemsArray,
+      attached_report: null,
+    });
   }, [selectedReport, getData]);
+;
 
   const handleClose = () => {
     setShowModal(false);
@@ -207,17 +208,30 @@ const QualityCheck = () => {
       }
     }
   };
-
   const handleEdit = async (id) => {
     try {
-      await getReportById(id);
-      setShowModal(true);
+      const res = await getReportById(id); // Wait for data
+      setModalMode("edit");
+      if (res) {
+        setShowModal(true);
+      }
     } catch (error) {
       console.error("Error fetching report for edit:", error);
     }
   };
 
-  console.log("selectedReport", selectedReport);
+  const handleView = async (id) => {
+    try {
+      const res = await getReportById(id);
+      setModalMode("view");
+      if (res) {
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error("Error fetching report for view:", error);
+    }
+  };
+
 
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
@@ -331,7 +345,7 @@ const QualityCheck = () => {
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
-            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-center text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">PO Number</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Company</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Item</th>
@@ -366,8 +380,9 @@ const QualityCheck = () => {
                 .map((item, i) => (
                   <tr
                     key={item._id || i}
-                    className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      }`}
+                    className={`border-t text-center ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
                   >
                     <td className="px-4 sm:px-6 py-3">
                       {item?.gateman_entry_id?.po_number || "-"}
@@ -384,7 +399,22 @@ const QualityCheck = () => {
                     <td className="px-4 sm:px-6 py-3">
                       {item?.rejected_quantity}
                     </td>
-                    <td className="px-4 sm:px-6 py-3">{item?.status || "-"}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
+                          item?.status === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : item?.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : item?.status === "Rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {item?.status || "-"}
+                      </span>
+                    </td>
+
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit
@@ -416,9 +446,13 @@ const QualityCheck = () => {
                             }
                           }}
                         />
+                        <Download
+                          className="h-4 w-4 text-green-700 cursor-pointer"
+                          onClick={() => {}}
+                        />
                         <Eye
                           className="h-4 w-4 text-gray-600 cursor-pointer"
-                          onClick={() => getReportById(item._id)}
+                          onClick={() => handleView(item?._id)}
                         />
                       </div>
                     </td>
@@ -457,10 +491,13 @@ const QualityCheck = () => {
                   <X className="h-5 w-5 text-gray-700" />
                 </button>
                 <h2 className="text-lg sm:text-xl font-semibold">
-                  {selectedReport
+                  {modalMode === "edit"
                     ? "Edit Quality Report"
-                    : "Add New Quality Report"}
+                    : modalMode === "view"
+                      ? "View Quality Report"
+                      : "Add New Quality Report"}
                 </h2>
+
               </div>
 
               <form className="space-y-5" onSubmit={handleSubmit}>
@@ -503,6 +540,7 @@ const QualityCheck = () => {
 
                       setSelectedItem(null);
                     }}
+                    disabled={modalMode === "view"}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                     required
                   >
@@ -543,10 +581,12 @@ const QualityCheck = () => {
                             </h4>
                             <p className="text-sm text-gray-600">
                               Available Quantity: {item.available_quantity}
+                              {console.log("helloworld", formData)}
                             </p>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3">
+                            {/* Approved Quantity */}
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">
                                 Approved Quantity
@@ -556,20 +596,32 @@ const QualityCheck = () => {
                                 placeholder="0"
                                 value={item.approved_quantity}
                                 onChange={(e) => {
+                                  const value = Number(e.target.value);
                                   const newItems = [...formData.items];
-                                  newItems[index].approved_quantity =
-                                    e.target.value;
+                                  const available = Number(item.available_quantity);
+
+                                  // Update approved quantity
+                                  newItems[index].approved_quantity = value;
+
+                                  // Automatically update rejected quantity
+                                  newItems[index].rejected_quantity = Math.max(
+                                    available - value,
+                                    0
+                                  );
+
                                   setFormData({
                                     ...formData,
                                     items: newItems,
                                   });
                                 }}
+                                disabled={modalMode === "view"}
                                 className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-100"
                                 min="0"
                                 max={item.available_quantity}
                               />
                             </div>
 
+                            {/* Rejected Quantity */}
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">
                                 Rejected Quantity
@@ -578,47 +630,49 @@ const QualityCheck = () => {
                                 type="number"
                                 placeholder="0"
                                 value={item.rejected_quantity}
-                                onChange={(e) => {
-                                  const newItems = [...formData.items];
-                                  newItems[index].rejected_quantity =
-                                    e.target.value;
-                                  setFormData({
-                                    ...formData,
-                                    items: newItems,
-                                  });
-                                }}
-                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-100"
-                                min="0"
-                                max={item.available_quantity}
+                                // disabled 
+                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-100 bg-gray-100 "
                               />
                             </div>
                           </div>
 
+
                           {(parseInt(item.approved_quantity) || 0) +
                             (parseInt(item.rejected_quantity) || 0) >
                             parseInt(item.available_quantity) && (
-                              <p className="text-xs text-red-500 mt-1">
-                                Total quantity cannot exceed available quantity (
-                                {item.available_quantity})
-                              </p>
-                            )}
+                            <p className="text-xs text-red-500 mt-1">
+                              Total quantity cannot exceed available quantity (
+                              {item.available_quantity})
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-medium"
-                  disabled={loading}
-                >
-                  {loading
-                    ? "Submitting..."
-                    : selectedReport
-                      ? "Update"
-                      : "Submit"}
-                </button>
+                <div>
+                  <label className="block text-sm font-medium">
+                    Attach Gateman
+                  </label>
+                  <input
+                    type="file"
+                    name="attached_po"
+                    onChange={() => {}}
+                    className="w-full border rounded-md px-3 py-2 mt-1"
+                  />
+                </div>
+
+                {modalMode !== "view" && (
+                  <button
+                    type="submit"
+                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-medium"
+                    disabled={loading}
+                  >
+                    {loading ? "Submitting..." : modalMode === "edit" ? "Update" : "Submit"}
+                  </button>
+                )}
+
               </form>
             </Motion.div>
           </>
@@ -669,17 +723,15 @@ const QualityCheck = () => {
                       .map((po, i) => (
                         <tr
                           key={i}
-                          className={`border-b hover:bg-gray-50 transition ${i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                            }`}
+                          className={`border-b hover:bg-gray-50 transition ${
+                            i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
                         >
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             {po?.po_number}
                           </td>
                           <td className="px-3 sm:px-4 py-3 text-gray-700 whitespace-nowrap">
                             {po?.invoice_number || "—"}
-                            {/* <div className="text-xs text-gray-500 truncate">
-                            {po.supplier?.name} ({po.supplier?.email})
-                          </div> */}
                           </td>
                           <td className="px-3 sm:px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                             {po?.company_name}
@@ -702,9 +754,36 @@ const QualityCheck = () => {
                                   await ChangesStatus(po?._id);
                                   await refreshGatemanData();
                                   setShowGtModal(false);
+                                  setShowModal(true);
+
+                                  // Auto-fill the selected Gateman Entry in the form
+                                  const selectedEntry = getData.find(
+                                    (entry) => entry._id === po._id
+                                  );
+
+                                  if (selectedEntry && selectedEntry.items) {
+                                    const itemsArray = selectedEntry.items.map(
+                                      (item) => ({
+                                        item_id: item._id,
+                                        item_name: item.item_name,
+                                        available_quantity: item.item_quantity,
+                                        approved_quantity: "",
+                                        rejected_quantity: "",
+                                      })
+                                    );
+
+                                    setFormData({
+                                      ...formData,
+                                      gateman_entry_id: po._id,
+                                      items: itemsArray,
+                                    });
+
+                                    setSelectedEntryItems(selectedEntry.items);
+                                    setSelectedItem(null);
+                                  }
                                 }}
                               >
-                                Verified
+                                Accept
                               </button>
                             </div>
                           </td>
@@ -780,9 +859,8 @@ const QualityCheck = () => {
                       return (
                         <tr
                           key={prod._id}
-                          className={`border-b hover:bg-gray-50 transition ${
-                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          }`}
+                          className={`border-b hover:bg-gray-50 transition ${index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                            }`}
                         >
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             {fg?.compound_code ||
@@ -791,11 +869,10 @@ const QualityCheck = () => {
                           </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                isRejected
-                                  ? "bg-red-100 text-red-600"
-                                  : "bg-green-100 text-green-600"
-                              }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${isRejected
+                                ? "bg-red-100 text-red-600"
+                                : "bg-green-100 text-green-600"
+                                }`}
                             >
                               {isRejected ? "rejected" : "completed"}
                             </span>
@@ -884,7 +961,11 @@ const QualityCheck = () => {
           </div>
         </div>
       )}
-      <Pagination page={page} setPage={setPage} hasNextPage={qualityReports?.length === 10} />
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={qualityReports?.length === 10}
+      />
     </div>
   );
 };

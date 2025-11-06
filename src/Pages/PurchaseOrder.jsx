@@ -58,24 +58,23 @@ const PurchaseOrder = () => {
       supplier: Yup.string().required("Supplier is required"),
     }),
     onSubmit: async (values) => {
-  const payload = { ...values, products };
+      const payload = { ...values, products };
 
-  if (editMode && selectedOrder?._id) {
-    await UpdatePurchaseOrder({ _id: selectedOrder._id, ...payload });
-  } else {
-    await CreatePurchaseOrder(payload);
-  }
+      if (editMode && selectedOrder?._id) {
+        await UpdatePurchaseOrder({ _id: selectedOrder._id, ...payload });
+      } else {
+        await CreatePurchaseOrder(payload);
+      }
 
-  // ✅ Get the latest data and update UI immediately
-  const updatedData = await GetAllPurchaseOrders();
-  setPOData(updatedData);
+      // ✅ Get the latest data and update UI immediately
+      const updatedData = await GetAllPurchaseOrders();
+      setPOData(updatedData);
 
-  // ✅ Close modal
-  setShowModal(false);
-  setEditMode(false);
-  setViewMode(false);
-},
-
+      // ✅ Close modal
+      setShowModal(false);
+      setEditMode(false);
+      setViewMode(false);
+    },
   });
 
   useEffect(() => {
@@ -188,7 +187,9 @@ const PurchaseOrder = () => {
   };
 
   const handleDelete = async (_id) => {
-    if (window.confirm("Are you sure you want to delete this purchase order?")) {
+    if (
+      window.confirm("Are you sure you want to delete this purchase order?")
+    ) {
       try {
         await DeletePurchaseOrder(_id);
         setPOData((prev) => ({
@@ -323,7 +324,7 @@ const PurchaseOrder = () => {
           </button>
         </div>
       </div>
-      
+
       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
@@ -371,17 +372,21 @@ const PurchaseOrder = () => {
                   </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex justify-center gap-3">
-                      <Eye
-                        onClick={() => handleView(order._id)}
-                        className="text-blue-500 cursor-pointer"
-                      />
                       <Edit
                         onClick={() => handleEdit(order._id)}
-                        className="text-green-500 cursor-pointer"
+                        className="h-4 w-4 text-blue-500 cursor-pointer"
                       />
                       <Trash2
                         onClick={() => handleDelete(order._id)}
-                        className="text-red-500 cursor-pointer"
+                        className="h-4 w-4 text-red-500 cursor-pointer"
+                      />
+                      <Download
+                        className="h-4 w-4 text-green-700 cursor-pointer"
+                        onClick={() => {}}
+                      />
+                      <Eye
+                        onClick={() => handleView(order._id)}
+                         className="h-4 w-4 text-gray-600 cursor-pointer"
                       />
                     </div>
                   </td>
