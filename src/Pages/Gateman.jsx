@@ -421,7 +421,7 @@ const Gateman = () => {
                           "items",
                           selectedPO.products?.map((p) => ({
                             item_name: p.item_name,
-                            item_quantity: p.est_quantity || 1,
+                            item_quantity: p.quantity || 1,
                           })) || []
                         );
                         formik.setFieldValue(
@@ -509,7 +509,7 @@ const Gateman = () => {
                         placeholder="Item Name"
                         className="flex-1 border rounded-md px-2 py-1"
                       />
-                      <input
+                      {/* <input
                         type="number"
                         name={`items[${index}].item_quantity`}
                         value={item.item_quantity}
@@ -518,8 +518,8 @@ const Gateman = () => {
                         readOnly={true}
                         placeholder="Qty"
                         className="w-20 border rounded-md px-2 py-1"
-                      />
-                      {mode !== "view" && (
+                      /> */}
+                      {/* {mode !== "view" && (
                         <button
                           type="button"
                           onClick={() => {
@@ -531,10 +531,10 @@ const Gateman = () => {
                         >
                           <Trash2 size={16} />
                         </button>
-                      )}
+                      )} */}
                     </div>
                   ))}
-                  {mode !== "view" && (
+                  {/* {mode !== "view" && (
                     <Button
                       type="button"
                       onClick={() =>
@@ -547,7 +547,7 @@ const Gateman = () => {
                     >
                       <Plus size={16} /> Add Item
                     </Button>
-                  )}
+                  )} */}
                 </div>
                 <div>
                   <label className="block text-sm font-medium">
@@ -697,11 +697,11 @@ const Gateman = () => {
                               <span className="font-medium text-gray-800">
                                 {p.item_name}
                               </span>{" "}
-                              - {p.est_quantity} {p.uom}
-                              <div className="text-xs text-gray-500">
+                              - {p.quantity} {p.uom}
+                              {/* <div className="text-xs text-gray-500">
                                 Remain: {p.remain_quantity}, Produced:{" "}
                                 {p.produce_quantity}
-                              </div>
+                              </div> */}
                             </div>
                           ))}
                         </td>

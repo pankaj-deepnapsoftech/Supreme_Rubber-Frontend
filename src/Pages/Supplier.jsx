@@ -59,10 +59,10 @@ const Supplier = () => {
       phone: Yup.string()
         .matches(/^[0-9]{10}$/, "Phone number must be 10 digits")
         .required("Phone is required"),
-      email: Yup.string().email("Invalid email").required("Email is required"),
-      company_name: Yup.string().required("Company name is required"),
+      email: Yup.string().email("Invalid email"),
+      company_name: Yup.string(),
       address: Yup.string().required("Address is required"),
-      gst_number: Yup.string().required("GST number is required"),
+      gst_number: Yup.string(),
     }),
     onSubmit: async (values) => {
       try {
