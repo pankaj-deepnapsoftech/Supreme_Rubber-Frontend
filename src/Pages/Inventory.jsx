@@ -202,14 +202,13 @@ const Inventory = () => {
                 "Category",
                 "Name",
                 "Stock",
+                "Reject Qty",
                 "UOM",
                 "Actions",
               ].map((header, i) => (
                 <th
                   key={i}
-                  className={`py-3 px-4 text-center font-semibold ${
-                    i === 0 ? "rounded-tl-2xl" : ""
-                  } ${i === 5 ? "rounded-tr-2xl" : ""}`}
+                  className={`py-3 px-4 text-center font-semibold `}
                 >
                   {header}
                 </th>
@@ -254,7 +253,10 @@ const Inventory = () => {
                       {item.name}
                     </td>
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.current_stock}
+                      {item.current_stock} 
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.reject_stock || 0}
                     </td>
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.uom}

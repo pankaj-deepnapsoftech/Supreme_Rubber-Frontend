@@ -281,7 +281,8 @@ export default function UserRolesManagement() {
     "bom",
     "gateman",
     "supplier",
-    "purchase order"
+    "purchase order",
+    "production start"
   ];
 
   // Filtered + searched roles
