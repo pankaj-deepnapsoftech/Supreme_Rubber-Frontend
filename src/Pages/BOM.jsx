@@ -489,7 +489,7 @@ const BOM = () => {
                   {/* Compound Codes */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Compound Codes
+                      Compound Code
                     </label>
                     {compoundCodes.map((code, idx) => (
                       <input
@@ -511,7 +511,7 @@ const BOM = () => {
                   {/* Part Names */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Part Names
+                      Part Name
                     </label>
                     {partNames.map((name, idx) => (
                       <input
@@ -533,7 +533,7 @@ const BOM = () => {
                   {/* Hardnesses */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Hardnesses
+                      Hardness
                     </label>
                     {hardnesses.map((hardness, idx) => (
                       <input

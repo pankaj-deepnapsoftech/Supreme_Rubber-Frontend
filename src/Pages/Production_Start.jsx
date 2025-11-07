@@ -458,7 +458,7 @@ const Production_Start = () => {
           
            <button
            onClick={fetchProductions}
-            className="p-2 cursor-pointer rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            className="p-2 cursor-pointer rounded-lg  text-gray-800  border border-gray-300 hover:bg-gray-100 transition">
           <RefreshCcw
             size={16}
             
@@ -512,26 +512,38 @@ const Production_Start = () => {
                           }
                           return p?.status || "pending";
                         };
-                        const statusVal = deriveStatus(prod);
-                        const label = statusVal === "in_progress" ? "Work in progress" : statusVal;
+
+                        const statusVal = (deriveStatus(prod) || "pending").toString().toLowerCase();
+                        const normalizedStatus =
+                          statusVal === "production start" || statusVal === "production_start"
+                            ? "completed"
+                            : statusVal;
+
+                        const label = (() => {
+                          if (normalizedStatus === "completed") return "Production Completed";
+                          if (normalizedStatus === "in_progress") return "Work in progress";
+                          if (!normalizedStatus) return "Pending";
+                          return normalizedStatus
+                            .split(/[_\s]+/)
+                            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(" ");
+                        })();
+
                         const cls =
-                          statusVal === "completed"
+                          normalizedStatus === "completed"
                             ? "bg-green-100 text-green-600"
-                            : statusVal === "in_progress"
+                            : normalizedStatus === "in_progress"
                             ? "bg-yellow-100 text-yellow-600"
                             : "bg-gray-100 text-gray-600";
+
                         return (
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${cls}`}>
                             {label}
                           </span>
                         );
                       })()}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">{fg?.prod_qty || fg?.est_qty || 0}</td>
-                    <td className="px-4 sm:px-6 py-3">{fg?.uom || "-"}</td>
-                    <td className="px-4 sm:px-6 py-3 text-center">
-                      <div className="flex justify-center items-center space-x-3">
-                        {(() => {
+
+{(() => {
                           // Check Compound Details remain_qty is 0
                           const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
                           const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
@@ -572,6 +584,14 @@ const Production_Start = () => {
                             </span>
                           );
                         })()}
+
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">{fg?.prod_qty || fg?.est_qty || 0}</td>
+                    <td className="px-4 sm:px-6 py-3">{fg?.uom || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3 text-center">
+                      <div className="flex justify-center items-center space-x-3">
+                        
+
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"
                           onClick={async () => {
@@ -694,7 +714,7 @@ const Production_Start = () => {
                           // No need to check quantity match when all quantities are fully consumed
                           return (
                             <button
-                              className="px-3 py-1 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 text-xs"
+                              className="px-3 py-1 rounded-md bg-indigo-500 border-2 border-black text-white hover:bg-indigo-400 cursor-pointer text-xs"
                               onClick={async () => {
                                 try {
                                   await axiosHandler.patch(`/production/${prod._id}/ready-for-qc`);
@@ -1171,7 +1191,7 @@ const Production_Start = () => {
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <Info label="Process" value={p.process_name} />
                             <Info label="Work Done" value={p.work_done} />
-                            <div>
+                            <div>5
                               <span className="font-medium text-gray-600">Status:</span>{" "}
                               <span
                                 className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
