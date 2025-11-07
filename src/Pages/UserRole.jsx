@@ -500,16 +500,29 @@ export default function UserRolesManagement() {
       {/* Drawer for add/edit */}
       {isDrawerOpen && (
         <>
+          {/* Background Overlay */}
           <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setIsDrawerOpen(false)}
           ></div>
 
-          <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-lg p-6 overflow-y-auto transition-transform duration-300">
-            <h2 className="text-xl font-semibold mb-4">
+          {/* Drawer */}
+          <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl p-6 overflow-y-auto transition-transform duration-300 border-l border-gray-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsDrawerOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition-all duration-200 px-3 py-2 rounded hover:bg-red-50 focus:outline-none"
+              title="Close"
+            >
+              ✕
+            </button>
+
+            {/* Drawer Header */}
+            <h2 className="text-xl font-semibold mb-6 mt-2 text-gray-800 border-b pb-2">
               {editRoleId ? "Edit Role" : "Add New Role"}
             </h2>
 
+            {/* Drawer Form */}
             <form onSubmit={formik.handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -566,7 +579,7 @@ export default function UserRolesManagement() {
                           }
                         }}
                       />
-                      <span className="text-sm">{perm}</span>
+                      <span className="text-sm text-gray-700">{perm}</span>
                     </label>
                   ))}
                 </div>
@@ -575,7 +588,7 @@ export default function UserRolesManagement() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition"
               >
                 {loading
                   ? "Saving..."
@@ -587,6 +600,7 @@ export default function UserRolesManagement() {
           </div>
         </>
       )}
+
 
       <Pagination
         page={page}

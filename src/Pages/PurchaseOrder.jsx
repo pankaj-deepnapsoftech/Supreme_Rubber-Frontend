@@ -484,7 +484,7 @@ const PurchaseOrder = () => {
                         />
                       </div>
 
-                      <div>
+                      {/* <div>
                         <label className="block text-gray-700 font-medium mb-1">
                           Product / Service
                         </label>
@@ -494,7 +494,7 @@ const PurchaseOrder = () => {
                           readOnly
                           className="border w-full px-3 py-2 rounded-lg bg-gray-100"
                         />
-                      </div>
+                      </div> */}
 
                       {/* ["quantity", "produce_quantity", "remain_quantity"].map(
                         (field) => (
