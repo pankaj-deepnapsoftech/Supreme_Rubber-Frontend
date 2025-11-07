@@ -116,7 +116,7 @@ const Gateman = () => {
   return matchesSearch && matchesStatus;
 });
 
-  console.log(POData);
+
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -126,7 +126,7 @@ const Gateman = () => {
           po_number: edittable.po_number || "",
           invoice_number: edittable.invoice_number || "",
           company_name: edittable.company_name || "",
-          items: edittable.items || [{ item_name: "", item_quantity: 1 }],
+          items: edittable.items || [{ item_name: "", item_quantity : "" }],
           attached_po: null,
           attached_invoice: null,
           status: edittable.status || "Entry Created",
@@ -136,7 +136,7 @@ const Gateman = () => {
           po_number: "",
           invoice_number: "",
           company_name: "",
-          items: [{ item_name: "", item_quantity: 1 }],
+          items: [{ item_name: "", item_quantity: "" }],
           attached_po: null,
           attached_invoice: null,
           status: "Entry Created",
@@ -222,6 +222,9 @@ const Gateman = () => {
       toast.error("Failed to accept purchase order");
     }
   };
+
+ console.log("values",formik.values.items)
+
 
   return (
     <div className="p-6 relative w-full">
@@ -486,14 +489,15 @@ const Gateman = () => {
                       const selectedPO = POData?.find(
                         (po) => po._id === selectedPOId
                       );
-
+                      console.log(POData)
                       if (selectedPO) {
                         formik.setFieldValue("po_number", selectedPO.po_number);
                         formik.setFieldValue(
                           "items",
                           selectedPO.products?.map((p) => ({
                             item_name: p.item_name,
-                            item_quantity: p.quantity || 1,
+                            item_quantity: p?.quantity,
+                            
                           })) || []
                         );
                         formik.setFieldValue(
@@ -581,7 +585,7 @@ const Gateman = () => {
                         placeholder="Item Name"
                         className="flex-1 border rounded-md px-2 py-1"
                       />
-                      {/* <input
+                      <input
                         type="number"
                         name={`items[${index}].item_quantity`}
                         value={item.item_quantity}
@@ -590,7 +594,7 @@ const Gateman = () => {
                         readOnly={true}
                         placeholder="Qty"
                         className="w-20 border rounded-md px-2 py-1"
-                      /> */}
+                      />
                       {/* {mode !== "view" && (
                         <button
                           type="button"
@@ -606,20 +610,7 @@ const Gateman = () => {
                       )} */}
                     </div>
                   ))}
-                  {/* {mode !== "view" && (
-                    <Button
-                      type="button"
-                      onClick={() =>
-                        formik.setFieldValue("items", [
-                          ...formik.values.items,
-                          { item_name: "", item_quantity: 1 },
-                        ])
-                      }
-                      className="flex items-center gap-1 text-sm bg-green-600 hover:bg-green-700 mt-2"
-                    >
-                      <Plus size={16} /> Add Item
-                    </Button>
-                  )} */}
+                 
                 </div>
                 <div>
                   <label className="block text-sm font-medium">
@@ -784,7 +775,7 @@ const Gateman = () => {
                               title="Accept"
                               onClick={async () => {
                                 await handleAccept(po?._id); // updates status etc.
-                                await refreshGatemenData(); // refresh data
+                                // await refreshGatemenData(); // refresh data
                                 setShowPOModal(false); // close PO list modal
                                 setShowModal(true); // open Gate Entry modal
 
@@ -802,9 +793,9 @@ const Gateman = () => {
                                       selectedPO?.supplier?.company_name || "",
                                     items: selectedPO.products?.map((p) => ({
                                       item_name: p.item_name,
-                                      item_quantity: p.est_quantity || 1,
+                                      item_quantity: p.quantity || 1,
                                     })) || [
-                                      { item_name: "", item_quantity: 1 },
+                                      { item_name: "", item_quantity:" " },
                                     ],
                                     attached_po: null,
                                     attached_invoice: null,
