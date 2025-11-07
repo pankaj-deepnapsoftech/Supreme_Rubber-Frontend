@@ -567,7 +567,7 @@ const BOM = () => {
                           }}
                           className="text-red-500 hover:text-red-700"
                         >
-                          <X className="h-5 w-5" />
+                          {/* <X className="h-5 w-5" /> */}
                         </button>
                       )}
                     </div>
@@ -628,12 +628,12 @@ const BOM = () => {
                                 }}
                                 className="text-red-500 hover:text-red-700"
                               >
-                                <X className="h-4 w-4" />
+                                {/* <X className="h-4 w-4" /> */}
                               </button>
                             )}
                           </div>
                         ))}
-                        {!viewMode && (
+                        {/* {!viewMode && (
                           <button
                             onClick={() => {
                               const next = [...finishedGoods];
@@ -644,7 +644,7 @@ const BOM = () => {
                           >
                             <Plus className="h-3 w-3" /> Add Quantity
                           </button>
-                        )}
+                        )} */}
                       </div>
                       
                       
@@ -700,55 +700,7 @@ const BOM = () => {
                       </div>
 
                       {/* Quantities */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Quantities
-                        </label>
-                        {fg.quantities.map((qty, qtyIdx) => (
-                          <div key={qtyIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="number"
-                              placeholder="Quantity"
-                              value={qty}
-                              onChange={(e) => {
-                                const next = [...finishedGoods];
-                                next[fgIdx].quantities[qtyIdx] = e.target.value;
-                                setFinishedGoods(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                            {/* {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...finishedGoods];
-                                  if (next[fgIdx].quantities.length > 1) {
-                                    next[fgIdx].quantities = next[fgIdx].quantities.filter((_, i) => i !== qtyIdx);
-                                  } else {
-                                    next[fgIdx].quantities[0] = "";
-                                  }
-                                  setFinishedGoods(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )} */}
-                          </div>
-                        ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...finishedGoods];
-                              next[fgIdx].quantities.push("");
-                              setFinishedGoods(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Quantity
-                          </button>
-                        )} */}
-                      </div>
+                      {/*  */}
 
                       {/* Comments */}
                       <div>
@@ -769,58 +721,15 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {/* {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...finishedGoods];
-                                  if (next[fgIdx].comments.length > 1) {
-                                    next[fgIdx].comments = next[fgIdx].comments.filter((_, i) => i !== commentIdx);
-                                  } else {
-                                    next[fgIdx].comments[0] = "";
-                                  }
-                                  setFinishedGoods(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )} */}
+                           
                           </div>
                         ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...finishedGoods];
-                              next[fgIdx].comments.push("");
-                              setFinishedGoods(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Comment
-                          </button>
-                        )} */}
+                       
                       </div>
                     </div>
                   </div>
                 ))}
-                {/* {!viewMode && (
-                  <button
-                    onClick={() => {
-                      setFinishedGoods([
-                        ...finishedGoods,
-                        {
-                          finished_good_id_name: "",
-                          tolerances: [""],
-                          quantities: [""],
-                          comments: [""],
-                        },
-                      ]);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
-                  >
-                    Add Finished Good
-                  </button>
-                )} */}
+                
               </div>
 
               {/* Raw Materials Section */}
@@ -841,7 +750,7 @@ const BOM = () => {
                           }}
                           className="text-red-500 hover:text-red-700"
                         >
-                          <X className="h-5 w-5" />
+                          {/* <X className="h-5 w-5" /> */}
                         </button>
                       )}
                     </div>
@@ -891,36 +800,10 @@ const BOM = () => {
                               disabled={viewMode}
                               className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
                             />
-                            {/* {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...rawMaterials];
-                                  if (next[rmIdx].tolerances.length > 1) {
-                                    next[rmIdx].tolerances = next[rmIdx].tolerances.filter((_, i) => i !== tolIdx);
-                                  } else {
-                                    next[rmIdx].tolerances[0] = "";
-                                  }
-                                  setRawMaterials(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )} */}
+                            
                           </div>
                         ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...rawMaterials];
-                              next[rmIdx].tolerances.push("");
-                              setRawMaterials(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Tolerance
-                          </button>
-                        )} */}
+                       
                       </div>
 
                       {/* Quantities */}
