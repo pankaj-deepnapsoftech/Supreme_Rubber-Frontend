@@ -463,7 +463,7 @@ const Production_Start = () => {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-x-auto shadow-sm">
+      <div className="mt-5 border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left min-w-[600px]">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
@@ -691,252 +691,328 @@ const Production_Start = () => {
       </div>
 
       {/* Add Production Modal */}
+      {/* now this  */}
       <AnimatePresence>
         {showModal && (
           <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-linear-to-br from-black/60 to-black/40 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           >
             <Motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.95 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 50, opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="relative bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-5xl max-h-[90vh] overflow-y-auto p-0"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
-              {/* Sticky Header */}
-              <div className="sticky top-0 bg-white/80 backdrop-blur-sm z-10 border-b border-gray-200 flex justify-between items-center p-4 sm:p-5">
-                <button
-                  onClick={() => { resetForm(); setShowModal(false); }}
-                  className="text-gray-600 hover:text-blue-600 transition text-lg"
-                >
-                  ←
-                </button>
-                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  Add New Production
-                </h1>
-                <button
-                  onClick={() => { resetForm(); setShowModal(false); }}
-                  className="text-gray-600 hover:text-red-500 transition text-xl"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                onClick={() => { resetForm(); setShowModal(false); }}
+                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
+              >
+                ✕
+              </button>
 
-              {/* Form Body */}
-              <div className="p-6 sm:p-8 space-y-10">
-                <form onSubmit={handleSubmit}>
-                  {/* Compound Details */}
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+              <button
+                onClick={() => { resetForm(); setShowModal(false); }}
+                className="text-2xl mb-4 hover:text-blue-500 transition"
+              >
+                ←
+              </button>
+
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-6 sm:mb-8">
+                Add New Production
+              </h1>
+
+              <form onSubmit={handleSubmit}>
+                {/* ---------- Finished Goods Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Compound Details
                     </h2>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-7 gap-4">
-                      <div className="relative sm:col-span-2">
-                        <input
-                          type="text"
-                          placeholder="Search Compound"
-                          value={bomSearch}
-                          onChange={(e) => {
-                            setBomSearch(e.target.value);
-                            setShowBomResults(true);
-                          }}
-                          onFocus={() => setShowBomResults(true)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400"
-                        />
-                        {showBomResults && (
-                          <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-56 overflow-auto">
-                            {boms.length > 0 ? (
-                              boms
-                                .filter((b) => {
-                                  const q = bomSearch.toLowerCase();
-                                  const name = (b.compound_name || "").toLowerCase();
-                                  const code = (Array.isArray(b.compound_codes) ? b.compound_codes[0] : "").toLowerCase();
-                                  return !q || name.includes(q) || code.includes(q);
-                                })
-                                .slice(0, 50)
-                                .map((b) => {
-                                  const label = `${b.compound_name}${b.compound_codes?.[0] ? ` (${b.compound_codes[0]})` : ""}`;
-                                  return (
-                                    <div
-                                      key={b._id}
-                                      className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ${selectedBomId === b._id ? "bg-blue-100" : ""}`}
-                                      onMouseDown={(e) => e.preventDefault()}
-                                      onClick={() => {
-                                        setSelectedBomId(b._id);
-                                        setBomSearch(label);
-                                        setShowBomResults(false);
-                                        handleBomSelect(b._id);
-                                      }}
-                                    >
-                                      {label}
-                                    </div>
-                                  );
-                                })
-                            ) : (
-                              <div className="px-3 py-2 text-sm text-gray-500">No BOMs found</div>
-                            )}
-                          </div>
-                        )}
+              <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                    {[
+                      "Compound Details",
+                      "EST. QTY",
+                      "UOM",
+                      "PROD. QTY",
+                      "Remain QTY",
+                      "Category",
+                  "Comment",
+                    ].map((head) => (
+                      <div key={head} className="p-2 text-center truncate">
+                        {head}
                       </div>
+                    ))}
+                  </div>
 
-                      {/* Other inputs */}
-                      {["est_qty", "uom", "prod_qty", "remain_qty", "category", "comment"].map((field, i) => (
-                        <input
-                          key={field}
-                          type={field.includes("qty") ? "number" : "text"}
-                          placeholder={field.replace("_", " ").toUpperCase()}
-                          value={finishedGood[field] || ""}
-                          readOnly={["uom", "remain_qty", "category"].includes(field)}
-                          onChange={(e) =>
-                            !["uom", "remain_qty", "category"].includes(field) &&
-                            handleFinishedGoodChange(field, e.target.value)
-                          }
-                          className={`border border-gray-300 rounded-lg px-3 py-2 text-sm w-full ${
-                            ["uom", "remain_qty", "category"].includes(field)
-                              ? "bg-gray-50"
-                              : "focus:ring-2 focus:ring-blue-400"
-                          }`}
-                        />
-                      ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search Compound"
+                        value={bomSearch}
+                        onChange={(e) => {
+                          setBomSearch(e.target.value);
+                          setShowBomResults(true);
+                        }}
+                        onFocus={() => setShowBomResults(true)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      />
+                      {showBomResults && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
+                          {boms
+                            .filter((b) => {
+                              const q = (bomSearch || "").toLowerCase();
+                              const name = (b.compound_name || "").toLowerCase();
+                              const code = ((Array.isArray(b.compound_codes) && b.compound_codes[0]) ? b.compound_codes[0] : "").toLowerCase();
+                              return !q || name.includes(q) || code.includes(q);
+                            })
+                            .slice(0, 50)
+                            .map((b) => {
+                              const label = `${b.compound_name || "Unnamed"}${(Array.isArray(b.compound_codes) && b.compound_codes[0]) ? ` (${b.compound_codes[0]})` : ""}`;
+                              return (
+                                <div
+                                  key={b._id}
+                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${selectedBomId === b._id ? "bg-gray-50" : ""}`}
+                                  onMouseDown={(e) => {
+                                    // prevent input blur before click handler
+                                    e.preventDefault();
+                                  }}
+                                  onClick={() => {
+                                    setSelectedBomId(b._id);
+                                    setBomSearch(label);
+                                    setShowBomResults(false);
+                                    handleBomSelect(b._id);
+                                  }}
+                                >
+                                  {label}
+                                </div>
+                              );
+                            })}
+                          {boms.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500">No BOMs</div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </section>
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={finishedGood.est_qty}
+                      onChange={(e) => handleFinishedGoodChange("est_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter UOM"
+                      value={finishedGood.uom}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={finishedGood.prod_qty}
+                      onChange={(e) => handleFinishedGoodChange("prod_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Remain QTY"
+                      value={finishedGood.remain_qty}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter Category"
+                      value={finishedGood.category}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                <input
+                  type="text"
+                  placeholder="Comment"
+                  value={finishedGood.comment}
+                  onChange={(e) => handleFinishedGoodChange("comment", e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+                />
+                  </div>
+                </section>
 
-                  {/* Raw Materials */}
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                {/* ---------- Raw Materials Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Raw Materials
                     </h2>
-                    {rawMaterials.length > 0 ? (
-                      <div className="space-y-3">
-                        {rawMaterials.map((rm, idx) => (
-                          <div
-                            key={idx}
-                            className="grid grid-cols-1 sm:grid-cols-7 gap-3 bg-gray-50 rounded-xl p-3 shadow-sm"
-                          >
-                            {Object.entries({
-                              name: `${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`,
-                              est_qty: rm.est_qty,
-                              uom: rm.uom,
-                              used_qty: rm.used_qty,
-                              remain_qty: rm.remain_qty,
-                              category: rm.category,
-                              comment: rm.comment,
-                            }).map(([key, value]) => (
-                              <input
-                                key={key}
-                                type={key.includes("qty") ? "number" : "text"}
-                                placeholder={key.replace("_", " ").toUpperCase()}
-                                value={value || ""}
-                                readOnly={!["used_qty", "comment"].includes(key)}
-                                onChange={(e) =>
-                                  ["used_qty", "comment"].includes(key) &&
-                                  handleRawMaterialChange(idx, key, e.target.value)
-                                }
-                                className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full ${
-                                  !["used_qty", "comment"].includes(key)
-                                    ? "bg-gray-100"
-                                    : "focus:ring-2 focus:ring-blue-400"
-                                }`}
-                              />
-                            ))}
+                  </div>
+
+                  {rawMaterials.length > 0 ? (
+                    <>
+                      <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                        {[
+                          "Finished Goods",
+                          "EST. QTY",
+                          "UOM",
+                          "Used QTY",
+                          "Remain QTY",
+                          "Category",
+                          "Comment",
+                        ].map((head) => (
+                          <div key={head} className="p-2 text-center truncate">
+                            {head}
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">
-                        {selectedBomId
-                          ? "No raw materials found for this BOM."
-                          : "Please select a BOM to view raw materials."}
-                      </p>
-                    )}
-                  </section>
 
-                  {/* Processes */}
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
-                      Processes
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {processes.map((proc, idx) => (
-                        <div
-                          key={idx}
-                          className="border rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-medium text-gray-800">Process {idx + 1}</h3>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                proc.status === "completed"
-                                  ? "text-green-700 bg-green-100"
-                                  : proc.status === "in_progress"
-                                  ? "text-yellow-700 bg-yellow-100"
-                                  : "text-gray-600 bg-gray-100"
-                              }`}
-                            >
-                              {proc.status}
-                            </span>
-                          </div>
-
+                      {rawMaterials.map((rm, idx) => (
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
                           <input
-                            type="text"
-                            placeholder="Process Name"
-                            value={proc.process_name}
+                            value={`${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`}
                             readOnly
-                            className="border border-gray-300 rounded-md px-3 py-2 w-full mb-3 text-sm bg-gray-50"
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
-
-                          <label className="text-sm text-gray-700 font-medium mb-1 block">
-                            Work Done
-                          </label>
                           <input
                             type="number"
-                            placeholder="1000"
-                            value={proc.work_done}
-                            onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
-                            className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-400 mb-2"
+                            placeholder="EST. QTY"
+                            value={rm.est_qty}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
-
-                          <div className="flex gap-4 items-center mt-2 flex-wrap">
-                            {["start", "done"].map((flag) => (
-                              <label key={flag} className="flex items-center gap-1 text-sm text-gray-700">
-                                <input
-                                  type="checkbox"
-                                  className="accent-blue-600"
-                                  checked={proc[flag]}
-                                  onChange={(e) => handleProcessChange(idx, flag, e.target.checked)}
-                                />
-                                {flag.charAt(0).toUpperCase() + flag.slice(1)}
-                              </label>
-                            ))}
-                          </div>
+                          <input
+                            type="text"
+                            placeholder="UOM"
+                            value={rm.uom}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Used QTY"
+                            value={rm.used_qty}
+                            onChange={(e) => handleRawMaterialChange(idx, "used_qty", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Remain QTY"
+                            value={rm.remain_qty}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Category"
+                            value={rm.category}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Comment"
+                            value={rm.comment || ""}
+                            onChange={(e) => handleRawMaterialChange(idx, "comment", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
                         </div>
                       ))}
+                    </>
+                  ) : selectedBomId ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No raw materials found for the selected BOM. Please check if the BOM has raw materials configured.
                     </div>
-                  </section>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      Please select a BOM to see raw materials.
+                    </div>
+                  )}
+                </section>
 
-                  {/* Submit Button */}
-                  <div className="flex justify-center mt-10 mb-6">
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-8 py-2.5 shadow-md font-medium transition disabled:opacity-50 flex items-center gap-2"
-                    >
-                      {submitting ? (
-                        <>
-                          <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"></span>
-                          Submitting...
-                        </>
-                      ) : (
-                        "Submit"
-                      )}
-                    </button>
+                {/* ---------- Processes Section ---------- */}
+                <section className="mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {processes.map((proc, idx) => (
+                      <div
+                        key={idx}
+                        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-semibold text-gray-800">
+                            Process {idx + 1}
+                          </h3>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              proc.status === "completed"
+                                ? "text-green-600 bg-green-100"
+                                : proc.status === "in_progress"
+                                ? "text-yellow-600 bg-yellow-100"
+                                : "text-gray-600 bg-gray-100"
+                            }`}
+                          >
+                            {proc.status}
+                          </span>
+                        </div>
+
+                        <input
+                          type="text"
+                          placeholder="Process Name"
+                          value={proc.process_name}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 w-full mb-3 text-sm bg-gray-50"
+                        />
+
+                        <label className="text-sm text-gray-700 font-medium mb-1 block">
+                          Work Done
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="1000"
+                          value={proc.work_done}
+                          onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
+                          className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-400 mb-2"
+                        />
+
+                        <div className="flex gap-4 items-center mt-2 flex-wrap">
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="accent-blue-600"
+                              checked={proc.start}
+                              onChange={(e) => handleProcessChange(idx, "start", e.target.checked)}
+                            />
+                            Start
+                          </label>
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="accent-blue-600"
+                              checked={proc.done}
+                              onChange={(e) => handleProcessChange(idx, "done", e.target.checked)}
+                            />
+                            Done
+                          </label>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </form>
-              </div>
+                </section>
+
+                <div className="flex justify-center mt-10 mb-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-2 shadow-md font-medium transition disabled:opacity-50"
+                  >
+                    {submitting ? "Submitting..." : "Submit"}
+                  </button>
+                </div>
+              </form>
             </Motion.div>
           </Motion.div>
         )}
