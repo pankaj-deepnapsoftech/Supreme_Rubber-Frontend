@@ -681,18 +681,20 @@ const BOM = () => {
                   }}
                   disabled={viewMode}
                 />
-                {!viewMode && (
-                  <button
-                    onClick={() => {
-                      if (processRows.length > 1) {
-                        setProcessRows(processRows.filter((_, i) => i !== idx));
-                      }
-                    }}
-                    className="text-red-500 hover:text-red-600 transition"
-                  >
-                    ✕
-                  </button>
-                )}
+
+              {!viewMode && (
+                <button
+                  onClick={() => {
+                    if (processRows.length > 1) {
+                      setProcessRows(processRows.filter((_, i) => i !== idx));
+                    }
+                  }}
+                  className="bg-red-50 text-red-600 mt-2 hover:bg-red-100 border border-red-200 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-all hover:scale-110 shadow-sm"
+                  title="Remove Process"
+                >
+                  ✕
+                </button>
+              )}
               </div>
             ))}
           </div>
