@@ -126,7 +126,7 @@ const Employee = () => {
         </div>
 
         <div className="flex items-center space-x-4 text-gray-500">
-          <div className="relative group">
+          <div className="relative group ml-3">
             <button
              onClick={() => setFilterOpen(!filterOpen)}
              className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 text-gray-800 border border-gray-300 hover:bg-gray-100 transition">

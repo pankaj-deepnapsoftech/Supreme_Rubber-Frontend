@@ -55,22 +55,24 @@ const Navbar = () => {
 
       {/* Right Section */}
       <div className="flex items-center gap-5">
-        <Search
-          className="text-gray-600 cursor-pointer hover:text-gray-800"
-          size={20}
-        />
-        <LuMessageSquareText
-          className="text-gray-600 cursor-pointer hover:text-gray-800"
-          size={20}
-        />
-        <Bell
-          className="text-gray-600 cursor-pointer hover:text-gray-800"
-          size={20}
-        />
-        <Settings
-          className="text-gray-600 cursor-pointer hover:text-gray-800"
-          size={20}
-        />
+        <div className="hidden sm:flex items-center space-x-4">
+          <Search
+            className="text-gray-600 cursor-pointer hover:text-gray-800"
+            size={20}
+          />
+          <LuMessageSquareText
+            className="text-gray-600 cursor-pointer hover:text-gray-800"
+            size={20}
+          />
+          <Bell
+            className="text-gray-600 cursor-pointer hover:text-gray-800"
+            size={20}
+          />
+          <Settings
+            className="text-gray-600 cursor-pointer hover:text-gray-800"
+            size={20}
+          />
+        </div>
 
         {/* Avatar Button */}
         <div

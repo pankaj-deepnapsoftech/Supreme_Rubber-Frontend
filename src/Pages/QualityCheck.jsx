@@ -34,7 +34,7 @@ const QualityCheck = () => {
     items: [],
     attached_report: null,
   });
-  const [modalMode, setModalMode] = useState("add"); 
+  const [modalMode, setModalMode] = useState("add");
   const { getAllProducts } = useInventory();
 
   const { GetAllPOData } = useGatemenContext();
@@ -74,15 +74,15 @@ const QualityCheck = () => {
     setGetData(filter);
   };
 
-  console.log(selectedReport)
+  console.log(selectedReport);
 
-    useEffect(() => {
+  useEffect(() => {
     if (!selectedReport) return;
 
     const gatemanEntry = getData.find(
       (entry) => entry._id === selectedReport.gateman_entry_id?._id
     );
-  
+
     if (!gatemanEntry) return;
 
     const item = gatemanEntry.items?.find(
@@ -108,8 +108,6 @@ const QualityCheck = () => {
       attached_report: null,
     });
   }, [selectedReport, getData]);
-;
-
   const handleClose = () => {
     setShowModal(false);
     setSelectedReport(null);
@@ -232,13 +230,12 @@ const QualityCheck = () => {
     }
   };
 
-
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Quality Check</h1>
         <Button
-          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white w-full sm:w-auto"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => {
             setSelectedReport(null);
             setSelectedEntryItems([]);
@@ -270,7 +267,7 @@ const QualityCheck = () => {
 
           <Button
             onClick={() => setShowGtModal(true)}
-            className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+            className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
             Gateman
           </Button>
@@ -307,32 +304,7 @@ const QualityCheck = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-4 text-gray-600">
-          {/* <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
-            <div className="relative group">
-            <Filter className="cursor-pointer hover:text-gray-800" size={16}/>
-            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
-              <p
-                onClick={() => handleFilter("All")}
-                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-              >
-                All
-              </p>
-              {[...new Set(qualityReports?.map((p) => p.category) || [])].map(
-                (cat) => (
-                  <p
-                    key={cat?._id}
-                    onClick={() => handleFilter(cat)}
-                    className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                  >
-                    {cat}
-                  </p>
-                )
-              )}
-            </div>
-          </div>
-          </button> */}
-          
+        <div className="flex justify-end items-center gap-4 text-gray-600 w-full">
           <button
             className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
             onClick={getAllReports}
@@ -501,10 +473,9 @@ const QualityCheck = () => {
                   {modalMode === "edit"
                     ? "Edit Quality Report"
                     : modalMode === "view"
-                      ? "View Quality Report"
-                      : "Add New Quality Report"}
+                    ? "View Quality Report"
+                    : "Add New Quality Report"}
                 </h2>
-
               </div>
 
               <form className="space-y-5" onSubmit={handleSubmit}>
@@ -551,7 +522,9 @@ const QualityCheck = () => {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
                     required
                   >
-                    <option value="" className="cursor-pointer">Select Gateman Entry</option>
+                    <option value="" className="cursor-pointer">
+                      Select Gateman Entry
+                    </option>
                     {getData
                       ?.filter((entry) => entry.status === "Verified")
                       .map((entry) => (
@@ -605,7 +578,9 @@ const QualityCheck = () => {
                                 onChange={(e) => {
                                   const value = Number(e.target.value);
                                   const newItems = [...formData.items];
-                                  const available = Number(item.available_quantity);
+                                  const available = Number(
+                                    item.available_quantity
+                                  );
 
                                   // Update approved quantity
                                   newItems[index].approved_quantity = value;
@@ -637,12 +612,11 @@ const QualityCheck = () => {
                                 type="number"
                                 placeholder="0"
                                 value={item.rejected_quantity}
-                                // disabled 
+                                // disabled
                                 className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-100 bg-gray-100 "
                               />
                             </div>
                           </div>
-
 
                           {(parseInt(item.approved_quantity) || 0) +
                             (parseInt(item.rejected_quantity) || 0) >
@@ -676,10 +650,13 @@ const QualityCheck = () => {
                     className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-medium"
                     disabled={loading}
                   >
-                    {loading ? "Submitting..." : modalMode === "edit" ? "Update" : "Submit"}
+                    {loading
+                      ? "Submitting..."
+                      : modalMode === "edit"
+                      ? "Update"
+                      : "Submit"}
                   </button>
                 )}
-
               </form>
             </Motion.div>
           </>
@@ -866,8 +843,9 @@ const QualityCheck = () => {
                       return (
                         <tr
                           key={prod._id}
-                          className={`border-b hover:bg-gray-50 transition ${index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                            }`}
+                          className={`border-b hover:bg-gray-50 transition ${
+                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }`}
                         >
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             {fg?.compound_code ||
@@ -876,10 +854,11 @@ const QualityCheck = () => {
                           </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${isRejected
-                                ? "bg-red-100 text-red-600"
-                                : "bg-green-100 text-green-600"
-                                }`}
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                isRejected
+                                  ? "bg-red-100 text-red-600"
+                                  : "bg-green-100 text-green-600"
+                              }`}
                             >
                               {isRejected ? "rejected" : "completed"}
                             </span>
@@ -905,13 +884,19 @@ const QualityCheck = () => {
                                   className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                                   onClick={async () => {
                                     try {
-                                      await axiosHandler.patch(`/production/${prod._id}/approve`);
+                                      await axiosHandler.patch(
+                                        `/production/${prod._id}/approve`
+                                      );
                                       toast.success("Production approved");
                                       // Remove from list after approve
-                                      setProdQcList((prev) => prev.filter((p) => p._id !== prod._id));
+                                      setProdQcList((prev) =>
+                                        prev.filter((p) => p._id !== prod._id)
+                                      );
                                     } catch (e) {
                                       console.error(e);
-                                      toast.error("Failed to approve production");
+                                      toast.error(
+                                        "Failed to approve production"
+                                      );
                                     }
                                   }}
                                 >

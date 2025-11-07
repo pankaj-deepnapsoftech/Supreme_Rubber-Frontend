@@ -50,9 +50,10 @@ const Sidebar = () => {
     { name: "Supplier", path: "/supplier", icon: <Users size={20} /> },
     { name: "Employee", path: "/employee", icon: <User size={20} /> },
     { name: "User Role", path: "/user-role", icon: <Shield size={20} /> },
+     { name: "Inventory", path: "/inventory", icon: <Package size={20} /> },
     { name: "Purchase Order", path: "/purchase-order", icon: <ShoppingBag size={20} /> },
     { name: "Gateman", path: "/gateman", icon: <Key size={20} /> },
-    { name: "Inventory", path: "/inventory", icon: <Package size={20} /> },
+   
     {
       name: "Quality Check",
       path: "/quality-check",

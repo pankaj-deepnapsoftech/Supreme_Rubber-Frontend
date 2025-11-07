@@ -260,46 +260,46 @@ const Gateman = () => {
           </Button>
         </div>
 
-        <div className="flex items-center space-x-3 text-gray-800">
+        <div className="flex justify-end items-center space-x-3 text-gray-800 w-full">
+  {/* Filter Dropdown */}
+  <div className="relative group">
+    <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+      <Funnel className="cursor-pointer hover:text-gray-800" size={16} />
 
-          {/* Filter Dropdown */}
-
-          
-          <div className="relative group">
-            <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
-            <Funnel className="cursor-pointer hover:text-gray-800" size={16} />
-
-            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-44">
-              {["All", "Verified", "Completed", "Entry Created"].map((status) => (
-                <p
-                  key={status}
-                  onClick={() => handleFilter(status)}
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm text-gray-700"
-                >
-                  {status}
-                </p>
-              ))}
-            </div>
-            </button>
-          </div>
-          
-
-          <button
-            onClick={handleRefresh}
-            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
-            title="Refresh"
+      {/* Dropdown Menu */}
+      <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-8 rounded-md z-10 w-44">
+        {["All", "Verified", "Completed", "Entry Created"].map((status) => (
+          <p
+            key={status}
+            onClick={() => handleFilter(status)}
+            className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm text-gray-700"
           >
-            <RefreshCcw size={16} />
-          </button>
+            {status}
+          </p>
+        ))}
+      </div>
+    </button>
+  </div>
 
-          <button
-            onClick={handleDownload}
-            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
-            title="Download"
-          >
-            <DownloadIcon size={16} />
-          </button>
-        </div>
+  {/* Refresh */}
+  <button
+    onClick={handleRefresh}
+    className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+    title="Refresh"
+  >
+    <RefreshCcw size={16} />
+  </button>
+
+  {/* Download */}
+  <button
+    onClick={handleDownload}
+    className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+    title="Download"
+  >
+    <DownloadIcon size={16} />
+  </button>
+</div>
+
       </div>
 
       {/* Gatemen Table */}

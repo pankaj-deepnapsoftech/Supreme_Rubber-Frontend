@@ -148,75 +148,80 @@ const Inventory = () => {
       </div>
 
       {/* Search & Icons */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-1 focus:ring-gray-300"
-          />
-        </div>
-        <div className="flex items-center space-x-4 text-gray-600">
-          {/* Filter dropdown */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-4">
+  {/* 🔍 Search Bar */}
+  <div className="flex items-center border rounded-lg px-3 py-2 w-48 sm:w-56 md:w-64">
+    <Search size={16} className="text-gray-400 mr-2" />
+    <input
+      type="text"
+      placeholder="Search..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full outline-none text-sm"
+    />
+  </div>
 
-          {/* ✅ Fixed Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilter((prev) => !prev)}
-              className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
-            >
-              <Filter size={16} className="text-gray-700" />
-            </button>
+  {/* ⚙️ Filter + Refresh + Download */}
+  <div className="flex items-center space-x-3 text-gray-600">
+    {/* Filter Dropdown */}
+    <div className="relative">
+      <button
+        onClick={() => setShowFilter((prev) => !prev)}
+        className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
+      >
+        <Filter size={16} className="text-gray-700" />
+      </button>
 
-            {showFilter && (
-              <div
-                className="absolute bg-white border shadow-md p-2 right-0 top-10 rounded-md z-10 w-48 max-h-60 overflow-y-auto"
-                onMouseLeave={() => setShowFilter(false)}
+      {showFilter && (
+        <div className="absolute right-0 top-9 bg-white border shadow-md rounded-md w-44 z-10 max-h-60 overflow-y-auto">
+          <p
+            onClick={() => handleFilter("All")}
+            className="cursor-pointer hover:bg-gray-100 px-3 py-2 text-sm rounded"
+          >
+            All
+          </p>
+
+          {[...new Set(
+            products
+              .map((p) => p.category?.trim())
+              .filter((cat) => cat && cat !== "")
+          )]
+            .sort()
+            .map((cat) => (
+              <p
+                key={cat}
+                onClick={() => handleFilter(cat)}
+                className={`cursor-pointer hover:bg-gray-100 px-3 py-2 text-sm rounded ${
+                  selectedCategory === cat
+                    ? "bg-blue-100 text-blue-600 font-medium"
+                    : "text-gray-700"
+                }`}
               >
-                <p
-                  onClick={() => handleFilter("All")}
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm"
-                >
-                  All
-                </p>
-
-                {[
-                  ...new Set(
-                    products
-                      .map((p) => p.category?.trim())
-                      .filter((cat) => cat && cat !== "")
-                  ),
-                ]
-                  .sort()
-                  .map((cat) => (
-                    <p
-                      key={cat}
-                      onClick={() => handleFilter(cat)}
-                      className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm ${
-                        selectedCategory === cat
-                          ? "bg-blue-100 text-blue-600 font-medium"
-                          : ""
-                      }`}
-                    >
-                      {cat}
-                    </p>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
-            <RefreshCcw size={16} onClick={handleRefresh} />
-          </button>
-
-          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
-            <Download size={16} onClick={handleDownload} />
-          </button>
+                {cat}
+              </p>
+            ))}
         </div>
-      </div>
+      )}
+    </div>
+
+    {/* Refresh Button */}
+    <button
+      onClick={handleRefresh}
+      className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
+    >
+      <RefreshCcw size={16} />
+    </button>
+
+    {/* Download Button */}
+    <button
+      onClick={handleDownload}
+      className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
+    >
+      <Download size={16} />
+    </button>
+  </div>
+</div>
+
 
       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
