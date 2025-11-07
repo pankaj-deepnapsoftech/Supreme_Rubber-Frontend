@@ -30,12 +30,15 @@ export const UserRoleProvider = ({ children }) => {
   const createRole = async (roleData) => {
     try {
       setLoading(true);
+      setError(null);
       const { data } = await axiosHandler.post(`/role`, roleData);
       setRoles((prev) => [data.role, ...prev]);
       return data.role;
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message);
+      const errorMessage = err.response?.data?.message || "Failed to create role";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -45,14 +48,17 @@ export const UserRoleProvider = ({ children }) => {
   const editRole = async (updatedData,) => {
     try {
       setLoading(true);
+      setError(null);
       const { data } = await axiosHandler.put(`/role`, updatedData);
       setRoles((prev) =>
         prev.map((r) => (r._id === data.role._id ? data.role : r))
       );
-  
+      return data.role;
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to update role");
+      const errorMessage = err.response?.data?.message || "Failed to update role";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
