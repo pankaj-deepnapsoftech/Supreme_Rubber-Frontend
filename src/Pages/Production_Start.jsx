@@ -411,6 +411,20 @@ const Production_Start = () => {
     );
   });
 
+ 
+  const Info = ({ label, value }) => (
+    <div>
+      <span className="font-medium text-gray-600">{label}:</span>{" "}
+      <span className="text-gray-900">{value || "-"}</span>
+    </div>
+  );
+
+  const EmptyState = ({ message }) => (
+    <div className="text-gray-500 italic text-sm bg-gray-50 border border-dashed border-gray-300 rounded-lg p-3 text-center">
+      {message}
+    </div>
+  );
+
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
       {/* Header */}
@@ -935,61 +949,138 @@ const Production_Start = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
           >
             <Motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-4xl max-h-[85vh] overflow-y-auto p-5"
+              initial={{ y: 60, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 60, opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="relative bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-4xl max-h-[85vh] overflow-y-auto"
             >
-              <button
-                onClick={() => setViewDetails(null)}
-                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
-              >
-                ✕
-              </button>
-              <h2 className="text-xl font-semibold mb-4">Production Details</h2>
-              <div className="space-y-3 text-sm">
-                <div><span className="font-medium">Production ID:</span> {viewDetails?.production_id || "-"}</div>
-                <div><span className="font-medium">BOM:</span> {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}</div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Finished Goods</h3>
-                  {(viewDetails?.finished_goods || []).map((fg, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
-                      <div><span className="font-medium">Compound:</span> {fg.compound_name || fg.compound_code}</div>
-                      <div><span className="font-medium">EST:</span> {fg.est_qty}</div>
-                      <div><span className="font-medium">PROD:</span> {fg.prod_qty}</div>
-                      <div><span className="font-medium">Remain:</span> {fg.remain_qty}</div>
-                      <div><span className="font-medium">UOM:</span> {fg.uom}</div>
-                      <div><span className="font-medium">Category:</span> {fg.category}</div>
-                    </div>
-                  ))}
+              {/* Sticky Header */}
+              <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 flex justify-between items-center px-6 py-4 z-10">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Production Details</h2>
+                <button
+                  onClick={() => setViewDetails(null)}
+                  className="text-gray-500 hover:text-red-500 text-2xl transition"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 sm:p-8 space-y-8 text-sm text-gray-800">
+                {/* Header Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gradient-to-br from-blue-50 to-white rounded-xl shadow-sm p-4">
+                  <div>
+                    <span className="font-medium text-gray-600">Production ID:</span>
+                    <p className="text-gray-900">{viewDetails?.production_id || "-"}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">BOM:</span>
+                    <p className="text-gray-900">
+                      {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}
+                    </p>
+                  </div>
                 </div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Raw Materials</h3>
-                  {(viewDetails?.raw_materials || []).map((rm, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
-                      <div><span className="font-medium">Item:</span> {rm.raw_material_name || rm.raw_material_code}</div>
-                      <div><span className="font-medium">EST:</span> {rm.est_qty}</div>
-                      <div><span className="font-medium">Used:</span> {rm.used_qty}</div>
-                      <div><span className="font-medium">Remain:</span> {rm.remain_qty}</div>
-                      <div><span className="font-medium">UOM:</span> {rm.uom}</div>
-                      <div><span className="font-medium">Category:</span> {rm.category}</div>
+
+                {/* Finished Goods */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Finished Goods</h3>
+                  </div>
+                  {(viewDetails?.finished_goods || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.finished_goods.map((fg, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-gray-50/50"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Compound" value={fg.compound_name || fg.compound_code} />
+                            <Info label="EST" value={fg.est_qty} />
+                            <Info label="PROD" value={fg.prod_qty} />
+                            <Info label="Remain" value={fg.remain_qty} />
+                            <Info label="UOM" value={fg.uom} />
+                            <Info label="Category" value={fg.category} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Processes</h3>
-                  {(viewDetails?.processes || []).map((p, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
-                      <div><span className="font-medium">Process:</span> {p.process_name}</div>
-                      <div><span className="font-medium">Work Done:</span> {p.work_done}</div>
-                      <div><span className="font-medium">Status:</span> {p.status}</div>
+                  ) : (
+                    <EmptyState message="No finished goods found." />
+                  )}
+                </section>
+
+                {/* Raw Materials */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Raw Materials</h3>
+                  </div>
+                  {(viewDetails?.raw_materials || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.raw_materials.map((rm, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Item" value={rm.raw_material_name || rm.raw_material_code} />
+                            <Info label="EST" value={rm.est_qty} />
+                            <Info label="Used" value={rm.used_qty} />
+                            <Info label="Remain" value={rm.remain_qty} />
+                            <Info label="UOM" value={rm.uom} />
+                            <Info label="Category" value={rm.category} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <EmptyState message="No raw materials found." />
+                  )}
+                </section>
+
+                {/* Processes */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-green-600 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Processes</h3>
+                  </div>
+                  {(viewDetails?.processes || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.processes.map((p, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-gray-50"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Process" value={p.process_name} />
+                            <Info label="Work Done" value={p.work_done} />
+                            <div>
+                              <span className="font-medium text-gray-600">Status:</span>{" "}
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                  p.status === "completed"
+                                    ? "bg-green-100 text-green-700"
+                                    : p.status === "in_progress"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {p.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState message="No processes found." />
+                  )}
+                </section>
               </div>
             </Motion.div>
           </Motion.div>
