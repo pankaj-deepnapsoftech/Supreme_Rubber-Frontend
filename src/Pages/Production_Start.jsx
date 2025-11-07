@@ -527,8 +527,31 @@ const Production_Start = () => {
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center items-center space-x-3">
                         {(() => {
+                          // Check Compound Details remain_qty is 0
+                          const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
+                          const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
+                          
+                          // Check all Raw Materials remain_qty are 0
+                          const rawMaterials = prod?.raw_materials || [];
+                          const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
+                            (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
+                          );
+                          
+                          // If both remain_qty are 0, consider it ready/matched
+                          if (isFgRemainZero && allRmRemainZero) {
+                            return (
+                              <span
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600"
+                                title="All quantities consumed - Ready for QC"
+                              >
+                                Ready for QC
+                              </span>
+                            );
+                          }
+                          
+                          // Otherwise check quantity match
                           const fgQty = parseFloat(fg?.prod_qty) || 0;
-                          const usedTotal = (prod?.raw_materials || []).reduce(
+                          const usedTotal = rawMaterials.reduce(
                             (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
                             0
                           );
@@ -538,7 +561,7 @@ const Production_Start = () => {
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 isMatched ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
                               }`}
-                              title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                              title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}${!isFgRemainZero ? `, Compound remain: ${fgRemainQty.toFixed(2)}` : ''}${!allRmRemainZero ? ', RM remain qty' : ''}`}
                             >
                               {isMatched ? "Quantity matched" : "Quantity mismatched"}
                             </span>
@@ -639,23 +662,31 @@ const Production_Start = () => {
                           if (alreadySent) return (
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">Waiting for QC</span>
                           );
-                          // Block sending to QC until quantities match
-                          const fgQty = parseFloat(fg?.prod_qty) || 0;
-                          const usedTotal = (prod?.raw_materials || []).reduce(
-                            (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
-                            0
+                          
+                          // Check Compound Details remain_qty is 0
+                          const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
+                          const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
+                          
+                          // Check all Raw Materials remain_qty are 0
+                          const rawMaterials = prod?.raw_materials || [];
+                          const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
+                            (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
                           );
-                          const isMatched = Math.abs(usedTotal - fgQty) <= 1e-6;
-                          if (!isMatched) {
+                          
+                          // Block sending to QC until Compound remain_qty is 0 AND all Raw Materials remain_qty are 0
+                          if (!isFgRemainZero || !allRmRemainZero) {
                             return (
                               <span
-                                className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600"
-                                title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600"
+                                title={!isFgRemainZero ? `Compound remain qty: ${fgRemainQty.toFixed(2)}` : `Some raw materials still have remaining quantity`}
                               >
-                                Quantity mismatched
+                                {!isFgRemainZero ? "Compound qty remaining" : "Raw materials qty remaining"}
                               </span>
                             );
                           }
+                          
+                          // If both remain_qty are 0, allow sending to QC (quantities are considered consumed/complete)
+                          // No need to check quantity match when all quantities are fully consumed
                           return (
                             <button
                               className="px-3 py-1 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 text-xs"
