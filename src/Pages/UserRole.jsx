@@ -261,6 +261,7 @@ import { useUserRole } from "@/Context/UserRoleContext";
 import { useState, useMemo } from "react";
 import { useFormik } from "formik";
 import { Edit, Trash2, Search, RefreshCw, Download } from "lucide-react";
+import { toast } from "react-toastify";
 import Pagination from "@/Components/Pagination/Pagination";
 
 export default function UserRolesManagement() {
@@ -307,14 +308,29 @@ export default function UserRolesManagement() {
     },
     enableReinitialize: true,
     onSubmit: async (values, { resetForm }) => {
-      if (editRoleId) {
-        await editRole({ _id: editRoleId, ...values });
-      } else {
-        await createRole(values);
+      try {
+        // Trim whitespace from role name before submitting
+        const trimmedValues = {
+          ...values,
+          role: (values.role || "").trim(),
+        };
+
+        if (editRoleId) {
+          await editRole({ _id: editRoleId, ...trimmedValues });
+          toast.success("Role updated successfully");
+        } else {
+          const result = await createRole(trimmedValues);
+          if (result) {
+            toast.success("Role successfully created");
+          }
+        }
+        resetForm();
+        setEditRoleId(null);
+        setIsDrawerOpen(false);
+      } catch (error) {
+        // Error toast will be shown from context error handling
+        toast.error(error.message || "Failed to save role");
       }
-      resetForm();
-      setEditRoleId(null);
-      setIsDrawerOpen(false);
     },
   });
 
