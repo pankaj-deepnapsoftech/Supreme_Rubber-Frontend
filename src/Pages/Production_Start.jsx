@@ -559,9 +559,9 @@ const Production_Start = () => {
                             return (
                               <span
                                 className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600"
-                                title="All quantities consumed - Ready for QC"
+                                title="All quantities consumed - Quantity matched"
                               >
-                                Ready for QC
+                                Quantity matched
                               </span>
                             );
                           }
