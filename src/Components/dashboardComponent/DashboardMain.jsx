@@ -147,9 +147,19 @@ export default function DashboardMain() {
         setInventoryLoading(true);
         const params = new URLSearchParams();
         params.set("period", inventoryPeriod.toLowerCase());
-        const { data } = await axiosHandler.get(`/product/inventory-stats?${params.toString()}`);
+        const { data } = await axiosHandler.get(
+          `/product/inventory-stats?${params.toString()}`
+        );
         const byCategory = data?.data?.byCategory || [];
-        const colors = ["#FBBF24", "#A78BFA", "#3B82F6", "#F87171", "#10B981", "#f59e0b", "#ef4444"];
+        const colors = [
+          "#FBBF24",
+          "#A78BFA",
+          "#3B82F6",
+          "#F87171",
+          "#10B981",
+          "#f59e0b",
+          "#ef4444",
+        ];
         const coloredData = byCategory.map((d, i) => ({
           name: d.category,
           value: d.count,
@@ -232,7 +242,10 @@ export default function DashboardMain() {
         setGateLoading(true);
         const params = new URLSearchParams();
         params.set("period", gatePeriod.toLowerCase());
-        const res = await axiosHandler.get(`/gateman/status-stats?${params.toString()}`, { withCredentials: true });
+        const res = await axiosHandler.get(
+          `/gateman/status-stats?${params.toString()}`,
+          { withCredentials: true }
+        );
         const d = res.data?.data || { created: 0, verified: 0 };
         const items = [
           { name: "Created", value: d.created || 0, color: "#3B82F6" },
@@ -256,7 +269,10 @@ export default function DashboardMain() {
         setQcLoading(true);
         const params = new URLSearchParams();
         params.set("period", qcPeriod.toLowerCase());
-        const res = await axiosHandler.get(`/production/qc-stats?${params.toString()}`, { withCredentials: true });
+        const res = await axiosHandler.get(
+          `/production/qc-stats?${params.toString()}`,
+          { withCredentials: true }
+        );
         const d = res.data?.data || { approved: 0, rejected: 0 };
         const items = [
           { name: "Approved", value: d.approved || 0, color: "#10B981" },
@@ -274,7 +290,11 @@ export default function DashboardMain() {
   }, [qcPeriod]);
 
   // removed unused productionData state
-  const [statusCount, setStatusCount] = useState({ completed: 0, inProgress: 0, notStarted: 0 });
+  const [statusCount, setStatusCount] = useState({
+    completed: 0,
+    inProgress: 0,
+    notStarted: 0,
+  });
   const [statusPeriod, setStatusPeriod] = useState("Weekly");
   const [statusLoading, setStatusLoading] = useState(false);
 
@@ -296,8 +316,15 @@ export default function DashboardMain() {
         setProdBarLoading(true);
         const params = new URLSearchParams();
         params.set("period", prodBarPeriod.toLowerCase());
-        const res = await axiosHandler.get(`/production/status-stats?${params.toString()}`, { withCredentials: true });
-        const d = res.data?.data || { pending: 0, in_progress: 0, completed: 0 };
+        const res = await axiosHandler.get(
+          `/production/status-stats?${params.toString()}`,
+          { withCredentials: true }
+        );
+        const d = res.data?.data || {
+          pending: 0,
+          in_progress: 0,
+          completed: 0,
+        };
         setBarData([
           {
             name: "Production",
@@ -321,8 +348,15 @@ export default function DashboardMain() {
         setStatusLoading(true);
         const params = new URLSearchParams();
         params.set("period", statusPeriod.toLowerCase());
-        const res = await axiosHandler.get(`/production/status-stats?${params.toString()}`, { withCredentials: true });
-        const d = res.data?.data || { pending: 0, in_progress: 0, completed: 0 };
+        const res = await axiosHandler.get(
+          `/production/status-stats?${params.toString()}`,
+          { withCredentials: true }
+        );
+        const d = res.data?.data || {
+          pending: 0,
+          in_progress: 0,
+          completed: 0,
+        };
         setStatusCount({
           completed: d.completed || 0,
           inProgress: d.in_progress || 0,
@@ -556,14 +590,22 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                     value={inventoryPeriod}
                     onChange={(e) => setInventoryPeriod(e.target.value)}
                   >
-                    <option className="text-gray-500" value="Weekly">Weekly</option>
-                    <option className="text-gray-500" value="Monthly">Monthly</option>
-                    <option className="text-gray-500" value="Yearly">Yearly</option>
+                    <option className="text-gray-500" value="Weekly">
+                      Weekly
+                    </option>
+                    <option className="text-gray-500" value="Monthly">
+                      Monthly
+                    </option>
+                    <option className="text-gray-500" value="Yearly">
+                      Yearly
+                    </option>
                   </select>
                 </div>
 
                 {inventoryLoading ? (
-                  <div className="flex items-center justify-center h-[300px] text-gray-500">Loading inventory...</div>
+                  <div className="flex items-center justify-center h-[300px] text-gray-500">
+                    Loading inventory...
+                  </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
@@ -587,27 +629,32 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-4">
               {/* Production Status */}
-              <div className="flex-1 min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
-                <div className="flex justify-between">
+              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Production Status
                   </h2>
-                  <div className="flex">
-                    <select
-                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
-                      value={statusPeriod}
-                      onChange={(e) => setStatusPeriod(e.target.value)}
-                    >
-                      <option className="text-gray-500" value="Weekly">Weekly</option>
-                      <option value="Monthly">Monthly</option>
-                      <option  value="Yearly">Yearly</option>
-                    </select>
-                  </div>
+                  <select
+                    className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+                    value={statusPeriod}
+                    onChange={(e) => setStatusPeriod(e.target.value)}
+                  >
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                  </select>
                 </div>
+
                 {statusLoading ? (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">Loading status...</div>
+                  <div className="flex items-center justify-center flex-1 text-gray-500">
+                    Loading status...
+                  </div>
+                ) : pieDataStatus.length === 0 ? (
+                  <div className="flex items-center justify-center flex-1 text-gray-400 italic">
+                    No records found
+                  </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={200} className="">
+                  <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
                       <Pie
                         data={pieDataStatus}
@@ -625,9 +672,109 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                 )}
               </div>
 
-              {/* Production */}
+              {/* Gate Entry */}
+              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="font-semibold text-gray-800 text-[15px]">
+                    Gate Entry
+                  </h2>
+                  <select
+                    className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+                    value={gatePeriod}
+                    onChange={(e) => setGatePeriod(e.target.value)}
+                  >
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                  </select>
+                </div>
 
-              {/* <div className="bg-white rounded-2xl p-5 h-[300px] shadow-sm w-full">
+                {gateLoading ? (
+                  <div className="flex items-center justify-center flex-1 text-gray-500">
+                    Loading gate stats...
+                  </div>
+                ) : gateChartData.length === 0 ? (
+                  <div className="flex items-center justify-center flex-1 text-gray-400 italic">
+                    No records found
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={gateChartData}
+                        dataKey="value"
+                        innerRadius={50}
+                        outerRadius={80}
+                        label
+                      >
+                        {gateChartData.map((d, i) => (
+                          <Cell key={i} fill={d.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+                <p className="text-center text-sm text-gray-600 mt-2">
+                  <b>Order ID:</b> 100 kg received
+                </p>
+              </div>
+
+              {/* Quality Check */}
+              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="font-semibold text-gray-800 text-[15px]">
+                    Quality Check
+                  </h2>
+                  <select
+                    className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+                    value={qcPeriod}
+                    onChange={(e) => setQcPeriod(e.target.value)}
+                  >
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                  </select>
+                </div>
+
+                {qcLoading ? (
+                  <div className="flex items-center justify-center flex-1 text-gray-500">
+                    Loading QC...
+                  </div>
+                ) : qcChartData.length === 0 ? (
+                  <div className="flex items-center justify-center flex-1 text-gray-400 italic">
+                    No records found
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={qcChartData}
+                        dataKey="value"
+                        innerRadius={50}
+                        outerRadius={80}
+                        label
+                      >
+                        {qcChartData.map((d, i) => (
+                          <Cell key={i} fill={d.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* TABLE */}
+            <DashboardTable />
+
+            {/* Supplier Table */}
+            <DashboardSupplier />
+
+            {/* Production */}
+
+            {/* <div className="bg-white rounded-2xl p-5 h-[300px] shadow-sm w-full">
                 <div className="flex justify-between">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Production
@@ -659,61 +806,6 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </ResponsiveContainer>
                 )}
               </div> */}
-
-              {/* Gate Entry */}
-              <div className="bg-white rounded-2xl h-[300px] p-5 shadow-sm w-full">
-                <div className="flex justify-between">
-                  <h2 className="font-semibold text-gray-800 text-[15px]">
-                    Gate Entry
-                  </h2>
-                  <div className="flex">
-                    <select
-                      className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/10 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
-                      value={gatePeriod}
-                      onChange={(e) => setGatePeriod(e.target.value)}
-                    >
-                      <option className="text-gray-500" value="Weekly">Weekly</option>
-                      <option className="text-gray-500" value="Monthly">Monthly</option>
-                      <option className="text-gray-500" value="Yearly">Yearly</option>
-                    </select>
-                  </div>
-                </div>
-                {gateLoading ? (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">Loading gate stats...</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={gateChartData}
-                        innerRadius={50}
-                        outerRadius={80}
-                        dataKey="value"
-                        label
-                      >
-                        {gateChartData.map((d, i) => (
-                          <Cell key={i} fill={d.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-                <p className="text-center text-sm text-gray-600 mt-2">
-                  <b>Order ID:</b> 100 kg received
-                </p>
-              </div>
-
-              {/* Quality Check */}
-
-
-
-            </div>
-
-            {/* TABLE */}
-            <DashboardTable />
-
-            {/* Supplier Table */}
-            <DashboardSupplier />
           </div>
         </div>
       </div>

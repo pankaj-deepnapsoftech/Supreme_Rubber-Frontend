@@ -17,7 +17,7 @@ import { useInventory } from "@/Context/InventoryContext";
 import Pagination from "@/Components/Pagination/Pagination";
 
 const Inventory = () => {
-  const [page,setPage] = useState(1)
+  const [page, setPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -25,6 +25,8 @@ const Inventory = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
+
 
   const {
     products,
@@ -38,7 +40,6 @@ const Inventory = () => {
 
   const formik = useFormik({
     initialValues: {
-     
       name: "",
       uom: "",
       category: "",
@@ -160,36 +161,60 @@ const Inventory = () => {
         </div>
         <div className="flex items-center space-x-4 text-gray-600">
           {/* Filter dropdown */}
-          <div className="relative group">
-            <Filter className="cursor-pointer hover:text-gray-800" />
-            <div className="absolute hidden group-hover:block bg-white border shadow-md p-2 right-0 top-6 rounded-md z-10 w-40">
-              <p
-                onClick={() => handleFilter("All")}
-                className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+
+          {/* ✅ Fixed Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilter((prev) => !prev)}
+              className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
+            >
+              <Filter size={16} className="text-gray-700" />
+            </button>
+
+            {showFilter && (
+              <div
+                className="absolute bg-white border shadow-md p-2 right-0 top-10 rounded-md z-10 w-48 max-h-60 overflow-y-auto"
+                onMouseLeave={() => setShowFilter(false)}
               >
-                All
-              </p>
-              {[...new Set(products.map((p) => p.category))].map((cat) => (
                 <p
-                  key={cat}
-                  onClick={() => handleFilter(cat)}
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                  onClick={() => handleFilter("All")}
+                  className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm"
                 >
-                  {cat}
+                  All
                 </p>
-              ))}
-            </div>
+
+                {[
+                  ...new Set(
+                    products
+                      .map((p) => p.category?.trim())
+                      .filter((cat) => cat && cat !== "")
+                  ),
+                ]
+                  .sort()
+                  .map((cat) => (
+                    <p
+                      key={cat}
+                      onClick={() => handleFilter(cat)}
+                      className={`cursor-pointer hover:bg-gray-100 px-2 py-1 rounded text-sm ${
+                        selectedCategory === cat
+                          ? "bg-blue-100 text-blue-600 font-medium"
+                          : ""
+                      }`}
+                    >
+                      {cat}
+                    </p>
+                  ))}
+              </div>
+            )}
           </div>
 
-          <RefreshCcw
-            className="cursor-pointer hover:text-gray-800"
-            onClick={handleRefresh}
-          />
+          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            <RefreshCcw size={16} onClick={handleRefresh} />
+          </button>
 
-          <Download
-            className="cursor-pointer hover:text-gray-800"
-            onClick={handleDownload}
-          />
+          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+            <Download size={16} onClick={handleDownload} />
+          </button>
         </div>
       </div>
 
@@ -202,14 +227,13 @@ const Inventory = () => {
                 "Category",
                 "Name",
                 "Stock",
+                "Reject Qty",
                 "UOM",
                 "Actions",
               ].map((header, i) => (
                 <th
                   key={i}
-                  className={`py-3 px-4 text-center font-semibold ${
-                    i === 0 ? "rounded-tl-2xl" : ""
-                  } ${i === 5 ? "rounded-tr-2xl" : ""}`}
+                  className={`py-3 px-4 text-center font-semibold `}
                 >
                   {header}
                 </th>
@@ -254,7 +278,10 @@ const Inventory = () => {
                       {item.name}
                     </td>
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.current_stock}
+                      {item.current_stock} 
+                    </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.reject_stock || 0}
                     </td>
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.uom}
@@ -283,8 +310,6 @@ const Inventory = () => {
                         >
                           <Eye size={16} />
                         </button>
-                        
-                        
                       </div>
                     </td>
                   </tr>
@@ -345,7 +370,12 @@ const Inventory = () => {
 
                     // Dropdown options for specific fields
                     const dropdownOptions = {
-                      category: ["Finished Goods", "Raw Material","FMB","CMB"],
+                      category: [
+                        "Finished Goods",
+                        "Raw Material",
+                        "FMB",
+                        "CMB",
+                      ],
                       uom: [
                         "Kg",
                         "Litre",
@@ -356,7 +386,7 @@ const Inventory = () => {
                         "Pack",
                       ],
                       // product_or_service: ["Product", "Service"],
-                      item_type: ["Buy","Sell"],
+                      item_type: ["Buy", "Sell"],
                       // inventory_category:["Direct"]
                     };
 
@@ -368,7 +398,6 @@ const Inventory = () => {
                           {label}
                         </label>
 
-                      
                         {isSelect ? (
                           <select
                             name={key}
@@ -445,7 +474,11 @@ const Inventory = () => {
         )}
       </AnimatePresence>
 
-      <Pagination page={page} setPage={setPage} hasNextPage={products?.length === 10}  />
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={products?.length === 10}
+      />
     </div>
   );
 };

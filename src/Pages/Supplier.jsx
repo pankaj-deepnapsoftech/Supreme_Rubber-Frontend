@@ -10,6 +10,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -193,15 +194,16 @@ const Supplier = () => {
             className="pl-8 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-1 focus:ring-gray-300"
           />
         </div>
-        <div className="flex items-center space-x-4 text-gray-600">
-          <RefreshCcw
-            className="cursor-pointer hover:text-gray-800"
-            onClick={fetchSuppliers}
-          />
-          <DownloadIcon
-            className="cursor-pointer hover:text-gray-800"
-            onClick={handleDownload}
-          />
+        <div className="flex items-center space-x-4 text-gray-800">
+          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+          onClick={fetchSuppliers}>
+            <RefreshCw size={16}/>
+          </button>
+
+          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+          onClick={handleDownload}>
+            <DownloadIcon size={16}/>
+          </button>
         </div>
       </div>
 

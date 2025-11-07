@@ -281,7 +281,8 @@ export default function UserRolesManagement() {
     "bom",
     "gateman",
     "supplier",
-    "purchase order"
+    "purchase order",
+    "production start"
   ];
 
   // Filtered + searched roles
@@ -373,7 +374,7 @@ export default function UserRolesManagement() {
           onClick={handleAddNew}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
         >
-          + Add New Role
+          Add New Role
         </button>
       </div>
 

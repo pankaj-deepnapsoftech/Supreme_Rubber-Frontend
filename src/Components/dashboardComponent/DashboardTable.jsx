@@ -99,14 +99,15 @@ export default function DashboardTable() {
 
       {/* Table */}
       <table className="w-full text-sm text-left text-gray-700 min-w-[500px]">
-        <thead className="text-xs bg-gray-200 text-gray-800 border-b">
-          <tr>
+        <thead className="text-xs bg-gray-200 text-gray-800 rounded-lg border-b">
+          <tr className="text-center">
             <th className="px-3 py-2">Role</th>
             <th className="px-3 py-2">Description</th>
             <th className="px-3 py-2">Permissions</th>
             <th className="px-3 py-2 text-center">Actions</th>
           </tr>
         </thead>
+        
 
         <tbody>
           {roles.length === 0 ? (
@@ -119,10 +120,10 @@ export default function DashboardTable() {
               </td>
             </tr>
           ) : (
-            roles.map((r, i) => (
+            roles.slice(0,3).map((r, i) => (
               <tr
                 key={r._id || i}
-                className={`transition-all duration-200 ${
+                className={`transition-all duration-200 text-center ${
                   i % 2 === 0 ? "bg-gray-50" : "bg-white"
                 } hover:bg-blue-50`}
               >
@@ -156,17 +157,17 @@ export default function DashboardTable() {
     </div>
 
     {/* ===== QUALITY CHECK CARD ===== */}
-    <div className="w-full lg:w-[350px] shrink-0 bg-white rounded-2xl h-[300px] p-5 shadow-sm">
+    {/* <div className="w-full lg:w-[350px] shrink-0 bg-white rounded-2xl h-[300px] p-5 shadow-sm">
       <div className="flex justify-between">
         <h2 className="font-semibold text-gray-800 text-[15px]">Quality Check</h2>
         <div className="flex">
           <select
-            className="border border-gray-200 cursor-pointer text-xs hover:bg-[#cd9cf2]/20 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
+            className="border border-gray-200 cursor-pointer text-xs rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4b3266]"
             value={qcPeriod}
             onChange={(e) => setQcPeriod(e.target.value)}
           >
             <option value="Weekly">Weekly</option>
-            <option value="Monthly">Monthly</option>
+            <option value="Monthly">Monthly</option>   
             <option value="Yearly">Yearly</option>
           </select>
         </div>
@@ -194,7 +195,7 @@ export default function DashboardTable() {
           </PieChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </div> */}
   </div>
 );
 
