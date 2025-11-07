@@ -51,6 +51,9 @@ export default function DashboardMain() {
   const [inventoryPeriod, setInventoryPeriod] = useState("Weekly");
   const [inventoryLoading, setInventoryLoading] = useState(false);
 
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear - 1, currentYear - 2];
+
   // Fetch production graph data from API
   const fetchProductionGraphData = async (
     selectedPeriod = period,
@@ -517,7 +520,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                           fetchProductionGraphData(period, newYear);
                         }}
                       >
-                        {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                        {years.map((year) => (
                           <option key={year} value={year}>
                             {year}
                           </option>

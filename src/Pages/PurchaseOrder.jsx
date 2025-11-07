@@ -40,6 +40,28 @@ const PurchaseOrder = () => {
 
   const [supplierData, setSupplierData] = useState([]);
   const [Inventorydata, setInventoryData] = useState([]);
+  
+  // Filter inventory data to show only raw materials (exclude finished goods)
+  // For purchase orders, we want items that can be bought and are not finished goods
+  const rawMaterialsOnly = Inventorydata.filter((item) => {
+    const category = (item.category || "").toLowerCase().trim();
+    const itemType = (item.item_type || "").toLowerCase();
+    
+    // Exclude finished goods explicitly
+    if (category && category.includes("finished")) {
+      return false;
+    }
+    
+    // Include items that can be bought (item_type = "Buy" or "both")
+    // This is the primary criteria for purchase orders
+    const canBeBought = itemType === "buy" || itemType === "both";
+    
+    // Also include items with "raw" in category (case-insensitive)
+    const isRawMaterial = category && category.includes("raw");
+    
+    // Show items that can be bought OR are raw materials
+    return canBeBought || isRawMaterial;
+  });
   const [products, setProducts] = useState([
     {
       item_name: "",
@@ -113,7 +135,8 @@ const PurchaseOrder = () => {
     const updated = [...products];
     updated[index][name] = value;
     if (name === "item_name") {
-      const selected = Inventorydata.find((p) => p._id === value);
+      // Search in rawMaterialsOnly first, fallback to Inventorydata if needed
+      const selected = rawMaterialsOnly.find((p) => p._id === value) || Inventorydata.find((p) => p._id === value);
       if (selected) {
         updated[index].category = selected.category || "";
         updated[index].uom = selected.uom || "";
@@ -452,11 +475,17 @@ const PurchaseOrder = () => {
                           className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                         >
                           <option value="">Select Item</option>
-                          {Inventorydata?.map((i) => (
-                            <option key={i._id} value={i._id}>
-                              {i.name}
+                          {rawMaterialsOnly && rawMaterialsOnly.length > 0 ? (
+                            rawMaterialsOnly.map((i) => (
+                              <option key={i._id} value={i._id}>
+                                {i.name}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="" disabled>
+                              No raw materials available
                             </option>
-                          ))}
+                          )}
                         </select>
                       </div>
 
