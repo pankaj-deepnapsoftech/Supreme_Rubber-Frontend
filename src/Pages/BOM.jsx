@@ -371,626 +371,361 @@ const BOM = () => {
 
       {/* Add BOM Modal */}
       <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
+  {showModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md"
+    >
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="relative bg-linear-to-b from-white/90 to-white/80 dark:from-gray-900/90 dark:to-gray-800/90 backdrop-blur-lg border border-gray-200/60 dark:border-gray-700/50 rounded-3xl shadow-2xl w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 md:p-10"
+      >
+        {/* Close Button */}
+        <button
+          onClick={() => {
+            setShowModal(false);
+            setEditMode(false);
+            setViewMode(false);
+            formik.resetForm();
+            resetAllFields();
+          }}
+          className="absolute top-4 right-5 text-gray-600 dark:text-gray-300 hover:text-red-500 transition-all duration-200 text-2xl"
+        >
+          ✕
+        </button>
+
+        {/* Title */}
+        <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Bill of Materials (BOM)
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Manage compounds, finished goods, raw materials, and processes.
+        </p>
+        <hr className="border-gray-300 dark:border-gray-600 mb-8" />
+
+        {/* Compound Section */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+            Compound Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Compound Name */}
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Compound Name
+              </label>
+              <input
+                type="text"
+                placeholder="Enter compound name"
+                value={compoundName}
+                onChange={(e) => setCompoundName(e.target.value)}
+                disabled={viewMode}
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+            </div>
+
+            {/* Compound Codes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Compound Codes
+              </label>
+              {compoundCodes.map((code, idx) => (
+                <input
+                  key={idx}
+                  type="text"
+                  placeholder="Enter compound code"
+                  value={code}
+                  onChange={(e) => {
+                    const next = [...compoundCodes];
+                    next[idx] = e.target.value;
+                    setCompoundCodes(next);
+                  }}
+                  disabled={viewMode}
+                  className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                />
+              ))}
+            </div>
+
+            {/* Part Names */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Part Names
+              </label>
+              {partNames.map((name, idx) => (
+                <input
+                  key={idx}
+                  type="text"
+                  placeholder="Enter part name"
+                  value={name}
+                  onChange={(e) => {
+                    const next = [...partNames];
+                    next[idx] = e.target.value;
+                    setPartNames(next);
+                  }}
+                  disabled={viewMode}
+                  className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                />
+              ))}
+            </div>
+
+            {/* Hardnesses */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Hardnesses
+              </label>
+              {hardnesses.map((hardness, idx) => (
+                <input
+                  key={idx}
+                  type="text"
+                  placeholder="Enter hardness"
+                  value={hardness}
+                  onChange={(e) => {
+                    const next = [...hardnesses];
+                    next[idx] = e.target.value;
+                    setHardnesses(next);
+                  }}
+                  disabled={viewMode}
+                  className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Finished Goods Section */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            Finished Goods
+          </h2>
+          {finishedGoods.map((fg, fgIdx) => (
+            <div
+              key={fgIdx}
+              className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
             >
-              {/* Close Button */}
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setEditMode(false);
-                  setViewMode(false);
-                  formik.resetForm();
-                  resetAllFields();
-                }}
-                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
-              >
-                ✕
-              </button>
-
-              {/* Title */}
-              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
-                Bill of Materials (BOM)
-              </h1>
-              <hr className="border-gray-300 mb-6" />
-
-              {/* Compound Name + Compound Codes, Part Names, Hardnesses */}
-              <div className="mb-8">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
-                  Compound Name, Compound Codes, Part Names & Hardnesses
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Compound Name */}
-                  <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Compound Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter compound name"
-                      value={compoundName}
-                      onChange={(e) => setCompoundName(e.target.value)}
-                      disabled={viewMode}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                    />
-                  </div>
-                  {/* Compound Codes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Compound Codes
-                    </label>
-                    {compoundCodes.map((code, idx) => (
-                      <div key={idx} className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          placeholder="Enter compound code"
-                          value={code}
-                          onChange={(e) => {
-                            const next = [...compoundCodes];
-                            next[idx] = e.target.value;
-                            setCompoundCodes(next);
-                          }}
-                          disabled={viewMode}
-                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                        />
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              if (compoundCodes.length > 1) {
-                                setCompoundCodes(compoundCodes.filter((_, i) => i !== idx));
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                        )} */}
-                      </div>
-                    ))}
-                    {/* We can re-enable add-more if required later */}
-                  </div>
-
-                  {/* Part Names */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Part Names
-                    </label>
-                    {partNames.map((name, idx) => (
-                      <div key={idx} className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          placeholder="Enter part name"
-                          value={name}
-                          onChange={(e) => {
-                            const next = [...partNames];
-                            next[idx] = e.target.value;
-                            setPartNames(next);
-                          }}
-                          disabled={viewMode}
-                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                        />
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              if (partNames.length > 1) {
-                                setPartNames(partNames.filter((_, i) => i !== idx));
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                        )} */}
-                      </div>
-                    ))}
-                    {!viewMode && (
-                      <button
-                        onClick={() => setPartNames([...partNames, ""])}
-                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
-                      >
-                        {/* <Plus className="h-4 w-4" /> Add More */}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Hardnesses */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Hardnesses
-                    </label>
-                    {hardnesses.map((hardness, idx) => (
-                      <div key={idx} className="flex gap-2 mb-2">
-                        <input
-                          type="text"
-                          placeholder="Enter hardness"
-                          value={hardness}
-                          onChange={(e) => {
-                            const next = [...hardnesses];
-                            next[idx] = e.target.value;
-                            setHardnesses(next);
-                          }}
-                          disabled={viewMode}
-                          className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                        />
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              if (hardnesses.length > 1) {
-                                setHardnesses(hardnesses.filter((_, i) => i !== idx));
-                              }
-                            }}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                        )} */}
-                      </div>
-                    ))}
-                    {/* {!viewMode && (
-                      <button
-                        onClick={() => setHardnesses([...hardnesses, ""])}
-                        className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
-                      >
-                        <Plus className="h-4 w-4" /> Add More
-                      </button>
-                    )} */}
-                  </div>
-                </div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                  Finished Good #{fgIdx + 1}
+                </h3>
               </div>
 
-              {/* Finished Goods Section */}
-              <div className="mb-8">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
-                  Finished Goods
-                </h2>
-                {finishedGoods.map((fg, fgIdx) => (
-                  <div key={fgIdx} className="border rounded-lg p-4 mb-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="font-medium">Finished Good #{fgIdx + 1}</h3>
-                      {!viewMode && (
-                        <button
-                          onClick={() => {
-                            if (finishedGoods.length > 1) {
-                              setFinishedGoods(finishedGoods.filter((_, i) => i !== fgIdx));
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          {/* <X className="h-5 w-5" /> */}
-                        </button>
-                      )}
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Finished Good (ID + Name)
-                      </label>
-                      <select
-                        value={fg.finished_good_id_name}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {/* Finished Good Selector */}
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Finished Good (ID + Name)
+                  </label>
+                  <select
+                    value={fg.finished_good_id_name}
+                    onChange={(e) => {
+                      const next = [...finishedGoods];
+                      next[fgIdx].finished_good_id_name = e.target.value;
+                      setFinishedGoods(next);
+                    }}
+                    disabled={viewMode}
+                    className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                  >
+                    <option value="">Select Finished Good...</option>
+                    {finishedGoodsOptions.map((fgOption) => (
+                      <option key={fgOption._id} value={`${fgOption._id}-${fgOption.name}`}>
+                        {fgOption.name} ({fgOption.product_id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quantities */}
+                {['quantities', 'tolerances', 'comments'].map((key) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                      {key}
+                    </label>
+                    {fg[key].map((value, idx2) => (
+                      <input
+                        key={idx2}
+                        type={key === 'quantities' ? 'number' : 'text'}
+                        placeholder={key.slice(0, -1)}
+                        value={value}
                         onChange={(e) => {
                           const next = [...finishedGoods];
-                          next[fgIdx].finished_good_id_name = e.target.value;
+                          next[fgIdx][key][idx2] = e.target.value;
                           setFinishedGoods(next);
                         }}
                         disabled={viewMode}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select Finished Good...</option>
-                        {finishedGoodsOptions.map((fgOption) => (
-                          <option key={fgOption._id} value={`${fgOption._id}-${fgOption.name}`}>
-                            {fgOption.name} ({fgOption.product_id})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                       {/* Quantities */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Quantities
-                        </label>
-                        {fg.quantities.map((qty, qtyIdx) => (
-                          <div key={qtyIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="number"
-                              placeholder="Quantity"
-                              value={qty}
-                              onChange={(e) => {
-                                const next = [...finishedGoods];
-                                next[fgIdx].quantities[qtyIdx] = e.target.value;
-                                setFinishedGoods(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                            {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...finishedGoods];
-                                  if (next[fgIdx].quantities.length > 1) {
-                                    next[fgIdx].quantities = next[fgIdx].quantities.filter((_, i) => i !== qtyIdx);
-                                  } else {
-                                    next[fgIdx].quantities[0] = "";
-                                  }
-                                  setFinishedGoods(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                {/* <X className="h-4 w-4" /> */}
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...finishedGoods];
-                              next[fgIdx].quantities.push("");
-                              setFinishedGoods(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Quantity
-                          </button>
-                        )} */}
-                      </div>
-                      
-                      
-                      {/* Tolerances */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tolerances
-                        </label>
-                        {fg.tolerances.map((tol, tolIdx) => (
-                          <div key={tolIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="text"
-                              placeholder="Tolerance"
-                              value={tol}
-                              onChange={(e) => {
-                                const next = [...finishedGoods];
-                                next[fgIdx].tolerances[tolIdx] = e.target.value;
-                                setFinishedGoods(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                            {/* {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...finishedGoods];
-                                  if (next[fgIdx].tolerances.length > 1) {
-                                    next[fgIdx].tolerances = next[fgIdx].tolerances.filter((_, i) => i !== tolIdx);
-                                  } else {
-                                    next[fgIdx].tolerances[0] = "";
-                                  }
-                                  setFinishedGoods(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )} */}
-                          </div>
-                        ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...finishedGoods];
-                              next[fgIdx].tolerances.push("");
-                              setFinishedGoods(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Tolerance
-                          </button>
-                        )} */}
-                      </div>
-
-                      {/* Quantities */}
-                      {/*  */}
-
-                      {/* Comments */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Comments
-                        </label>
-                        {fg.comments.map((comment, commentIdx) => (
-                          <div key={commentIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="text"
-                              placeholder="Comment"
-                              value={comment}
-                              onChange={(e) => {
-                                const next = [...finishedGoods];
-                                next[fgIdx].comments[commentIdx] = e.target.value;
-                                setFinishedGoods(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                           
-                          </div>
-                        ))}
-                       
-                      </div>
-                    </div>
+                        className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                      />
+                    ))}
                   </div>
                 ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* Raw Materials Section */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+            Raw Materials
+          </h2>
+          {rawMaterials.map((rm, rmIdx) => (
+            <div
+              key={rmIdx}
+              className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                  Raw Material #{rmIdx + 1}
+                </h3>
                 
               </div>
 
-              {/* Raw Materials Section */}
-              <div className="mb-8">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
-                  Raw Materials
-                </h2>
-                {rawMaterials.map((rm, rmIdx) => (
-                  <div key={rmIdx} className="border rounded-lg p-4 mb-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="font-medium">Raw Material #{rmIdx + 1}</h3>
-                      {!viewMode && (
-                        <button
-                          onClick={() => {
-                            if (rawMaterials.length > 1) {
-                              setRawMaterials(rawMaterials.filter((_, i) => i !== rmIdx));
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          {/* <X className="h-5 w-5" /> */}
-                        </button>
-                      )}
-                    </div>
-                    
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Raw Material
-                      </label>
-                      <select
-                        value={rm.raw_material_id}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="md:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Raw Material
+                  </label>
+                  <select
+                    value={rm.raw_material_id}
+                    onChange={(e) => {
+                      const next = [...rawMaterials];
+                      const selected = rawMaterialsOptions.find(
+                        (opt) => opt._id === e.target.value
+                      );
+                      next[rmIdx].raw_material_id = e.target.value;
+                      next[rmIdx].raw_material_name = selected ? selected.name : '';
+                      setRawMaterials(next);
+                    }}
+                    disabled={viewMode}
+                    className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                  >
+                    <option value="">Select Raw Material...</option>
+                    {rawMaterialsOptions.map((rmOption) => (
+                      <option key={rmOption._id} value={rmOption._id}>
+                        {rmOption.name} ({rmOption.product_id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {['tolerances', 'quantities', 'comments'].map((key) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                      {key}
+                    </label>
+                    {rm[key].map((value, idx2) => (
+                      <input
+                        key={idx2}
+                        type={key === 'quantities' ? 'number' : 'text'}
+                        placeholder={key.slice(0, -1)}
+                        value={value}
                         onChange={(e) => {
                           const next = [...rawMaterials];
-                          const selected = rawMaterialsOptions.find(opt => opt._id === e.target.value);
-                          next[rmIdx].raw_material_id = e.target.value;
-                          next[rmIdx].raw_material_name = selected ? selected.name : "";
+                          next[rmIdx][key][idx2] = e.target.value;
                           setRawMaterials(next);
                         }}
                         disabled={viewMode}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-400"
-                      >
-                        <option value="">Select Raw Material...</option>
-                        {rawMaterialsOptions.map((rmOption) => (
-                          <option key={rmOption._id} value={rmOption._id}>
-                            {rmOption.name} ({rmOption.product_id})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Tolerances */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Tolerances
-                        </label>
-                        {rm.tolerances.map((tol, tolIdx) => (
-                          <div key={tolIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="text"
-                              placeholder="Tolerance"
-                              value={tol}
-                              onChange={(e) => {
-                                const next = [...rawMaterials];
-                                next[rmIdx].tolerances[tolIdx] = e.target.value;
-                                setRawMaterials(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                            
-                          </div>
-                        ))}
-                       
-                      </div>
-
-                      {/* Quantities */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Quantities
-                        </label>
-                        {rm.quantities.map((qty, qtyIdx) => (
-                          <div key={qtyIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="number"
-                              placeholder="Quantity"
-                              value={qty}
-                              onChange={(e) => {
-                                const next = [...rawMaterials];
-                                next[rmIdx].quantities[qtyIdx] = e.target.value;
-                                setRawMaterials(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                            {/* {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...rawMaterials];
-                                  if (next[rmIdx].quantities.length > 1) {
-                                    next[rmIdx].quantities = next[rmIdx].quantities.filter((_, i) => i !== qtyIdx);
-                                  } else {
-                                    next[rmIdx].quantities[0] = "";
-                                  }
-                                  setRawMaterials(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )} */}
-                          </div>
-                        ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...rawMaterials];
-                              next[rmIdx].quantities.push("");
-                              setRawMaterials(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Quantity
-                          </button>
-                        )} */}
-                      </div>
-
-                      {/* Comments */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Comments
-                        </label>
-                        {rm.comments.map((comment, commentIdx) => (
-                          <div key={commentIdx} className="flex gap-2 mb-2">
-                            <input
-                              type="text"
-                              placeholder="Comment"
-                              value={comment}
-                              onChange={(e) => {
-                                const next = [...rawMaterials];
-                                next[rmIdx].comments[commentIdx] = e.target.value;
-                                setRawMaterials(next);
-                              }}
-                              disabled={viewMode}
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                            />
-                            {/* {!viewMode && (
-                              <button
-                                onClick={() => {
-                                  const next = [...rawMaterials];
-                                  if (next[rmIdx].comments.length > 1) {
-                                    next[rmIdx].comments = next[rmIdx].comments.filter((_, i) => i !== commentIdx);
-                                  } else {
-                                    next[rmIdx].comments[0] = "";
-                                  }
-                                  setRawMaterials(next);
-                                }}
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            )} */}
-                          </div>
-                        ))}
-                        {/* {!viewMode && (
-                          <button
-                            onClick={() => {
-                              const next = [...rawMaterials];
-                              next[rmIdx].comments.push("");
-                              setRawMaterials(next);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-xs flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add Comment
-                          </button>
-                        )} */}
-                      </div>
-                    </div>
+                        className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                      />
+                    ))}
                   </div>
                 ))}
+              </div>
+            </div>
+          ))}
+
+          {!viewMode && (
+            <button
+              onClick={() =>
+                setRawMaterials([
+                  ...rawMaterials,
+                  {
+                    raw_material_id: '',
+                    raw_material_name: '',
+                    tolerances: [''],
+                    quantities: [''],
+                    comments: [''],
+                  },
+                ])
+              }
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+            >
+              + Add Raw Material
+            </button>
+          )}
+        </section>
+
+        {/* Processes */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+            Processes
+          </h2>
+          <div className="flex flex-col gap-3">
+            {processRows.map((proc, idx) => (
+              <div key={idx} className="flex gap-2">
+                <input
+                  placeholder={`Process ${idx + 1}`}
+                  className="flex-1 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-yellow-500 transition"
+                  value={proc}
+                  onChange={(e) => {
+                    const next = [...processRows];
+                    next[idx] = e.target.value;
+                    setProcessRows(next);
+                  }}
+                  disabled={viewMode}
+                />
                 {!viewMode && (
                   <button
                     onClick={() => {
-                      setRawMaterials([
-                        ...rawMaterials,
-                        {
-                          raw_material_id: "",
-                          raw_material_name: "",
-                          tolerances: [""],
-                          quantities: [""],
-                          comments: [""],
-                        },
-                      ]);
+                      if (processRows.length > 1) {
+                        setProcessRows(processRows.filter((_, i) => i !== idx));
+                      }
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
+                    className="text-red-500 hover:text-red-600 transition"
                   >
-                    Add Raw Material
+                    ✕
                   </button>
                 )}
               </div>
+            ))}
+          </div>
 
-              {/* Processes Section */}
-              <section className="mb-8">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
-                  Processes
-                </h2>
-                <div className="flex flex-col gap-3">
-                  {processRows.map((proc, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        placeholder={`Process ${idx + 1}`}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                        value={proc}
-                        onChange={(e) => {
-                          const next = [...processRows];
-                          next[idx] = e.target.value;
-                          setProcessRows(next);
-                        }}
-                        disabled={viewMode}
-                      />
-                      {!viewMode && (
-                        <button
-                          onClick={() => {
-                            if (processRows.length > 1) {
-                              setProcessRows(processRows.filter((_, i) => i !== idx));
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {!viewMode && (
-                  <div className="flex justify-end mt-4">
-                    <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 shadow-sm text-sm font-medium"
-                      onClick={() => {
-                        setProcessRows([...processRows, ""]);
-                      }}
-                    >
-                      Add More Process
-                    </button>
-                  </div>
-                )}
-              </section>
+          {!viewMode && (
+            <div className="flex justify-end mt-6">
+              <button
+                className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                onClick={() => setProcessRows([...processRows, ''])}
+              >
+                + Add Process
+              </button>
+            </div>
+          )}
+        </section>
 
-              {/* Submit */}
-              {!viewMode && (
-                <div className="flex justify-center mt-10 mb-4">
-                  <button onClick={formik.handleSubmit} disabled={formik.isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-2 shadow-md font-medium transition disabled:opacity-60">
-                    Submit
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
+        {/* Submit Button */}
+        {!viewMode && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={formik.handleSubmit}
+              disabled={formik.isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-8 py-2.5 shadow-lg font-medium text-base transition disabled:opacity-60"
+            >
+              Submit
+            </button>
+          </div>
         )}
-      </AnimatePresence>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
       <Pagination page={page} setPage={setPage} hasNextPage={boms?.length === 10} />
     </div>
   );
