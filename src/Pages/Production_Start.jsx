@@ -972,7 +972,7 @@ const Production_Start = () => {
               {/* Body */}
               <div className="p-6 sm:p-8 space-y-8 text-sm text-gray-800">
                 {/* Header Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gradient-to-br from-blue-50 to-white rounded-xl shadow-sm p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-linear-to-br from-blue-50 to-white rounded-xl shadow-sm p-4">
                   <div>
                     <span className="font-medium text-gray-600">Production ID:</span>
                     <p className="text-gray-900">{viewDetails?.production_id || "-"}</p>
