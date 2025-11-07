@@ -720,43 +720,6 @@ const BOM = () => {
                   </button>
                 )}
               </section>
-        {/* Processes */}
-        <section className="mb-12">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-            <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-            Processes
-          </h2>
-          <div className="flex flex-col gap-3">
-            {processRows.map((proc, idx) => (
-              <div key={idx} className="flex gap-2">
-                <input
-                  placeholder={`Process ${idx + 1}`}
-                  className="flex-1 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-yellow-500 transition"
-                  value={proc}
-                  onChange={(e) => {
-                    const next = [...processRows];
-                    next[idx] = e.target.value;
-                    setProcessRows(next);
-                  }}
-                  disabled={viewMode}
-                />
-
-              {!viewMode && (
-                <button
-                  onClick={() => {
-                    if (processRows.length > 1) {
-                      setProcessRows(processRows.filter((_, i) => i !== idx));
-                    }
-                  }}
-                  className="bg-red-50 text-red-600 mt-2 hover:bg-red-100 border border-red-200 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold transition-all hover:scale-110 shadow-sm"
-                  title="Remove Process"
-                >
-                  ✕
-                </button>
-              )}
-              </div>
-            ))}
-          </div>
 
               {/* Processes */}
               <section className="mb-12">
