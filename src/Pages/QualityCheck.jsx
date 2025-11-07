@@ -271,6 +271,7 @@ const QualityCheck = () => {
           >
             Gateman
           </Button>
+          
           <Button
             onClick={async () => {
               try {
@@ -298,7 +299,7 @@ const QualityCheck = () => {
                 setShowProdQcModal(true);
               }
             }}
-            className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+            className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
             Production QC
           </Button>
@@ -306,14 +307,14 @@ const QualityCheck = () => {
 
         <div className="flex justify-end items-center gap-4 text-gray-600 w-full">
           <button
-            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+            className="p-2 rounded-lg cursor-pointer border border-gray-300 hover:bg-gray-100 transition"
             onClick={getAllReports}
           >
             <RefreshCcw size={16} />
           </button>
 
           <button
-            className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+            className="p-2 rounded-lg cursor-pointer border border-gray-300 hover:bg-gray-100 transition"
             onClick={handleDownload}
           >
             <Download size={16} />
