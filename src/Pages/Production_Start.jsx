@@ -417,7 +417,7 @@ const Production_Start = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Production Start</h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white w-full sm:w-auto"
           onClick={() => {
             setShowModal(true);
             resetForm();
@@ -441,10 +441,15 @@ const Production_Start = () => {
         </div>
 
         <div className="flex items-center gap-4 text-gray-600">
+          
+           <button
+           onClick={fetchProductions}
+            className="p-2 cursor-pointer rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
           <RefreshCcw
-            className="cursor-pointer hover:text-gray-800"
-            onClick={fetchProductions}
+            size={16}
+            
           />
+          </button>
         </div>
       </div>
 
@@ -452,7 +457,7 @@ const Production_Start = () => {
       <div className="border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left min-w-[600px]">
           <thead>
-            <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+            <tr className="bg-linear-to-r text-center from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
@@ -475,7 +480,7 @@ const Production_Start = () => {
                 return (
                   <tr
                     key={prod._id}
-                    className={`border-t ${
+                    className={`border-t text-center ${
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >

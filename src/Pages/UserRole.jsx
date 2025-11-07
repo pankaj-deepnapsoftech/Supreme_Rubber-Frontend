@@ -372,7 +372,7 @@ export default function UserRolesManagement() {
         <h1 className="text-2xl font-semibold">User Roles</h1>
         <button
           onClick={handleAddNew}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded-md hover:bg-blue-700"
         >
           Add New Role
         </button>
@@ -402,7 +402,7 @@ export default function UserRolesManagement() {
   <select
     value={filterPermission}
     onChange={(e) => setFilterPermission(e.target.value)}
-    className="border border-gray-300 rounded-lg py-2 px-3 w-[60%] text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    className="border cursor-pointer border-gray-300 rounded-lg py-2 px-3 w-[60%] text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
   >
     <option value="">All Permissions</option>
     {permissionOptions.map((perm) => (
@@ -415,7 +415,7 @@ export default function UserRolesManagement() {
   {/* Refresh */}
   <button
     onClick={handleRefresh}
-    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+    className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
   >
     <RefreshCw size={16} />
   </button>
@@ -423,7 +423,7 @@ export default function UserRolesManagement() {
   {/* Download */}
   <button
     onClick={handleDownload}
-    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+    className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
   >
     <Download size={16} />
   </button>
@@ -432,7 +432,7 @@ export default function UserRolesManagement() {
 </div>
 
       {/* Table */}
-      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
+      <div className="overflow-x-auto bg-white rounded-2xl mt-10 shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left text-gray-700">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">

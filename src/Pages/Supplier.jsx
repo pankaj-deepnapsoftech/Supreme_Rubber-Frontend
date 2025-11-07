@@ -170,7 +170,7 @@ const Supplier = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Supplier</h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
           onClick={() => {
             setMode("add");
             setSelectedSupplier(null);
@@ -208,7 +208,7 @@ const Supplier = () => {
       </div>
 
      
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-auto">
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-auto mt-10">
         <div className="overflow-auto max-h-[70vh] rounded-lg">
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">

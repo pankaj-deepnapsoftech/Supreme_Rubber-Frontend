@@ -176,8 +176,8 @@ const Employee = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
-        <table className="min-w-full border-collapse">
+      <div className="overflow-x-auto bg-white rounded-2xl mt-10 shadow-md border border-gray-100">
+        <table className="min-w-full border-collapse ">
           <thead>
             <tr className="bg-gradient-to-r text-center from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
               <th className="py-3 px-4  ">Name</th>

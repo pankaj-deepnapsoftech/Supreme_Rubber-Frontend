@@ -264,7 +264,7 @@ const PurchaseOrder = () => {
                 },
               ]);
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
             Add Purchase
           </button>
@@ -287,21 +287,21 @@ const PurchaseOrder = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={handleRefresh}
-            className="p-2 rounded-lg border ml-3 border-gray-300 hover:bg-gray-100 transition"
+            className="p-2 rounded-lg cursor-pointer border ml-3 border-gray-300 hover:bg-gray-100 transition"
           >
             <RefreshCw size={16} />
           </button>
 
           <button
             onClick={handleDownload}
-            className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+            className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
           >
             <Download size={16} />
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
+      <div className="overflow-x-auto bg-white rounded-2xl mt-10 shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">

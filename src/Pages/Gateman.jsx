@@ -228,7 +228,7 @@ const Gateman = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Gateman</h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
           onClick={() => {
             setShowModal(true);
             setEditTable(null);
@@ -254,7 +254,7 @@ const Gateman = () => {
           </div>
           <Button
             onClick={() => setShowPOModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm"
+            className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg shadow-sm"
           >
             PO Data
           </Button>

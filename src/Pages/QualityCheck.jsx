@@ -235,7 +235,7 @@ const QualityCheck = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl sm:text-2xl font-semibold">Quality Check</h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
           onClick={() => {
             setSelectedReport(null);
             setSelectedEntryItems([]);
@@ -322,7 +322,7 @@ const QualityCheck = () => {
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-x-auto shadow-sm">
+      <div className="border rounded-lg overflow-x-auto shadow-sm ">
         <table className="w-full min-w-[800px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-center text-white uppercase text-xs tracking-wide">

@@ -140,7 +140,7 @@ const Inventory = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Inventory</h1>
         <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
           onClick={() => setShowModal(true)}
         >
           Add Inventory
@@ -223,7 +223,7 @@ const Inventory = () => {
 </div>
 
 
-      <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
+      <div className="overflow-x-auto bg-white mt-10 rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
