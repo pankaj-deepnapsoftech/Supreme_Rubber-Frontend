@@ -51,10 +51,16 @@ export default function DashboardMain() {
   const [inventoryPeriod, setInventoryPeriod] = useState("Weekly");
   const [inventoryLoading, setInventoryLoading] = useState(false);
 
+  const [latestProduction, setLatestProduction] = useState({
+    day: "",
+    count: 0,
+  });
+
   const currentYear = new Date().getFullYear();
   const years = [currentYear, currentYear - 1, currentYear - 2];
 
   // Fetch production graph data from API
+
   const fetchProductionGraphData = async (
     selectedPeriod = period,
     year = selectedYear
@@ -71,25 +77,35 @@ export default function DashboardMain() {
 
       const response = await axiosHandler.get(
         `/production/dashboard/graph?${params}`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       if (response.data?.success) {
         const graphData = response.data.data.graphData;
 
-        // Transform data for the chart
         const chartData = graphData.map((item) => ({
           ...item,
-          productions: item.productions, // Single line for production count
+          productions: item.productions,
         }));
 
         setLineData(chartData);
+
+        // ✅ Get the most recent record (last item in the array)
+        if (chartData.length > 0) {
+          const last = chartData[chartData.length - 1];
+          setLatestProduction({
+            day:
+              selectedPeriod === "Weekly"
+                ? last.day
+                : selectedPeriod === "Monthly"
+                ? last.date
+                : last.month,
+            count: last.productions,
+          });
+        }
       }
     } catch (error) {
       console.error("Error fetching production graph data:", error);
-      // Fallback to dummy data on error
       setLineData(getDefaultData(selectedPeriod));
     } finally {
       setLoadingProductionGraph(false);
@@ -586,9 +602,18 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                     </ResponsiveContainer>
                   )}
 
-                  <div className="flex items-center flex-col">
-                    <p>Day</p>
-                    <p>Production</p>
+                  <div className="flex flex-col items-center mt-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-blue-500 rounded-full"></span>
+                      <span className="text-gray-700 font-semibold">
+                        {latestProduction.day
+                          ? `Day: ${latestProduction.day}`
+                          : "No data available"}
+                      </span>
+                    </div>
+                    <p className="text-blue-700 font-semibold text-lg">
+                      Production: {latestProduction.count || 0}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -667,7 +692,6 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </>
                 )}
               </div>
-              );
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-4">
@@ -723,7 +747,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                           className="flex items-center justify-between w-full max-w-[100px]"
                         >
                           <span
-                            className="w-3 h-3 rounded-full"
+                            className="w-3 h-3  rounded-full"
                             style={{ backgroundColor: item.color }}
                           ></span>
                           <span className="text-gray-700 font-medium">
@@ -807,7 +831,8 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
               </div>
 
               {/* Quality Check */}
-              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex flex-col min-w-[300px] h-[350px] bg-white rounded-2xl p-5 shadow-sm">
+                {/* Header */}
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Quality Check
@@ -823,6 +848,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </select>
                 </div>
 
+                {/* Chart or Loader */}
                 {qcLoading ? (
                   <div className="flex items-center justify-center flex-1 text-gray-500">
                     Loading QC...
@@ -849,6 +875,27 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                     </PieChart>
                   </ResponsiveContainer>
                 )}
+
+                {/* Styled Legend (like Gate Entry) */}
+                <div className="flex flex-col items-center justify-around w-full mt-4 text-sm space-y-2">
+                  {qcChartData.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between w-full max-w-[110px]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        ></span>
+                        <span className="text-gray-700 font-medium">
+                          {item.name}:
+                        </span>
+                      </div>
+                      <span className="text-gray-600">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
