@@ -411,6 +411,20 @@ const Production_Start = () => {
     );
   });
 
+ 
+  const Info = ({ label, value }) => (
+    <div>
+      <span className="font-medium text-gray-600">{label}:</span>{" "}
+      <span className="text-gray-900">{value || "-"}</span>
+    </div>
+  );
+
+  const EmptyState = ({ message }) => (
+    <div className="text-gray-500 italic text-sm bg-gray-50 border border-dashed border-gray-300 rounded-lg p-3 text-center">
+      {message}
+    </div>
+  );
+
   return (
     <div className="p-4 sm:p-6 relative overflow-hidden">
       {/* Header */}
@@ -454,7 +468,7 @@ const Production_Start = () => {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-x-auto shadow-sm">
+      <div className="mt-5 border rounded-lg overflow-x-auto shadow-sm">
         <table className="w-full text-sm text-left min-w-[600px]">
           <thead>
             <tr className="bg-linear-to-r text-center from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
@@ -518,8 +532,31 @@ const Production_Start = () => {
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center items-center space-x-3">
                         {(() => {
+                          // Check Compound Details remain_qty is 0
+                          const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
+                          const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
+                          
+                          // Check all Raw Materials remain_qty are 0
+                          const rawMaterials = prod?.raw_materials || [];
+                          const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
+                            (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
+                          );
+                          
+                          // If both remain_qty are 0, consider it ready/matched
+                          if (isFgRemainZero && allRmRemainZero) {
+                            return (
+                              <span
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600"
+                                title="All quantities consumed - Ready for QC"
+                              >
+                                Ready for QC
+                              </span>
+                            );
+                          }
+                          
+                          // Otherwise check quantity match
                           const fgQty = parseFloat(fg?.prod_qty) || 0;
-                          const usedTotal = (prod?.raw_materials || []).reduce(
+                          const usedTotal = rawMaterials.reduce(
                             (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
                             0
                           );
@@ -529,7 +566,7 @@ const Production_Start = () => {
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 isMatched ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
                               }`}
-                              title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                              title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}${!isFgRemainZero ? `, Compound remain: ${fgRemainQty.toFixed(2)}` : ''}${!allRmRemainZero ? ', RM remain qty' : ''}`}
                             >
                               {isMatched ? "Quantity matched" : "Quantity mismatched"}
                             </span>
@@ -630,23 +667,31 @@ const Production_Start = () => {
                           if (alreadySent) return (
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">Waiting for QC</span>
                           );
-                          // Block sending to QC until quantities match
-                          const fgQty = parseFloat(fg?.prod_qty) || 0;
-                          const usedTotal = (prod?.raw_materials || []).reduce(
-                            (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
-                            0
+                          
+                          // Check Compound Details remain_qty is 0
+                          const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
+                          const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
+                          
+                          // Check all Raw Materials remain_qty are 0
+                          const rawMaterials = prod?.raw_materials || [];
+                          const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
+                            (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
                           );
-                          const isMatched = Math.abs(usedTotal - fgQty) <= 1e-6;
-                          if (!isMatched) {
+                          
+                          // Block sending to QC until Compound remain_qty is 0 AND all Raw Materials remain_qty are 0
+                          if (!isFgRemainZero || !allRmRemainZero) {
                             return (
                               <span
-                                className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600"
-                                title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(2)}`}
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600"
+                                title={!isFgRemainZero ? `Compound remain qty: ${fgRemainQty.toFixed(2)}` : `Some raw materials still have remaining quantity`}
                               >
-                                Quantity mismatched
+                                {!isFgRemainZero ? "Compound qty remaining" : "Raw materials qty remaining"}
                               </span>
                             );
                           }
+                          
+                          // If both remain_qty are 0, allow sending to QC (quantities are considered consumed/complete)
+                          // No need to check quantity match when all quantities are fully consumed
                           return (
                             <button
                               className="px-3 py-1 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 text-xs"
@@ -682,252 +727,328 @@ const Production_Start = () => {
       </div>
 
       {/* Add Production Modal */}
+      {/* now this  */}
       <AnimatePresence>
         {showModal && (
           <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-linear-to-br from-black/60 to-black/40 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           >
             <Motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.95 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 50, opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="relative bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-5xl max-h-[90vh] overflow-y-auto p-0"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
-              {/* Sticky Header */}
-              <div className="sticky top-0 bg-white/80 backdrop-blur-sm z-10 border-b border-gray-200 flex justify-between items-center p-4 sm:p-5">
-                <button
-                  onClick={() => { resetForm(); setShowModal(false); }}
-                  className="text-gray-600 hover:text-blue-600 transition text-lg"
-                >
-                  ←
-                </button>
-                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  Add New Production
-                </h1>
-                <button
-                  onClick={() => { resetForm(); setShowModal(false); }}
-                  className="text-gray-600 hover:text-red-500 transition text-xl"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                onClick={() => { resetForm(); setShowModal(false); }}
+                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
+              >
+                ✕
+              </button>
 
-              {/* Form Body */}
-              <div className="p-6 sm:p-8 space-y-10">
-                <form onSubmit={handleSubmit}>
-                  {/* Compound Details */}
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+              <button
+                onClick={() => { resetForm(); setShowModal(false); }}
+                className="text-2xl mb-4 hover:text-blue-500 transition"
+              >
+                ←
+              </button>
+
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-6 sm:mb-8">
+                Add New Production
+              </h1>
+
+              <form onSubmit={handleSubmit}>
+                {/* ---------- Finished Goods Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Compound Details
                     </h2>
+                  </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-7 gap-4">
-                      <div className="relative sm:col-span-2">
-                        <input
-                          type="text"
-                          placeholder="Search Compound"
-                          value={bomSearch}
-                          onChange={(e) => {
-                            setBomSearch(e.target.value);
-                            setShowBomResults(true);
-                          }}
-                          onFocus={() => setShowBomResults(true)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-blue-400"
-                        />
-                        {showBomResults && (
-                          <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-56 overflow-auto">
-                            {boms.length > 0 ? (
-                              boms
-                                .filter((b) => {
-                                  const q = bomSearch.toLowerCase();
-                                  const name = (b.compound_name || "").toLowerCase();
-                                  const code = (Array.isArray(b.compound_codes) ? b.compound_codes[0] : "").toLowerCase();
-                                  return !q || name.includes(q) || code.includes(q);
-                                })
-                                .slice(0, 50)
-                                .map((b) => {
-                                  const label = `${b.compound_name}${b.compound_codes?.[0] ? ` (${b.compound_codes[0]})` : ""}`;
-                                  return (
-                                    <div
-                                      key={b._id}
-                                      className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ${selectedBomId === b._id ? "bg-blue-100" : ""}`}
-                                      onMouseDown={(e) => e.preventDefault()}
-                                      onClick={() => {
-                                        setSelectedBomId(b._id);
-                                        setBomSearch(label);
-                                        setShowBomResults(false);
-                                        handleBomSelect(b._id);
-                                      }}
-                                    >
-                                      {label}
-                                    </div>
-                                  );
-                                })
-                            ) : (
-                              <div className="px-3 py-2 text-sm text-gray-500">No BOMs found</div>
-                            )}
-                          </div>
-                        )}
+              <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                    {[
+                      "Compound Details",
+                      "EST. QTY",
+                      "UOM",
+                      "PROD. QTY",
+                      "Remain QTY",
+                      "Category",
+                  "Comment",
+                    ].map((head) => (
+                      <div key={head} className="p-2 text-center truncate">
+                        {head}
                       </div>
+                    ))}
+                  </div>
 
-                      {/* Other inputs */}
-                      {["est_qty", "uom", "prod_qty", "remain_qty", "category", "comment"].map((field, i) => (
-                        <input
-                          key={field}
-                          type={field.includes("qty") ? "number" : "text"}
-                          placeholder={field.replace("_", " ").toUpperCase()}
-                          value={finishedGood[field] || ""}
-                          readOnly={["uom", "remain_qty", "category"].includes(field)}
-                          onChange={(e) =>
-                            !["uom", "remain_qty", "category"].includes(field) &&
-                            handleFinishedGoodChange(field, e.target.value)
-                          }
-                          className={`border border-gray-300 rounded-lg px-3 py-2 text-sm w-full ${
-                            ["uom", "remain_qty", "category"].includes(field)
-                              ? "bg-gray-50"
-                              : "focus:ring-2 focus:ring-blue-400"
-                          }`}
-                        />
-                      ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search Compound"
+                        value={bomSearch}
+                        onChange={(e) => {
+                          setBomSearch(e.target.value);
+                          setShowBomResults(true);
+                        }}
+                        onFocus={() => setShowBomResults(true)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      />
+                      {showBomResults && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
+                          {boms
+                            .filter((b) => {
+                              const q = (bomSearch || "").toLowerCase();
+                              const name = (b.compound_name || "").toLowerCase();
+                              const code = ((Array.isArray(b.compound_codes) && b.compound_codes[0]) ? b.compound_codes[0] : "").toLowerCase();
+                              return !q || name.includes(q) || code.includes(q);
+                            })
+                            .slice(0, 50)
+                            .map((b) => {
+                              const label = `${b.compound_name || "Unnamed"}${(Array.isArray(b.compound_codes) && b.compound_codes[0]) ? ` (${b.compound_codes[0]})` : ""}`;
+                              return (
+                                <div
+                                  key={b._id}
+                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${selectedBomId === b._id ? "bg-gray-50" : ""}`}
+                                  onMouseDown={(e) => {
+                                    // prevent input blur before click handler
+                                    e.preventDefault();
+                                  }}
+                                  onClick={() => {
+                                    setSelectedBomId(b._id);
+                                    setBomSearch(label);
+                                    setShowBomResults(false);
+                                    handleBomSelect(b._id);
+                                  }}
+                                >
+                                  {label}
+                                </div>
+                              );
+                            })}
+                          {boms.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500">No BOMs</div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </section>
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={finishedGood.est_qty}
+                      onChange={(e) => handleFinishedGoodChange("est_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter UOM"
+                      value={finishedGood.uom}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={finishedGood.prod_qty}
+                      onChange={(e) => handleFinishedGoodChange("prod_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Remain QTY"
+                      value={finishedGood.remain_qty}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter Category"
+                      value={finishedGood.category}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                <input
+                  type="text"
+                  placeholder="Comment"
+                  value={finishedGood.comment}
+                  onChange={(e) => handleFinishedGoodChange("comment", e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+                />
+                  </div>
+                </section>
 
-                  {/* Raw Materials */}
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                {/* ---------- Raw Materials Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       Raw Materials
                     </h2>
-                    {rawMaterials.length > 0 ? (
-                      <div className="space-y-3">
-                        {rawMaterials.map((rm, idx) => (
-                          <div
-                            key={idx}
-                            className="grid grid-cols-1 sm:grid-cols-7 gap-3 bg-gray-50 rounded-xl p-3 shadow-sm"
-                          >
-                            {Object.entries({
-                              name: `${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`,
-                              est_qty: rm.est_qty,
-                              uom: rm.uom,
-                              used_qty: rm.used_qty,
-                              remain_qty: rm.remain_qty,
-                              category: rm.category,
-                              comment: rm.comment,
-                            }).map(([key, value]) => (
-                              <input
-                                key={key}
-                                type={key.includes("qty") ? "number" : "text"}
-                                placeholder={key.replace("_", " ").toUpperCase()}
-                                value={value || ""}
-                                readOnly={!["used_qty", "comment"].includes(key)}
-                                onChange={(e) =>
-                                  ["used_qty", "comment"].includes(key) &&
-                                  handleRawMaterialChange(idx, key, e.target.value)
-                                }
-                                className={`border border-gray-300 rounded-md px-3 py-2 text-sm w-full ${
-                                  !["used_qty", "comment"].includes(key)
-                                    ? "bg-gray-100"
-                                    : "focus:ring-2 focus:ring-blue-400"
-                                }`}
-                              />
-                            ))}
+                  </div>
+
+                  {rawMaterials.length > 0 ? (
+                    <>
+                      <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                        {[
+                          "Finished Goods",
+                          "EST. QTY",
+                          "UOM",
+                          "Used QTY",
+                          "Remain QTY",
+                          "Category",
+                          "Comment",
+                        ].map((head) => (
+                          <div key={head} className="p-2 text-center truncate">
+                            {head}
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">
-                        {selectedBomId
-                          ? "No raw materials found for this BOM."
-                          : "Please select a BOM to view raw materials."}
-                      </p>
-                    )}
-                  </section>
 
-                  {/* Processes */}
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
-                      Processes
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {processes.map((proc, idx) => (
-                        <div
-                          key={idx}
-                          className="border rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-medium text-gray-800">Process {idx + 1}</h3>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                proc.status === "completed"
-                                  ? "text-green-700 bg-green-100"
-                                  : proc.status === "in_progress"
-                                  ? "text-yellow-700 bg-yellow-100"
-                                  : "text-gray-600 bg-gray-100"
-                              }`}
-                            >
-                              {proc.status}
-                            </span>
-                          </div>
-
+                      {rawMaterials.map((rm, idx) => (
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
                           <input
-                            type="text"
-                            placeholder="Process Name"
-                            value={proc.process_name}
+                            value={`${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`}
                             readOnly
-                            className="border border-gray-300 rounded-md px-3 py-2 w-full mb-3 text-sm bg-gray-50"
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
-
-                          <label className="text-sm text-gray-700 font-medium mb-1 block">
-                            Work Done
-                          </label>
                           <input
                             type="number"
-                            placeholder="1000"
-                            value={proc.work_done}
-                            onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
-                            className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-2 focus:ring-blue-400 mb-2"
+                            placeholder="EST. QTY"
+                            value={rm.est_qty}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
-
-                          <div className="flex gap-4 items-center mt-2 flex-wrap">
-                            {["start", "done"].map((flag) => (
-                              <label key={flag} className="flex items-center gap-1 text-sm text-gray-700">
-                                <input
-                                  type="checkbox"
-                                  className="accent-blue-600"
-                                  checked={proc[flag]}
-                                  onChange={(e) => handleProcessChange(idx, flag, e.target.checked)}
-                                />
-                                {flag.charAt(0).toUpperCase() + flag.slice(1)}
-                              </label>
-                            ))}
-                          </div>
+                          <input
+                            type="text"
+                            placeholder="UOM"
+                            value={rm.uom}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Used QTY"
+                            value={rm.used_qty}
+                            onChange={(e) => handleRawMaterialChange(idx, "used_qty", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Remain QTY"
+                            value={rm.remain_qty}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Category"
+                            value={rm.category}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Comment"
+                            value={rm.comment || ""}
+                            onChange={(e) => handleRawMaterialChange(idx, "comment", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
                         </div>
                       ))}
+                    </>
+                  ) : selectedBomId ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No raw materials found for the selected BOM. Please check if the BOM has raw materials configured.
                     </div>
-                  </section>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      Please select a BOM to see raw materials.
+                    </div>
+                  )}
+                </section>
 
-                  {/* Submit Button */}
-                  <div className="flex justify-center mt-10 mb-6">
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-8 py-2.5 shadow-md font-medium transition disabled:opacity-50 flex items-center gap-2"
-                    >
-                      {submitting ? (
-                        <>
-                          <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"></span>
-                          Submitting...
-                        </>
-                      ) : (
-                        "Submit"
-                      )}
-                    </button>
+                {/* ---------- Processes Section ---------- */}
+                <section className="mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {processes.map((proc, idx) => (
+                      <div
+                        key={idx}
+                        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-semibold text-gray-800">
+                            Process {idx + 1}
+                          </h3>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              proc.status === "completed"
+                                ? "text-green-600 bg-green-100"
+                                : proc.status === "in_progress"
+                                ? "text-yellow-600 bg-yellow-100"
+                                : "text-gray-600 bg-gray-100"
+                            }`}
+                          >
+                            {proc.status}
+                          </span>
+                        </div>
+
+                        <input
+                          type="text"
+                          placeholder="Process Name"
+                          value={proc.process_name}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 w-full mb-3 text-sm bg-gray-50"
+                        />
+
+                        <label className="text-sm text-gray-700 font-medium mb-1 block">
+                          Work Done
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="1000"
+                          value={proc.work_done}
+                          onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
+                          className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-400 mb-2"
+                        />
+
+                        <div className="flex gap-4 items-center mt-2 flex-wrap">
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="accent-blue-600"
+                              checked={proc.start}
+                              onChange={(e) => handleProcessChange(idx, "start", e.target.checked)}
+                            />
+                            Start
+                          </label>
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="accent-blue-600"
+                              checked={proc.done}
+                              onChange={(e) => handleProcessChange(idx, "done", e.target.checked)}
+                            />
+                            Done
+                          </label>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </form>
-              </div>
+                </section>
+
+                <div className="flex justify-center mt-10 mb-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-8 py-2 shadow-md font-medium transition disabled:opacity-50"
+                  >
+                    {submitting ? "Submitting..." : "Submit"}
+                  </button>
+                </div>
+              </form>
             </Motion.div>
           </Motion.div>
         )}
@@ -940,61 +1061,138 @@ const Production_Start = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
           >
             <Motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-4xl max-h-[85vh] overflow-y-auto p-5"
+              initial={{ y: 60, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 60, opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="relative bg-white rounded-2xl shadow-2xl w-[95%] sm:w-[90%] md:w-[80%] lg:max-w-4xl max-h-[85vh] overflow-y-auto"
             >
-              <button
-                onClick={() => setViewDetails(null)}
-                className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
-              >
-                ✕
-              </button>
-              <h2 className="text-xl font-semibold mb-4">Production Details</h2>
-              <div className="space-y-3 text-sm">
-                <div><span className="font-medium">Production ID:</span> {viewDetails?.production_id || "-"}</div>
-                <div><span className="font-medium">BOM:</span> {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}</div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Finished Goods</h3>
-                  {(viewDetails?.finished_goods || []).map((fg, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
-                      <div><span className="font-medium">Compound:</span> {fg.compound_name || fg.compound_code}</div>
-                      <div><span className="font-medium">EST:</span> {fg.est_qty}</div>
-                      <div><span className="font-medium">PROD:</span> {fg.prod_qty}</div>
-                      <div><span className="font-medium">Remain:</span> {fg.remain_qty}</div>
-                      <div><span className="font-medium">UOM:</span> {fg.uom}</div>
-                      <div><span className="font-medium">Category:</span> {fg.category}</div>
-                    </div>
-                  ))}
+              {/* Sticky Header */}
+              <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 flex justify-between items-center px-6 py-4 z-10">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Production Details</h2>
+                <button
+                  onClick={() => setViewDetails(null)}
+                  className="text-gray-500 hover:text-red-500 text-2xl transition"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 sm:p-8 space-y-8 text-sm text-gray-800">
+                {/* Header Info */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-linear-to-br from-blue-50 to-white rounded-xl shadow-sm p-4">
+                  <div>
+                    <span className="font-medium text-gray-600">Production ID:</span>
+                    <p className="text-gray-900">{viewDetails?.production_id || "-"}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">BOM:</span>
+                    <p className="text-gray-900">
+                      {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}
+                    </p>
+                  </div>
                 </div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Raw Materials</h3>
-                  {(viewDetails?.raw_materials || []).map((rm, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
-                      <div><span className="font-medium">Item:</span> {rm.raw_material_name || rm.raw_material_code}</div>
-                      <div><span className="font-medium">EST:</span> {rm.est_qty}</div>
-                      <div><span className="font-medium">Used:</span> {rm.used_qty}</div>
-                      <div><span className="font-medium">Remain:</span> {rm.remain_qty}</div>
-                      <div><span className="font-medium">UOM:</span> {rm.uom}</div>
-                      <div><span className="font-medium">Category:</span> {rm.category}</div>
+
+                {/* Finished Goods */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Finished Goods</h3>
+                  </div>
+                  {(viewDetails?.finished_goods || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.finished_goods.map((fg, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-gray-50/50"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Compound" value={fg.compound_name || fg.compound_code} />
+                            <Info label="EST" value={fg.est_qty} />
+                            <Info label="PROD" value={fg.prod_qty} />
+                            <Info label="Remain" value={fg.remain_qty} />
+                            <Info label="UOM" value={fg.uom} />
+                            <Info label="Category" value={fg.category} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">Processes</h3>
-                  {(viewDetails?.processes || []).map((p, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 border rounded-lg mb-2">
-                      <div><span className="font-medium">Process:</span> {p.process_name}</div>
-                      <div><span className="font-medium">Work Done:</span> {p.work_done}</div>
-                      <div><span className="font-medium">Status:</span> {p.status}</div>
+                  ) : (
+                    <EmptyState message="No finished goods found." />
+                  )}
+                </section>
+
+                {/* Raw Materials */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Raw Materials</h3>
+                  </div>
+                  {(viewDetails?.raw_materials || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.raw_materials.map((rm, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Item" value={rm.raw_material_name || rm.raw_material_code} />
+                            <Info label="EST" value={rm.est_qty} />
+                            <Info label="Used" value={rm.used_qty} />
+                            <Info label="Remain" value={rm.remain_qty} />
+                            <Info label="UOM" value={rm.uom} />
+                            <Info label="Category" value={rm.category} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <EmptyState message="No raw materials found." />
+                  )}
+                </section>
+
+                {/* Processes */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-green-600 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Processes</h3>
+                  </div>
+                  {(viewDetails?.processes || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.processes.map((p, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-gray-50"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Process" value={p.process_name} />
+                            <Info label="Work Done" value={p.work_done} />
+                            <div>
+                              <span className="font-medium text-gray-600">Status:</span>{" "}
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                  p.status === "completed"
+                                    ? "bg-green-100 text-green-700"
+                                    : p.status === "in_progress"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {p.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState message="No processes found." />
+                  )}
+                </section>
               </div>
             </Motion.div>
           </Motion.div>
