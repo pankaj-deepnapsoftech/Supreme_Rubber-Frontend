@@ -685,7 +685,7 @@ const Production_Start = () => {
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">QC Done</span>
                           );
                           if (alreadySent) return (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">Waiting for QC</span>
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600">Waiting for QC</span>
                           );
                           
                           // Check Compound Details remain_qty is 0
@@ -714,7 +714,7 @@ const Production_Start = () => {
                           // No need to check quantity match when all quantities are fully consumed
                           return (
                             <button
-                              className="px-3 py-1 rounded-md bg-indigo-500 border-2 border-black text-white hover:bg-indigo-400 cursor-pointer text-xs"
+                              className="px-[0.5px] py-1 rounded-md bg-yellow-500 border-1 border-gray-400 text-white hover:bg-yellow-400 cursor-pointer text-xs"
                               onClick={async () => {
                                 try {
                                   await axiosHandler.patch(`/production/${prod._id}/ready-for-qc`);
