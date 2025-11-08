@@ -29,36 +29,38 @@ const BOM = () => {
   // eslint-disable-next-line no-unused-vars
   const [selectedBom, setSelectedBom] = useState(null);
   const [viewMode, setViewMode] = useState(false);
+  const [accelerator, setAccelerator] = useState("");
 
   // New state for arrays
   const [compoundCodes, setCompoundCodes] = useState([""]);
   const [compoundName, setCompoundName] = useState("");
   const [partNames, setPartNames] = useState([""]);
   const [hardnesses, setHardnesses] = useState([""]);
-  const [finishedGoods, setFinishedGoods] = useState([
-    {
-      finished_good_id_name: "",
-      tolerances: [""],
-      quantities: [""],
-      comments: [""],
-    },
-  ]);
   const [rawMaterials, setRawMaterials] = useState([
+    { name: "", weight: "", tolerance: "", code: "" },
+  ]);
+  const [compoundInfo, setCompoundInfo] = useState({
+    quantity: "",
+    comment: "",
+  });
+
+
+
+  const [accelerators, setAccelerators] = useState([
     {
-      raw_material_id: "",
-      raw_material_name: "",
-      tolerances: [""],
-      quantities: [""],
-      comments: [""],
+      name: "",
+      tolerance: "",
+      quantity: "",
+      comment: "",
     },
   ]);
+
+
   const [processRows, setProcessRows] = useState([""]);
 
   const { products, getAllProducts } = useInventory();
 
-  const finishedGoodsOptions = (products || []).filter((p) =>
-    (p?.category || "").toLowerCase().includes("finished")
-  );
+ 
   const rawMaterialsOptions = (products || []).filter((p) =>
     (p?.category || "").toLowerCase().includes("raw")
   );
@@ -71,19 +73,12 @@ const BOM = () => {
       try {
         const payload = {
           ...values,
-          compound_codes: compoundCodes.filter((c) => c && c.trim() !== ""),
-          compound_name: (compoundName || "").trim(),
-          part_names: partNames.filter((p) => p && p.trim() !== ""),
-          hardnesses: hardnesses.filter((h) => h && h.trim() !== ""),
-          finished_goods: finishedGoods.map((fg) => ({
-            finished_good_id_name: fg.finished_good_id_name || "",
-            tolerances: fg.tolerances.filter((t) => t && t.trim() !== ""),
-            quantities: fg.quantities
-              .filter((q) => q && q.trim() !== "")
-              .map((q) => Number(q))
-              .filter((q) => !isNaN(q)),
-            comments: fg.comments.filter((c) => c && c.trim() !== ""),
-          })),
+          compound_codes: compoundCodes.filter((c) => c.trim() !== ""),
+          compound_name: compoundName.trim(),
+          part_names: partNames.filter((p) => p.trim() !== ""),
+          hardnesses: hardnesses.filter((h) => h.trim() !== ""),
+          quantity: Number(compoundInfo.quantity) || 0,
+          comment: compoundInfo.comment.trim(),
           raw_materials: rawMaterials.map((rm) => ({
             raw_material_id: rm.raw_material_id || "",
             raw_material_name: rm.raw_material_name || "",
@@ -94,6 +89,14 @@ const BOM = () => {
               .filter((q) => !isNaN(q)),
             comments: rm.comments.filter((c) => c && c.trim() !== ""),
           })),
+          accelerators: accelerators
+            .filter((a) => a.name || a.tolerance || a.quantity || a.comment)
+            .map((a) => ({
+              name: a.name.trim(),
+              tolerance: a.tolerance.trim(),
+              quantity: Number(a.quantity) || 0,
+              comment: a.comment.trim(),
+            })),
           processes: processRows.filter((p) => (p || "").trim() !== ""),
         };
 
@@ -102,6 +105,7 @@ const BOM = () => {
         } else {
           await axiosHandler.post("/bom", payload, { withCredentials: true });
         }
+
         await fetchBoms();
         resetForm();
         setShowModal(false);
@@ -113,7 +117,8 @@ const BOM = () => {
       } finally {
         setSubmitting(false);
       }
-    },
+    }
+
   });
 
   const resetAllFields = () => {
@@ -121,14 +126,7 @@ const BOM = () => {
     setCompoundName("");
     setPartNames([""]);
     setHardnesses([""]);
-    setFinishedGoods([
-      {
-        finished_good_id_name: "",
-        tolerances: [""],
-        quantities: [""],
-        comments: [""],
-      },
-    ]);
+
     setRawMaterials([
       {
         raw_material_id: "",
@@ -203,30 +201,7 @@ const BOM = () => {
         bom.hardnesses && bom.hardnesses.length > 0 ? bom.hardnesses : [""]
       );
 
-      setFinishedGoods(
-        bom.finished_goods && bom.finished_goods.length > 0
-          ? bom.finished_goods.map((fg) => ({
-              finished_good_id_name: fg.finished_good_id_name || "",
-              tolerances:
-                fg.tolerances && fg.tolerances.length > 0
-                  ? fg.tolerances
-                  : [""],
-              quantities:
-                fg.quantities && fg.quantities.length > 0
-                  ? fg.quantities.map((q) => String(q))
-                  : [""],
-              comments:
-                fg.comments && fg.comments.length > 0 ? fg.comments : [""],
-            }))
-          : [
-              {
-                finished_good_id_name: "",
-                tolerances: [""],
-                quantities: [""],
-                comments: [""],
-              },
-            ]
-      );
+    
 
       setRawMaterials(
         bom.raw_materials && bom.raw_materials.length > 0
@@ -551,81 +526,44 @@ const BOM = () => {
                       />
                     ))}
                   </div>
+                  {/* Quantity */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Enter quantity"
+                      value={compoundInfo.quantity}
+                      onChange={(e) =>
+                        setCompoundInfo({ ...compoundInfo, quantity: e.target.value })
+                      }
+                      disabled={viewMode}
+                      className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                    />
+                  </div>
+
+                  {/* Comments */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Comments
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter comments"
+                      value={compoundInfo.comment}
+                      onChange={(e) =>
+                        setCompoundInfo({ ...compoundInfo, comment: e.target.value })
+                      }
+                      disabled={viewMode}
+                      className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                    />
+                  </div>
+
                 </div>
               </section>
 
-              {/* Finished Goods Section */}
-              <section className="mb-10">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Finished Goods
-                </h2>
-                {finishedGoods.map((fg, fgIdx) => (
-                  <div
-                    key={fgIdx}
-                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-medium text-gray-700 dark:text-gray-300">
-                        Finished Good #{fgIdx + 1}
-                      </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      {/* Finished Good Selector */}
-                      <div className="md:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Finished Good (ID + Name)
-                        </label>
-                        <select
-                          value={fg.finished_good_id_name}
-                          onChange={(e) => {
-                            const next = [...finishedGoods];
-                            next[fgIdx].finished_good_id_name = e.target.value;
-                            setFinishedGoods(next);
-                          }}
-                          disabled={viewMode}
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                        >
-                          <option value="">Select Finished Good...</option>
-                          {finishedGoodsOptions.map((fgOption) => (
-                            <option
-                              key={fgOption._id}
-                              value={`${fgOption._id}-${fgOption.name}`}
-                            >
-                              {fgOption.name} ({fgOption.product_id})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Quantities */}
-                      {["quantities", "tolerances", "comments"].map((key) => (
-                        <div key={key}>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
-                            {key}
-                          </label>
-                          {fg[key].map((value, idx2) => (
-                            <input
-                              key={idx2}
-                              type={key === "quantities" ? "number" : "text"}
-                              placeholder={key.slice(0, -1)}
-                              value={value}
-                              onChange={(e) => {
-                                const next = [...finishedGoods];
-                                next[fgIdx][key][idx2] = e.target.value;
-                                setFinishedGoods(next);
-                              }}
-                              disabled={viewMode}
-                              className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                            />
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </section>
+             
 
               {/* Raw Materials Section */}
               <section className="mb-10">
@@ -720,6 +658,129 @@ const BOM = () => {
                   </button>
                 )}
               </section>
+
+              <section className="mb-10">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Accelerator (Pakai)
+                </h2>
+
+                {accelerators.map((acc, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                  >
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                        Accelerator #{idx + 1}
+                      </h3>
+                      {!viewMode && accelerators.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setAccelerators(accelerators.filter((_, i) => i !== idx))
+                          }
+                          className="text-red-500 hover:text-red-600 text-sm"
+                        >
+                          ✕ Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      {/* Accelerator Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Accelerator Name
+                        </label>
+                        <input
+                          type="text"
+                          value={acc.name}
+                          onChange={(e) => {
+                            const next = [...accelerators];
+                            next[idx].name = e.target.value;
+                            setAccelerators(next);
+                          }}
+                          disabled={viewMode}
+                          placeholder="Enter Accelerator name"
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                        />
+                      </div>
+
+                      {/* Tolerance */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Tolerance
+                        </label>
+                        <input
+                          type="text"
+                          value={acc.tolerance}
+                          onChange={(e) => {
+                            const next = [...accelerators];
+                            next[idx].tolerance = e.target.value;
+                            setAccelerators(next);
+                          }}
+                          disabled={viewMode}
+                          placeholder="Enter tolerance"
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                        />
+                      </div>
+
+                      {/* Quantity */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Quantity
+                        </label>
+                        <input
+                          type="number"
+                          value={acc.quantity}
+                          onChange={(e) => {
+                            const next = [...accelerators];
+                            next[idx].quantity = e.target.value;
+                            setAccelerators(next);
+                          }}
+                          disabled={viewMode}
+                          placeholder="Enter quantity"
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                        />
+                      </div>
+
+                      {/* Comment */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Comments
+                        </label>
+                        <input
+                          type="text"
+                          value={acc.comment}
+                          onChange={(e) => {
+                            const next = [...accelerators];
+                            next[idx].comment = e.target.value;
+                            setAccelerators(next);
+                          }}
+                          disabled={viewMode}
+                          placeholder="Enter comment"
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {!viewMode && (
+                  <button
+                    onClick={() =>
+                      setAccelerators([
+                        ...accelerators,
+                        { name: "", tolerance: "", quantity: "", comment: "" },
+                      ])
+                    }
+                    className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                  >
+                    + Add Accelerator
+                  </button>
+                )}
+              </section>
+
 
               {/* Processes */}
               <section className="mb-12">
