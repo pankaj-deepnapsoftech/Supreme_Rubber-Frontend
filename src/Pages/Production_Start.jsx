@@ -894,7 +894,7 @@ const Production_Start = () => {
                           // No need to check quantity match when all quantities are fully consumed
                           return (
                             <button
-                              className="px-[0.5px] py-1 rounded-md bg-yellow-500 border-1 border-gray-400 text-white hover:bg-yellow-400 cursor-pointer text-xs"
+                              className="px-[0.5px] py-1 rounded-md bg-yellow-500 border border-gray-400 text-white hover:bg-yellow-400 cursor-pointer text-xs"
                               onClick={async () => {
                                 try {
                                   await axiosHandler.patch(`/production/${prod._id}/ready-for-qc`);
