@@ -17,6 +17,7 @@ const QC_History = () => {
   const [qcHistory, setQcHistory] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredHistory, setFilteredHistory] = useState([]);
+  const [filterType, setFilterType] = useState("all"); // all, production, gateman
 
   const fetchQcHistory = async () => {
     try {
@@ -40,36 +41,44 @@ const QC_History = () => {
   }, [page]);
 
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredHistory(qcHistory);
-    } else {
-      const q = searchQuery.toLowerCase();
-      const filtered = qcHistory.filter((item) => {
-        if (item.qc_type === "production") {
-          const pn = item.part_names?.[0] || {};
-          const compoundCode = (pn?.compound_code || item?.bom?.compound_code || "").toLowerCase();
-          const compoundName = (pn?.compound_name || item?.bom?.compound_name || "").toLowerCase();
-          const productionId = (item.production_id || "").toLowerCase();
-          return (
-            compoundCode.includes(q) ||
-            compoundName.includes(q) ||
-            productionId.includes(q)
-          );
-        } else {
-          // Gateman QC
-          const poNumber = (item?.gateman_entry_id?.po_number || "").toLowerCase();
-          const companyName = (item?.gateman_entry_id?.company_name || "").toLowerCase();
-          const itemName = (item?.item_name || "").toLowerCase();
-          return (
-            poNumber.includes(q) ||
-            companyName.includes(q) ||
-            itemName.includes(q)
-          );
-        }
-      });
-      setFilteredHistory(filtered);
+    // start from qcHistory, apply type filter first
+    let base = qcHistory || [];
+    if (filterType === "production") {
+      base = base.filter((it) => it.qc_type === "production");
+    } else if (filterType === "gateman") {
+      base = base.filter((it) => it.qc_type === "gateman");
     }
-  }, [searchQuery, qcHistory]);
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      setFilteredHistory(base);
+      return;
+    }
+
+    const filtered = base.filter((item) => {
+      if (item.qc_type === "production") {
+        const pn = item.part_names?.[0] || {};
+        const compoundCode = (pn?.compound_code || item?.bom?.compound_code || "").toLowerCase();
+        const compoundName = (pn?.compound_name || item?.bom?.compound_name || "").toLowerCase();
+        const productionId = (item.production_id || "").toLowerCase();
+        return (
+          compoundCode.includes(q) ||
+          compoundName.includes(q) ||
+          productionId.includes(q)
+        );
+      } else {
+        const poNumber = (item?.gateman_entry_id?.po_number || "").toLowerCase();
+        const companyName = (item?.gateman_entry_id?.company_name || "").toLowerCase();
+        const itemName = (item?.item_name || "").toLowerCase();
+        return (
+          poNumber.includes(q) ||
+          companyName.includes(q) ||
+          itemName.includes(q)
+        );
+      }
+    });
+    setFilteredHistory(filtered);
+  }, [searchQuery, qcHistory, filterType]);
 
   const handleDelete = async (id, type) => {
     if (!window.confirm("Are you sure you want to delete this QC history entry?")) {
@@ -155,24 +164,65 @@ const QC_History = () => {
       </div>
 
       {/* Search & Download */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-4">
-        <div className="flex items-center border rounded-lg px-3 py-2 w-48 sm:w-56 md:w-64">
-          <Search size={16} className="text-gray-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full outline-none text-sm"
-          />
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 mb-4 mt-4">
+        {/* Left section: Search + Filters */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Search bar */}
+          <div className="flex items-center border rounded-lg px-3 py-2 w-full sm:w-56 md:w-64">
+            <Search size={16} className="text-gray-400 mr-2" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full outline-none text-sm"
+            />
+          </div>
+
+          {/* Filter buttons */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterType("all")}
+              className={`px-3 py-1 rounded-lg border transition ${
+                filterType === "all"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilterType("production")}
+              className={`px-3 py-1 rounded-lg border transition ${
+                filterType === "production"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+            >
+              Production
+            </button>
+            <button
+              onClick={() => setFilterType("gateman")}
+              className={`px-3 py-1 rounded-lg border transition ${
+                filterType === "gateman"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+            >
+              Gateman
+            </button>
+          </div>
         </div>
 
-        <button
-          onClick={handleDownload}
-          className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
-        >
-          <Download size={16} />
-        </button>
+        {/* Right section: Download button */}
+        <div className="flex justify-end sm:justify-start">
+          <button
+            onClick={handleDownload}
+            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
+          >
+            <Download size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto bg-white mt-10 rounded-2xl shadow-md border border-gray-100">

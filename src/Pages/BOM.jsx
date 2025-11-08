@@ -173,11 +173,11 @@ const BOM = () => {
   }, [page]);
 
   const handleDownload = () => {
-    const headers = ["Compound Name", "Compound Codes", "Part Names", "Created Date"];
+    const headers = ["Compound Codes", "Compound Name", "Part Names", "Created Date"];
     const source = filteredBoms.length ? filteredBoms : boms;
     const rows = source.map((b) => [
-      b.compound_name || "",
       (b.compound_codes || []).join(", ") || "",
+      b.compound_name || "",
       (b.part_names || []).join(", ") || "",
       b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
     ]);
@@ -350,8 +350,8 @@ const BOM = () => {
         <table className="w-full min-w-[900px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r text-center from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
-            <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
             <th className="px-4 sm:px-6 py-3 font-medium">Compound Codes</th>
+            <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
 
             
               <th className="px-4 sm:px-6 py-3 font-medium">Part Names</th>
@@ -393,10 +393,10 @@ const BOM = () => {
                     }`}
                   >
                     <td className="px-4 sm:px-6 py-3">
-                      {item.compound_name || "-"}
+                      {(item.compound_codes || []).join(", ") || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {(item.compound_codes || []).join(", ") || "-"}
+                      {item.compound_name || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       {(() => {
