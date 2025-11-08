@@ -508,7 +508,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
             {/* Row: Production Graph + Inventory */}
             <div className="flex flex-col lg:flex-row gap-6 w-full">
               {/* Production Graph */}
-              <div className="flex-1 bg-white h-auto lg:h-[460px] rounded-2xl p-5 shadow-sm">
+              <div className="flex-1 bg-white h-auto lg:h-[500px] rounded-2xl p-5 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-3">
                   <h2 className="font-semibold text-gray-700 text-lg">
                     Production Graph
@@ -618,7 +618,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                 </div>
               </div>
               {/* Inventory */}
-              <div className="w-full lg:w-[400px] h-auto lg:h-[460px] bg-white rounded-2xl p-5 shadow-sm">
+              <div className="w-full lg:w-[400px] h-auto lg:h-[500px] bg-white rounded-2xl p-5 shadow-sm">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
