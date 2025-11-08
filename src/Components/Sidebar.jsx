@@ -102,7 +102,7 @@ const Sidebar = () => {
         if (allowedSubs.length > 0) menu.submenus = allowedSubs;
         return allowedSubs.length > 0;
       }
-      console.log("Menu", userPermissions.includes(menuName))
+      
       return userPermissions.includes(menuName);
     });
 
