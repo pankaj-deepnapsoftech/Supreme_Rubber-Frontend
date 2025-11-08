@@ -29,12 +29,12 @@ const Production_Start = () => {
   const [boms, setBoms] = useState([]);
   const [selectedBomId, setSelectedBomId] = useState("");
   const [_selectedBom, setSelectedBom] = useState(null);
-  const [page, setPage] = useState(1);
+  const [page,setPage] = useState(1)
   // Searchable BOM selector state
   const [bomSearch, setBomSearch] = useState("");
   const [showBomResults, setShowBomResults] = useState(false);
-  // Finished Goods data
-  const [finishedGood, setFinishedGood] = useState({
+  // Part Name data
+  const [partName, setPartName] = useState({
     compound_code: "",
     compound_name: "",
     est_qty: "",
@@ -48,6 +48,9 @@ const Production_Start = () => {
   // Raw Materials data
   const [rawMaterials, setRawMaterials] = useState([]);
 
+  // Accelerators data
+  const [accelerators, setAccelerators] = useState([]);
+
   // Processes data
   const [processes, setProcesses] = useState([]);
 
@@ -57,9 +60,7 @@ const Production_Start = () => {
   const fetchProductions = async () => {
     try {
       setLoading(true);
-      const res = await axiosHandler.get(
-        `/production/all?page=${page}&limit=10`
-      );
+      const res = await axiosHandler.get(`/production/all?page=${page}&limit=10`);
       setProductions(res?.data?.productions || []);
     } catch (e) {
       console.error("Error fetching productions", e);
@@ -80,6 +81,8 @@ const Production_Start = () => {
     }
   };
 
+  
+
   useEffect(() => {
     getAllProducts();
     fetchBoms();
@@ -93,20 +96,22 @@ const Production_Start = () => {
       setSelectedBomId("");
       setSelectedBom(null);
       setRawMaterials([]);
+      setAccelerators([]);
       setProcesses([]);
       return;
     }
 
     setSelectedBomId(bomId);
-
+    
     try {
       // Fetch detailed BOM data to ensure all fields are populated
       const res = await axiosHandler.get(`/bom/${bomId}`);
       const bom = res?.data?.bom;
-      console.log("bom data",bom)
+      
       if (!bom) {
         setSelectedBom(null);
         setRawMaterials([]);
+        setAccelerators([]);
         setProcesses([]);
         return;
       }
@@ -116,78 +121,49 @@ const Production_Start = () => {
       console.log("Raw Materials:", bom.raw_materials);
 
       // Get first compound from compoundingStandards or use top-level
-      const firstCode = Array.isArray(bom.compound_codes)
-        ? bom.compound_codes[0]
-        : "";
+      const firstCode = Array.isArray(bom.compound_codes) ? bom.compound_codes[0] : "";
 
-      // Auto-fill Finished Goods
-      // Try to resolve uom/category for finished good
-      const firstFinishedGood =
-        Array.isArray(bom.finished_goods) && bom.finished_goods.length > 0
-          ? bom.finished_goods[0]
-          : null;
-
-      console.log("finsihs",firstFinishedGood)
-      const fgId =
-        typeof firstFinishedGood?.finished_good_id_name === "string"
-          ? firstFinishedGood.finished_good_id_name.split("-")[0]
-          : null;
-      const productById = (products || []).find((p) => p?._id === fgId);
+      // Auto-fill Part Name
+      // Try to resolve uom/category for part name
+      const firstPartNameDetail = Array.isArray(bom.part_name_details) && bom.part_name_details.length > 0 ? bom.part_name_details[0] : null;
+      const pndId = typeof firstPartNameDetail?.part_name_id_name === "string" ? firstPartNameDetail.part_name_id_name.split("-")[0] : null;
+      const productById = (products || []).find((p) => p?._id === pndId);
       const productMatch = (products || []).find(
-        (p) =>
-          p?.product_id === firstCode || p?.name === (bom.compound_name || "")
+        (p) => p?.product_id === firstCode || p?.name === (bom.compound_name || "")
       );
-      const fgSnap = firstFinishedGood?.product_snapshot || null;
-      // Get first quantity from finished_goods if available
-      const firstEstQty =
-        bom &&
-          Array.isArray(bom?.quantity) &&
-          bom?.quantity.length > 0
-          ? String(bom?.quantity[0])
-          : "";
-      setFinishedGood({
+      const pndSnap = firstPartNameDetail?.product_snapshot || null;
+      // Get first quantity from part_name_details if available
+      const firstEstQty = firstPartNameDetail && Array.isArray(firstPartNameDetail.quantities) && firstPartNameDetail.quantities.length > 0
+        ? String(firstPartNameDetail.quantities[0])
+        : "";
+      setPartName({
         compound_code: firstCode || "",
         compound_name: bom.compound_name || "",
-        est_qty: bom?.quantity,
-        uom: fgSnap?.uom || productById?.uom || productMatch?.uom || "",
+        est_qty: firstEstQty,
+        uom: pndSnap?.uom || productById?.uom || productMatch?.uom || "",
         prod_qty: "",
         remain_qty: firstEstQty || "",
-        category:
-          fgSnap?.category ||
-          productById?.category ||
-          productMatch?.category ||
-          "",
+        category: pndSnap?.category || productById?.category || productMatch?.category || "",
         comment: "",
       });
 
       // Auto-fill Raw Materials from BOM
       let rms = [];
-
+      
       // Check if rawMaterials array exists and has data
-      if (
-        bom.raw_materials &&
-        Array.isArray(bom.raw_materials) &&
-        bom.raw_materials.length > 0
-      ) {
+      if (bom.raw_materials && Array.isArray(bom.raw_materials) && bom.raw_materials.length > 0) {
         rms = bom.raw_materials.map((rm) => {
-          const rawPop =
-            rm.raw_material_id && typeof rm.raw_material_id === "object"
-              ? rm.raw_material_id
-              : null;
+          const rawPop = rm.raw_material_id && typeof rm.raw_material_id === 'object' ? rm.raw_material_id : null;
           const snap = rm.product_snapshot || null;
           // Get first quantity from quantities array
-          const firstQtyStr =
-            Array.isArray(rm.quantities) && rm.quantities.length > 0
-              ? String(rm.quantities[0])
-              : "0";
+          const firstQtyStr = Array.isArray(rm.quantities) && rm.quantities.length > 0 ? String(rm.quantities[0]) : "0";
           const firstQtyNum = parseFloat(firstQtyStr) || 0;
           const fgBase = parseFloat(firstEstQty) || 1; // initial FG qty from BOM (fallback 1)
           const perUnitBase = fgBase ? firstQtyNum / fgBase : 0; // RM per 1 FG unit
           const initialEst = firstQtyStr; // show exactly BOM value on first load
           return {
             raw_material_id: rawPop?._id || rm.raw_material_id || null,
-            raw_material_name:
-              rm.raw_material_name || rawPop?.name || snap?.name || "",
+            raw_material_name: rm.raw_material_name || rawPop?.name || snap?.name || "",
             raw_material_code: rawPop?.product_id || snap?.product_id || "",
             est_qty: initialEst,
             base_qty: perUnitBase,
@@ -202,39 +178,26 @@ const Production_Start = () => {
           };
         });
       }
-
+      
       // Fallback to single raw material if array is empty
       if (rms.length === 0 && (bom.raw_material || bom.raw_material_name)) {
-        const rawMaterialPopulated =
-          bom.raw_material && typeof bom.raw_material === "object"
-            ? bom.raw_material
-            : null;
-
+        const rawMaterialPopulated = bom.raw_material && typeof bom.raw_material === 'object' ? bom.raw_material : null;
+        
         rms.push({
-          raw_material_id:
-            rawMaterialPopulated?._id || bom.raw_material || null,
-          raw_material_name:
-            bom.raw_material_name || rawMaterialPopulated?.name || "",
-          raw_material_code:
-            bom.raw_material_code || rawMaterialPopulated?.product_id || "",
+          raw_material_id: rawMaterialPopulated?._id || bom.raw_material || null,
+          raw_material_name: bom.raw_material_name || rawMaterialPopulated?.name || "",
+          raw_material_code: bom.raw_material_code || rawMaterialPopulated?.product_id || "",
           // Use BOM single raw material weight as default estimated quantity
-          est_qty:
-            bom.raw_material_weight !== undefined &&
-            bom.raw_material_weight !== null &&
-            bom.raw_material_weight !== ""
-              ? parseFloat(bom.raw_material_weight) || 0
-              : 0,
+          est_qty: (bom.raw_material_weight !== undefined && bom.raw_material_weight !== null && bom.raw_material_weight !== "")
+            ? parseFloat(bom.raw_material_weight) || 0
+            : 0,
           uom: bom.raw_material_uom || rawMaterialPopulated?.uom || "",
           used_qty: "",
           // Initialize remain equal to est by default
-          remain_qty:
-            bom.raw_material_weight !== undefined &&
-            bom.raw_material_weight !== null &&
-            bom.raw_material_weight !== ""
-              ? parseFloat(bom.raw_material_weight) || 0
-              : 0,
-          category:
-            bom.raw_material_category || rawMaterialPopulated?.category || "",
+          remain_qty: (bom.raw_material_weight !== undefined && bom.raw_material_weight !== null && bom.raw_material_weight !== "")
+            ? parseFloat(bom.raw_material_weight) || 0
+            : 0,
+          category: bom.raw_material_category || rawMaterialPopulated?.category || "",
           total_cost: "",
           weight: bom.raw_material_weight || "",
           tolerance: bom.raw_material_tolerance || "",
@@ -244,6 +207,28 @@ const Production_Start = () => {
 
       console.log("Processed Raw Materials:", rms);
       setRawMaterials(rms);
+
+      // Auto-fill Accelerators from BOM
+      const accs = Array.isArray(bom.accelerators) && bom.accelerators.length > 0
+        ? bom.accelerators.map((acc) => {
+            const accQtyStr = acc.quantity || "0";
+            const accQtyNum = parseFloat(accQtyStr) || 0;
+            const fgBase = parseFloat(firstEstQty) || 1; // initial FG qty from BOM (fallback 1)
+            const perUnitBase = fgBase ? accQtyNum / fgBase : 0; // Accelerator per 1 FG unit
+            const initialEst = accQtyStr; // show exactly BOM value on first load
+            return {
+              name: acc.name || "",
+              tolerance: acc.tolerance || "",
+              quantity: acc.quantity || "",
+              est_qty: initialEst,
+              base_qty: perUnitBase,
+              used_qty: "",
+              remain_qty: initialEst,
+              comment: acc.comment || "",
+            };
+          })
+        : [];
+      setAccelerators(accs);
 
       // Auto-fill Processes from BOM
       const procList = (bom.processes || [])
@@ -277,20 +262,19 @@ const Production_Start = () => {
       console.error("Error fetching BOM details:", error);
       setSelectedBom(null);
       setRawMaterials([]);
+      setAccelerators([]);
       setProcesses([]);
     }
   };
 
-  // Handle Finished Goods field changes
-  const handleFinishedGoodChange = (field, value) => {
-    setFinishedGood((prev) => {
+  // Handle Part Name field changes
+  const handlePartNameChange = (field, value) => {
+    setPartName((prev) => {
       const updated = { ...prev, [field]: value };
       // Calculate remain_qty and (if est changes) we'll scale RMs below
       if (field === "prod_qty" || field === "est_qty") {
-        const est =
-          parseFloat(field === "est_qty" ? value : updated.est_qty) || 0;
-        const prod =
-          parseFloat(field === "prod_qty" ? value : updated.prod_qty) || 0;
+        const est = parseFloat(field === "est_qty" ? value : updated.est_qty) || 0;
+        const prod = parseFloat(field === "prod_qty" ? value : updated.prod_qty) || 0;
         updated.remain_qty = (est - prod).toFixed(2);
       }
       return updated;
@@ -310,6 +294,19 @@ const Production_Start = () => {
           };
         })
       );
+      // Also scale accelerators: acc.est_qty = acc.base_qty * est_qty
+      setAccelerators((prev) =>
+        (prev || []).map((acc) => {
+          const base = parseFloat(acc.base_qty) || 0;
+          const nextEst = base * multiplier;
+          const used = parseFloat(acc.used_qty) || 0;
+          return {
+            ...acc,
+            est_qty: String(nextEst),
+            remain_qty: String((nextEst - used).toFixed(2)),
+          };
+        })
+      );
     }
   };
 
@@ -320,13 +317,26 @@ const Production_Start = () => {
       next[idx] = { ...next[idx], [field]: value };
       // Calculate remain_qty for raw materials
       if (field === "est_qty" || field === "used_qty") {
-        const est =
-          parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
-        const used =
-          parseFloat(field === "used_qty" ? value : next[idx].used_qty) || 0;
+        const est = parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
+        const used = parseFloat(field === "used_qty" ? value : next[idx].used_qty) || 0;
         next[idx].remain_qty = (est - used).toFixed(2);
       }
       // no cost calculation; using comments instead
+      return next;
+    });
+  };
+
+  // Handle Accelerator changes
+  const handleAcceleratorChange = (idx, field, value) => {
+    setAccelerators((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      // Calculate remain_qty for accelerators
+      if (field === "est_qty" || field === "used_qty") {
+        const est = parseFloat(field === "est_qty" ? value : next[idx].est_qty) || 0;
+        const used = parseFloat(field === "used_qty" ? value : next[idx].used_qty) || 0;
+        next[idx].remain_qty = (est - used).toFixed(2);
+      }
       return next;
     });
   };
@@ -356,33 +366,20 @@ const Production_Start = () => {
       return;
     }
 
-    // Validate: sum(rawMaterials.used_qty) must equal finishedGood.prod_qty
-    const prodQtyNum = parseFloat(finishedGood.prod_qty) || 0;
-    const usedSum = (rawMaterials || []).reduce(
-      (sum, rm) => sum + (parseFloat(rm.used_qty) || 0),
-      0
-    );
-    if (Math.abs(usedSum - prodQtyNum) > 1e-6) {
-      toast.warning(
-        "Raw Material Quantities is not matching with the finished good quantity"
-      );
-      // continue submission
-    }
-
     try {
       setSubmitting(true);
       const payload = {
         bom: selectedBomId,
-        finished_goods: [
+        part_names: [
           {
-            compound_code: finishedGood.compound_code,
-            compound_name: finishedGood.compound_name,
-            est_qty: parseFloat(finishedGood.est_qty) || 0,
-            uom: finishedGood.uom,
-            prod_qty: parseFloat(finishedGood.prod_qty) || 0,
-            remain_qty: parseFloat(finishedGood.remain_qty) || 0,
-            category: finishedGood.category,
-            comment: finishedGood.comment || "",
+            compound_code: partName.compound_code,
+            compound_name: partName.compound_name,
+            est_qty: parseFloat(partName.est_qty) || 0,
+            uom: partName.uom,
+            prod_qty: parseFloat(partName.prod_qty) || 0,
+            remain_qty: parseFloat(partName.remain_qty) || 0,
+            category: partName.category,
+            comment: partName.comment || "",
           },
         ],
         raw_materials: rawMaterials.map((rm) => ({
@@ -399,6 +396,15 @@ const Production_Start = () => {
           tolerance: rm.tolerance || "",
           code_no: rm.code_no || "",
         })),
+        accelerators: accelerators.map((acc) => ({
+          name: acc.name || "",
+          tolerance: acc.tolerance || "",
+          quantity: acc.quantity || acc.est_qty || "",
+          est_qty: parseFloat(acc.est_qty) || 0,
+          used_qty: parseFloat(acc.used_qty) || 0,
+          remain_qty: parseFloat(acc.remain_qty) || 0,
+          comment: acc.comment || "",
+        })),
         processes: processes.map((proc) => ({
           process_name: proc.process_name,
           work_done: parseFloat(proc.work_done) || 0,
@@ -409,31 +415,19 @@ const Production_Start = () => {
 
       let res;
       if (editMode && currentProductionId) {
-        res = await axiosHandler.put("/production", {
-          _id: currentProductionId,
-          ...payload,
-        });
+        res = await axiosHandler.put("/production", { _id: currentProductionId, ...payload });
       } else {
         res = await axiosHandler.post("/production", payload);
       }
       if (res.data.success) {
-        toast.success(
-          editMode
-            ? "Production updated successfully"
-            : "Production created successfully"
-        );
+        toast.success(editMode ? "Production updated successfully" : "Production created successfully");
         setShowModal(false);
         resetForm();
         fetchProductions();
       }
     } catch (error) {
       console.error("Error creating production", error);
-      toast.error(
-        error.response?.data?.message ||
-          (editMode
-            ? "Failed to update production"
-            : "Failed to create production")
-      );
+      toast.error(error.response?.data?.message || (editMode ? "Failed to update production" : "Failed to create production"));
     } finally {
       setSubmitting(false);
     }
@@ -445,7 +439,7 @@ const Production_Start = () => {
     setSelectedBom(null);
     setEditMode(false);
     setCurrentProductionId("");
-    setFinishedGood({
+    setPartName({
       compound_code: "",
       compound_name: "",
       est_qty: "",
@@ -456,24 +450,24 @@ const Production_Start = () => {
       comment: "",
     });
     setRawMaterials([]);
+    setAccelerators([]);
     setProcesses([]);
   };
 
   // Filter productions (show all, search applied)
   const filteredProductions = productions.filter((prod) => {
     const q = searchQuery.toLowerCase();
-    const fg = prod.finished_goods?.[0];
+    const pn = prod.part_names?.[0];
     return (
       prod.production_id?.toLowerCase().includes(q) ||
-      fg?.compound_code?.toLowerCase().includes(q) ||
-      fg?.compound_name?.toLowerCase().includes(q) ||
-      prod.bom?.compound_code?.toLowerCase().includes(q)
+      pn?.compound_code?.toLowerCase().includes(q) ||
+      pn?.compound_name?.toLowerCase().includes(q) ||
+      prod.bom?.compound_code?.toLowerCase().includes(q) ||
+      prod.bom?.compound_name?.toLowerCase().includes(q)
     );
   });
 
-
-  console.log("finishGoods",finishedGood)
-
+ 
   const Info = ({ label, value }) => (
     <div>
       <span className="font-medium text-gray-600">{label}:</span>{" "}
@@ -517,21 +511,25 @@ const Production_Start = () => {
         </div>
 
         <div className="flex items-center gap-4 text-gray-600">
-          <button
-            onClick={fetchProductions}
-            className="p-2 cursor-pointer rounded-lg  text-gray-800  border border-gray-300 hover:bg-gray-100 transition"
-          >
-            <RefreshCcw size={16} />
+          
+           <button
+           onClick={fetchProductions}
+            className="p-2 cursor-pointer rounded-lg  text-gray-800  border border-gray-300 hover:bg-gray-100 transition">
+          <RefreshCcw
+            size={16}
+            
+          />
           </button>
         </div>
       </div>
 
       {/* Table */}
       <div className="mt-5 border rounded-lg overflow-x-auto shadow-sm">
-        <table className="w-full text-sm text-left min-w-[600px]">
+        <table className="w-full text-sm text-left min-w-[800px]">
           <thead>
             <tr className="bg-linear-to-r text-center from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Code</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Quantity</th>
               <th className="px-4 sm:px-6 py-3 font-medium">UOM</th>
@@ -543,13 +541,13 @@ const Production_Start = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
+                <td colSpan="6" className="text-center py-6 text-gray-500">
                   Loading productions...
                 </td>
               </tr>
             ) : filteredProductions?.length > 0 ? (
               filteredProductions.map((prod, index) => {
-                const fg = prod.finished_goods?.[0];
+                const pn = prod.part_names?.[0];
                 return (
                   <tr
                     key={prod._id}
@@ -558,55 +556,36 @@ const Production_Start = () => {
                     }`}
                   >
                     <td className="px-4 sm:px-6 py-3">
-                      {fg?.compound_code ||
-                        prod.bom?.compound_code ||
-                        prod.production_id}
+                      {pn?.compound_code || prod.bom?.compound_code || prod.production_id}
+                    </td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {pn?.compound_name || prod.bom?.compound_name || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       {(() => {
                         const deriveStatus = (p) => {
-                          const list = Array.isArray(p?.processes)
-                            ? p.processes
-                            : [];
+                          const list = Array.isArray(p?.processes) ? p.processes : [];
                           if (!p?.status && list.length) {
-                            const allDone = list.every(
-                              (pr) =>
-                                pr.done === true || pr.status === "completed"
-                            );
-                            const anyStarted = list.some(
-                              (pr) =>
-                                pr.start === true || pr.status === "in_progress"
-                            );
-                            return allDone
-                              ? "completed"
-                              : anyStarted
-                              ? "in_progress"
-                              : "pending";
+                            const allDone = list.every((pr) => pr.done === true || pr.status === "completed");
+                            const anyStarted = list.some((pr) => pr.start === true || pr.status === "in_progress");
+                            return allDone ? "completed" : anyStarted ? "in_progress" : "pending";
                           }
                           return p?.status || "pending";
                         };
 
-                        const statusVal = (deriveStatus(prod) || "pending")
-                          .toString()
-                          .toLowerCase();
+                        const statusVal = (deriveStatus(prod) || "pending").toString().toLowerCase();
                         const normalizedStatus =
-                          statusVal === "production start" ||
-                          statusVal === "production_start"
+                          statusVal === "production start" || statusVal === "production_start"
                             ? "completed"
                             : statusVal;
 
                         const label = (() => {
-                          if (normalizedStatus === "completed")
-                            return "Production Completed";
-                          if (normalizedStatus === "in_progress")
-                            return "Work in progress";
+                          if (normalizedStatus === "completed") return "Production Completed";
+                          if (normalizedStatus === "in_progress") return "Work in progress";
                           if (!normalizedStatus) return "Pending";
                           return normalizedStatus
                             .split(/[_\s]+/)
-                            .map(
-                              (word) =>
-                                word.charAt(0).toUpperCase() + word.slice(1)
-                            )
+                            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                             .join(" ");
                         })();
 
@@ -618,82 +597,66 @@ const Production_Start = () => {
                             : "bg-gray-100 text-gray-600";
 
                         return (
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${cls}`}
-                          >
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${cls}`}>
                             {label}
                           </span>
                         );
                       })()}
 
-                      {(() => {
-                        // Check Compound Details remain_qty is 0
-                        const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
-                        const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
-
-                        // Check all Raw Materials remain_qty are 0
-                        const rawMaterials = prod?.raw_materials || [];
-                        const allRmRemainZero =
-                          rawMaterials.length === 0 ||
-                          rawMaterials.every(
-                            (rm) =>
-                              Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
+{(() => {
+                          // Check Compound Details remain_qty is 0
+                          const pnRemainQty = parseFloat(pn?.remain_qty) || 0;
+                          const isPnRemainZero = Math.abs(pnRemainQty) <= 1e-6;
+                          
+                          // Check all Raw Materials remain_qty are 0
+                          const rawMaterials = prod?.raw_materials || [];
+                          const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
+                            (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
                           );
-
-                        // If both remain_qty are 0, consider it ready/matched
-                        if (isFgRemainZero && allRmRemainZero) {
+                          
+                          // If both remain_qty are 0, consider it ready/matched
+                          if (isPnRemainZero && allRmRemainZero) {
+                            return (
+                              <span
+                                className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600"
+                                title="All quantities consumed - Quantity matched"
+                              >
+                                Quantity matched
+                              </span>
+                            );
+                          }
+                          
+                          // Otherwise check quantity match
+                          const pnQty = parseFloat(pn?.prod_qty) || 0;
+                          const usedTotal = rawMaterials.reduce(
+                            (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
+                            0
+                          );
+                          const isMatched = Math.abs(usedTotal - pnQty) <= 1e-6;
                           return (
                             <span
-                              className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600"
-                              title="All quantities consumed - Quantity matched"
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                isMatched ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                              }`}
+                              title={`Part Name: ${pnQty}, Used: ${usedTotal.toFixed(2)}${!isPnRemainZero ? `, Compound remain: ${pnRemainQty.toFixed(2)}` : ''}${!allRmRemainZero ? ', RM remain qty' : ''}`}
                             >
-                              Quantity matched
+                              {isMatched ? "Quantity matched" : "Quantity mismatched"}
                             </span>
                           );
-                        }
+                        })()}
 
-                        // Otherwise check quantity match
-                        const fgQty = parseFloat(fg?.prod_qty) || 0;
-                        const usedTotal = rawMaterials.reduce(
-                          (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
-                          0
-                        );
-                        const isMatched = Math.abs(usedTotal - fgQty) <= 1e-6;
-                        return (
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              isMatched
-                                ? "bg-green-100 text-green-600"
-                                : "bg-red-100 text-red-600"
-                            }`}
-                            title={`FG: ${fgQty}, Used: ${usedTotal.toFixed(
-                              2
-                            )}${
-                              !isFgRemainZero
-                                ? `, Compound remain: ${fgRemainQty.toFixed(2)}`
-                                : ""
-                            }${!allRmRemainZero ? ", RM remain qty" : ""}`}
-                          >
-                            {isMatched
-                              ? "Quantity matched"
-                              : "Quantity mismatched"}
-                          </span>
-                        );
-                      })()}
                     </td>
-                    <td className="px-4 sm:px-6 py-3">
-                      {fg?.prod_qty || fg?.est_qty || 0}
-                    </td>
-                    <td className="px-4 sm:px-6 py-3">{fg?.uom || "-"}</td>
+                    <td className="px-4 sm:px-6 py-3">{pn?.prod_qty || pn?.est_qty || 0}</td>
+                    <td className="px-4 sm:px-6 py-3">{pn?.uom || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center items-center space-x-3">
+                        
+
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"
                           onClick={async () => {
                             try {
-                              const res = await axiosHandler.get(
-                                `/production/${prod._id}`
-                              );
+                              const res = await axiosHandler.get(`/production/${prod._id}`);
                               const data = res?.data?.production;
                               if (!data) return;
                               setEditMode(true);
@@ -702,34 +665,61 @@ const Production_Start = () => {
                               // Prefill BOM selection
                               const bomId = data?.bom?._id || data?.bom;
                               await handleBomSelect(bomId);
-                              // Prefill FG
-                              const fg = (data.finished_goods || [])[0] || {};
-                              setFinishedGood({
-                                compound_code: fg.compound_code || "",
-                                compound_name: fg.compound_name || "",
-                                est_qty: String(fg.est_qty ?? ""),
-                                uom: fg.uom || "",
-                                prod_qty: String(fg.prod_qty ?? ""),
-                                remain_qty: String(fg.remain_qty ?? ""),
-                                category: fg.category || "",
-                                total_cost: String(fg.total_cost ?? ""),
+                              // Prefill Part Name
+                              const pn = (data.part_names || [])[0] || {};
+                              setPartName({
+                                compound_code: pn.compound_code || "",
+                                compound_name: pn.compound_name || "",
+                                est_qty: String(pn.est_qty ?? ""),
+                                uom: pn.uom || "",
+                                prod_qty: String(pn.prod_qty ?? ""),
+                                remain_qty: String(pn.remain_qty ?? ""),
+                                category: pn.category || "",
+                                total_cost: String(pn.total_cost ?? ""),
                               });
                               // Prefill RMs
+                              const currentEstQtyForRM = parseFloat(partName.est_qty) || 1;
                               setRawMaterials(
-                                (data.raw_materials || []).map((rm) => ({
-                                  raw_material_id: rm.raw_material_id || null,
-                                  raw_material_name: rm.raw_material_name || "",
-                                  raw_material_code: rm.raw_material_code || "",
-                                  est_qty: String(rm.est_qty ?? ""),
-                                  uom: rm.uom || "",
-                                  used_qty: String(rm.used_qty ?? ""),
-                                  remain_qty: String(rm.remain_qty ?? ""),
-                                  category: rm.category || "",
-                                  total_cost: String(rm.total_cost ?? ""),
-                                  weight: rm.weight || "",
-                                  tolerance: rm.tolerance || "",
-                                  code_no: rm.code_no || "",
-                                }))
+                                (data.raw_materials || []).map((rm) => {
+                                  const estQty = parseFloat(rm.est_qty) || 0;
+                                  // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
+                                  const baseQty = currentEstQtyForRM ? estQty / currentEstQtyForRM : 0;
+                                  return {
+                                    raw_material_id: rm.raw_material_id || null,
+                                    raw_material_name: rm.raw_material_name || "",
+                                    raw_material_code: rm.raw_material_code || "",
+                                    est_qty: String(rm.est_qty ?? ""),
+                                    base_qty: baseQty,
+                                    uom: rm.uom || "",
+                                    used_qty: String(rm.used_qty ?? ""),
+                                    remain_qty: String(rm.remain_qty ?? ""),
+                                    category: rm.category || "",
+                                    total_cost: String(rm.total_cost ?? ""),
+                                    weight: rm.weight || "",
+                                    tolerance: rm.tolerance || "",
+                                    code_no: rm.code_no || "",
+                                  };
+                                })
+                              );
+                              // Prefill accelerators
+                              const currentEstQty = parseFloat(partName.est_qty) || 1;
+                              setAccelerators(
+                                (data.accelerators || []).map((acc) => {
+                                  const estQty = parseFloat(acc.est_qty || acc.quantity) || 0;
+                                  const usedQty = parseFloat(acc.used_qty) || 0;
+                                  // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
+                                  const baseQty = currentEstQty ? estQty / currentEstQty : estQty;
+                                  return {
+                                    name: acc.name || "",
+                                    tolerance: acc.tolerance || "",
+                                    quantity: acc.quantity || "",
+                                    est_qty: String(estQty),
+                                    base_qty: baseQty,
+                                    used_qty: String(usedQty),
+                                    remain_qty: String((estQty - usedQty).toFixed(2)),
+                                    comment: acc.comment || "",
+                                  };
+                                })
                               );
                               // Prefill processes
                               setProcesses(
@@ -738,20 +728,12 @@ const Production_Start = () => {
                                   work_done: String(p.work_done ?? ""),
                                   start: !!p.start,
                                   done: !!p.done,
-                                  status:
-                                    p.status ||
-                                    (p.done
-                                      ? "completed"
-                                      : p.start
-                                      ? "in_progress"
-                                      : "pending"),
+                                  status: p.status || (p.done ? "completed" : p.start ? "in_progress" : "pending"),
                                 }))
                               );
                             } catch (e) {
                               console.error(e);
-                              toast.error(
-                                "Failed to load production details for edit"
-                              );
+                              toast.error("Failed to load production details for edit");
                             }
                           }}
                         />
@@ -760,9 +742,7 @@ const Production_Start = () => {
                           onClick={async () => {
                             if (!confirm("Delete this production?")) return;
                             try {
-                              await axiosHandler.delete("/production", {
-                                data: { id: prod._id },
-                              });
+                              await axiosHandler.delete("/production", { data: { id: prod._id } });
                               toast.success("Production deleted");
                               fetchProductions();
                             } catch (e) {
@@ -775,9 +755,7 @@ const Production_Start = () => {
                           className="h-4 w-4 text-gray-600 cursor-pointer"
                           onClick={async () => {
                             try {
-                              const res = await axiosHandler.get(
-                                `/production/${prod._id}`
-                              );
+                              const res = await axiosHandler.get(`/production/${prod._id}`);
                               setViewDetails(res?.data?.production || null);
                             } catch (e) {
                               console.error(e);
@@ -788,81 +766,54 @@ const Production_Start = () => {
                         {(() => {
                           const alreadySent = prod?.ready_for_qc === true;
                           const alreadyQCed = prod?.qc_done === true;
-                          const isCompleted = prod?.status === "completed";
+                          const isCompleted = prod?.status === 'completed';
                           if (!isCompleted) return null;
-                          if (alreadyQCed)
-                            return (
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">
-                                QC Done
-                              </span>
-                            );
-                          if (alreadySent)
-                            return (
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600">
-                                Waiting for QC
-                              </span>
-                            );
-
+                          if (alreadyQCed) return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">QC Done</span>
+                          );
+                          if (alreadySent) return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600">Waiting for QC</span>
+                          );
+                          
                           // Check Compound Details remain_qty is 0
-                          const fgRemainQty = parseFloat(fg?.remain_qty) || 0;
-                          const isFgRemainZero = Math.abs(fgRemainQty) <= 1e-6;
-
+                          const pnRemainQty = parseFloat(pn?.remain_qty) || 0;
+                          const isPnRemainZero = Math.abs(pnRemainQty) <= 1e-6;
+                          
                           // Check all Raw Materials remain_qty are 0
                           const rawMaterials = prod?.raw_materials || [];
-                          const allRmRemainZero =
-                            rawMaterials.length === 0 ||
-                            rawMaterials.every(
-                              (rm) =>
-                                Math.abs(parseFloat(rm?.remain_qty) || 0) <=
-                                1e-6
-                            );
-
+                          const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
+                            (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
+                          );
+                          
                           // Block sending to QC until Compound remain_qty is 0 AND all Raw Materials remain_qty are 0
-                          if (!isFgRemainZero || !allRmRemainZero) {
+                          if (!isPnRemainZero || !allRmRemainZero) {
                             return (
                               <span
                                 className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600"
-                                title={
-                                  !isFgRemainZero
-                                    ? `Compound remain qty: ${fgRemainQty.toFixed(
-                                        2
-                                      )}`
-                                    : `Some raw materials still have remaining quantity`
-                                }
+                                title={!isPnRemainZero ? `Compound remain qty: ${pnRemainQty.toFixed(2)}` : `Some raw materials still have remaining quantity`}
                               >
-                                {!isFgRemainZero
-                                  ? "Compound qty remaining"
-                                  : "Raw materials qty remaining"}
+                                {!isPnRemainZero ? "Compound qty remaining" : "Raw materials qty remaining"}
                               </span>
                             );
                           }
-
+                          
                           // If both remain_qty are 0, allow sending to QC (quantities are considered consumed/complete)
                           // No need to check quantity match when all quantities are fully consumed
                           return (
                             <button
-                              className="px-2 py-1 rounded-xl bg-yellow-100 text-yellow-700 border-2 border-yellow-300 hover:bg-yellow-200 cursor-pointer text-[10px] sm:text-xs font-medium transition-all"
+                              className="px-[0.5px] py-1 rounded-md bg-yellow-500 border-1 border-gray-400 text-white hover:bg-yellow-400 cursor-pointer text-xs"
                               onClick={async () => {
                                 try {
-                                  await axiosHandler.patch(
-                                    `/production/${prod._id}/ready-for-qc`
-                                  );
-                                  toast.success("Sent to Quality Check");
+                                  await axiosHandler.patch(`/production/${prod._id}/ready-for-qc`);
+                                  toast.success('Sent to Quality Check');
                                   fetchProductions();
                                 } catch (e) {
                                   console.error(e);
-                                  toast.error(
-                                    "Failed to send to Quality Check"
-                                  );
+                                  toast.error('Failed to send to Quality Check');
                                 }
                               }}
                             >
-                              <span className="hidden sm:inline">
-                                Send to Quality Check
-                              </span>
-                              <span className="inline sm:hidden">
-                                Send to QC
-                              </span>
+                              Send to Quality Check
                             </button>
                           );
                         })()}
@@ -873,7 +824,7 @@ const Production_Start = () => {
               })
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
+                <td colSpan="6" className="text-center py-6 text-gray-500">
                   No Production found.
                 </td>
               </tr>
@@ -900,20 +851,14 @@ const Production_Start = () => {
               className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
               <button
-                onClick={() => {
-                  resetForm();
-                  setShowModal(false);
-                }}
+                onClick={() => { resetForm(); setShowModal(false); }}
                 className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
               >
                 ✕
               </button>
 
               <button
-                onClick={() => {
-                  resetForm();
-                  setShowModal(false);
-                }}
+                onClick={() => { resetForm(); setShowModal(false); }}
                 className="text-2xl mb-4 hover:text-blue-500 transition"
               >
                 ←
@@ -924,7 +869,7 @@ const Production_Start = () => {
               </h1>
 
               <form onSubmit={handleSubmit}>
-                {/* ---------- Finished Goods Section ---------- */}
+                {/* ---------- Part Name Section ---------- */}
                 <section className="mb-10">
                   <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
                     <h2 className="text-lg font-semibold text-gray-900">
@@ -932,15 +877,16 @@ const Production_Start = () => {
                     </h2>
                   </div>
 
-                  <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+              <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
                     {[
                       "Compound Details",
+                      "Part Name",
                       "EST. QTY",
                       "UOM",
                       "PROD. QTY",
                       "Remain QTY",
                       "Category",
-                      "Comment",
+                  "Comment",
                     ].map((head) => (
                       <div key={head} className="p-2 text-center truncate">
                         {head}
@@ -948,7 +894,7 @@ const Production_Start = () => {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-8 gap-3 mt-3">
                     <div className="relative">
                       <input
                         type="text"
@@ -966,31 +912,17 @@ const Production_Start = () => {
                           {boms
                             .filter((b) => {
                               const q = (bomSearch || "").toLowerCase();
-                              const name = (
-                                b.compound_name || ""
-                              ).toLowerCase();
-                              const code = (
-                                Array.isArray(b.compound_codes) &&
-                                b.compound_codes[0]
-                                  ? b.compound_codes[0]
-                                  : ""
-                              ).toLowerCase();
+                              const name = (b.compound_name || "").toLowerCase();
+                              const code = ((Array.isArray(b.compound_codes) && b.compound_codes[0]) ? b.compound_codes[0] : "").toLowerCase();
                               return !q || name.includes(q) || code.includes(q);
                             })
                             .slice(0, 50)
                             .map((b) => {
-                              const label = `${b.compound_name || "Unnamed"}${
-                                Array.isArray(b.compound_codes) &&
-                                b.compound_codes[0]
-                                  ? ` (${b.compound_codes[0]})`
-                                  : ""
-                              }`;
+                              const label = `${b.compound_name || "Unnamed"}${(Array.isArray(b.compound_codes) && b.compound_codes[0]) ? ` (${b.compound_codes[0]})` : ""}`;
                               return (
                                 <div
                                   key={b._id}
-                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                                    selectedBomId === b._id ? "bg-gray-50" : ""
-                                  }`}
+                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${selectedBomId === b._id ? "bg-gray-50" : ""}`}
                                   onMouseDown={(e) => {
                                     // prevent input blur before click handler
                                     e.preventDefault();
@@ -1007,61 +939,103 @@ const Production_Start = () => {
                               );
                             })}
                           {boms.length === 0 && (
-                            <div className="px-3 py-2 text-sm text-gray-500">
-                              No BOMs
-                            </div>
+                            <div className="px-3 py-2 text-sm text-gray-500">No BOMs</div>
                           )}
                         </div>
                       )}
                     </div>
                     <input
-                      type="number"
-                      placeholder="Enter Quantity"
-                      value={finishedGood.est_qty}
-                      onChange={(e) =>
-                        handleFinishedGoodChange("est_qty", e.target.value)
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
-                    />
-                    <input
                       type="text"
-                      placeholder="Enter UOM"
-                      value={finishedGood.uom}
+                      placeholder="Part Name"
+                      value={(() => {
+                        // First try to get from _selectedBom (has full details from API)
+                        if (_selectedBom) {
+                          if (_selectedBom.part_name_details && _selectedBom.part_name_details.length > 0) {
+                            const firstPartName = _selectedBom.part_name_details[0];
+                            if (firstPartName.product_snapshot && firstPartName.product_snapshot.name) {
+                              return firstPartName.product_snapshot.name;
+                            }
+                            if (firstPartName.part_name_id_name) {
+                              const parts = firstPartName.part_name_id_name.split("-");
+                              if (parts.length > 1) {
+                                return parts.slice(1).join("-");
+                              }
+                              return firstPartName.part_name_id_name;
+                            }
+                          }
+                          if (_selectedBom.part_names && _selectedBom.part_names.length > 0) {
+                            return _selectedBom.part_names.filter((p) => p && p.trim() !== "").join(", ");
+                          }
+                        }
+                        // Fallback to boms array
+                        if (selectedBomId) {
+                          const selectedBom = boms.find((b) => b._id === selectedBomId);
+                          if (selectedBom) {
+                            if (selectedBom.part_name_details && selectedBom.part_name_details.length > 0) {
+                              const firstPartName = selectedBom.part_name_details[0];
+                              if (firstPartName.product_snapshot && firstPartName.product_snapshot.name) {
+                                return firstPartName.product_snapshot.name;
+                              }
+                              if (firstPartName.part_name_id_name) {
+                                const parts = firstPartName.part_name_id_name.split("-");
+                                if (parts.length > 1) {
+                                  return parts.slice(1).join("-");
+                                }
+                                return firstPartName.part_name_id_name;
+                              }
+                            }
+                            if (selectedBom.part_names && selectedBom.part_names.length > 0) {
+                              return selectedBom.part_names.filter((p) => p && p.trim() !== "").join(", ");
+                            }
+                          }
+                        }
+                        return "";
+                      })()}
                       readOnly
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
                     <input
                       type="number"
                       placeholder="Enter Quantity"
-                      value={finishedGood.prod_qty}
-                      onChange={(e) =>
-                        handleFinishedGoodChange("prod_qty", e.target.value)
-                      }
+                      value={partName.est_qty}
+                      onChange={(e) => handlePartNameChange("est_qty", e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Enter UOM"
+                      value={partName.uom}
+                      readOnly
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Enter Quantity"
+                      value={partName.prod_qty}
+                      onChange={(e) => handlePartNameChange("prod_qty", e.target.value)}
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                     />
                     <input
                       type="number"
                       placeholder="Remain QTY"
-                      value={finishedGood.remain_qty}
+                      value={partName.remain_qty}
                       readOnly
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
                     <input
                       type="text"
                       placeholder="Enter Category"
-                      value={finishedGood.category}
+                      value={partName.category}
                       readOnly
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
-                    <input
-                      type="text"
-                      placeholder="Comment"
-                      value={finishedGood.comment}
-                      onChange={(e) =>
-                        handleFinishedGoodChange("comment", e.target.value)
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
-                    />
+                <input
+                  type="text"
+                  placeholder="Comment"
+                  value={partName.comment}
+                  onChange={(e) => handlePartNameChange("comment", e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+                />
                   </div>
                 </section>
 
@@ -1077,7 +1051,7 @@ const Production_Start = () => {
                     <>
                       <div className="hidden sm:grid grid-cols-7 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
                         {[
-                          "Finished Goods",
+                          "Part Name",
                           "EST. QTY",
                           "UOM",
                           "Used QTY",
@@ -1092,16 +1066,9 @@ const Production_Start = () => {
                       </div>
 
                       {rawMaterials.map((rm, idx) => (
-                        <div
-                          key={idx}
-                          className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3"
-                        >
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
                           <input
-                            value={`${rm.raw_material_name || ""}${
-                              rm.raw_material_code
-                                ? ` (${rm.raw_material_code})`
-                                : ""
-                            }`}
+                            value={`${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`}
                             readOnly
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
@@ -1123,13 +1090,7 @@ const Production_Start = () => {
                             type="number"
                             placeholder="Used QTY"
                             value={rm.used_qty}
-                            onChange={(e) =>
-                              handleRawMaterialChange(
-                                idx,
-                                "used_qty",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleRawMaterialChange(idx, "used_qty", e.target.value)}
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                           <input
@@ -1150,13 +1111,7 @@ const Production_Start = () => {
                             type="text"
                             placeholder="Comment"
                             value={rm.comment || ""}
-                            onChange={(e) =>
-                              handleRawMaterialChange(
-                                idx,
-                                "comment",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleRawMaterialChange(idx, "comment", e.target.value)}
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                         </div>
@@ -1164,12 +1119,89 @@ const Production_Start = () => {
                     </>
                   ) : selectedBomId ? (
                     <div className="text-center py-4 text-gray-500 text-sm">
-                      No raw materials found for the selected BOM. Please check
-                      if the BOM has raw materials configured.
+                      No raw materials found for the selected BOM. Please check if the BOM has raw materials configured.
                     </div>
                   ) : (
                     <div className="text-center py-4 text-gray-500 text-sm">
                       Please select a BOM to see raw materials.
+                    </div>
+                  )}
+                </section>
+
+                {/* ---------- Accelerator (Pakai) Section ---------- */}
+                <section className="mb-10">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Accelerator (Pakai)
+                      </h2>
+                    </div>
+                  </div>
+
+                  {accelerators.length > 0 ? (
+                    <>
+                      <div className="hidden sm:grid grid-cols-5 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                        {[
+                          "Name",
+                          "EST. QTY",
+                          "Used QTY",
+                          "Remain QTY",
+                          "Comment",
+                        ].map((head) => (
+                          <div key={head} className="p-2 text-center truncate">
+                            {head}
+                          </div>
+                        ))}
+                      </div>
+
+                      {accelerators.map((acc, idx) => (
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-5 gap-3 mt-3">
+                          <input
+                            type="text"
+                            placeholder="Name"
+                            value={acc.name || ""}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="EST. QTY"
+                            value={acc.est_qty || ""}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Used QTY"
+                            value={acc.used_qty || ""}
+                            onChange={(e) => handleAcceleratorChange(idx, "used_qty", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Remain QTY"
+                            value={acc.remain_qty || ""}
+                            readOnly
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Comment"
+                            value={acc.comment || ""}
+                            onChange={(e) => handleAcceleratorChange(idx, "comment", e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                          />
+                        </div>
+                      ))}
+                    </>
+                  ) : selectedBomId ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No accelerators found for the selected BOM.
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      Please select a BOM to see accelerators.
                     </div>
                   )}
                 </section>
@@ -1214,13 +1246,7 @@ const Production_Start = () => {
                           type="number"
                           placeholder="1000"
                           value={proc.work_done}
-                          onChange={(e) =>
-                            handleProcessChange(
-                              idx,
-                              "work_done",
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
                           className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-400 mb-2"
                         />
 
@@ -1230,13 +1256,7 @@ const Production_Start = () => {
                               type="checkbox"
                               className="accent-blue-600"
                               checked={proc.start}
-                              onChange={(e) =>
-                                handleProcessChange(
-                                  idx,
-                                  "start",
-                                  e.target.checked
-                                )
-                              }
+                              onChange={(e) => handleProcessChange(idx, "start", e.target.checked)}
                             />
                             Start
                           </label>
@@ -1245,13 +1265,7 @@ const Production_Start = () => {
                               type="checkbox"
                               className="accent-blue-600"
                               checked={proc.done}
-                              onChange={(e) =>
-                                handleProcessChange(
-                                  idx,
-                                  "done",
-                                  e.target.checked
-                                )
-                              }
+                              onChange={(e) => handleProcessChange(idx, "done", e.target.checked)}
                             />
                             Done
                           </label>
@@ -1294,9 +1308,7 @@ const Production_Start = () => {
             >
               {/* Sticky Header */}
               <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 flex justify-between items-center px-6 py-4 z-10">
-                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                  Production Details
-                </h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Production Details</h2>
                 <button
                   onClick={() => setViewDetails(null)}
                   className="text-gray-500 hover:text-red-500 text-2xl transition"
@@ -1310,54 +1322,43 @@ const Production_Start = () => {
                 {/* Header Info */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-linear-to-br from-blue-50 to-white rounded-xl shadow-sm p-4">
                   <div>
-                    <span className="font-medium text-gray-600">
-                      Production ID:
-                    </span>
-                    <p className="text-gray-900">
-                      {viewDetails?.production_id || "-"}
-                    </p>
+                    <span className="font-medium text-gray-600">Production ID:</span>
+                    <p className="text-gray-900">{viewDetails?.production_id || "-"}</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">BOM:</span>
                     <p className="text-gray-900">
-                      {viewDetails?.bom?.compound_name ||
-                        viewDetails?.bom?.compound_code ||
-                        "-"}
+                      {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}
                     </p>
                   </div>
                 </div>
 
-                {/* Finished Goods */}
+                {/* Part Names */}
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Finished Goods
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Part Names</h3>
                   </div>
-                  {(viewDetails?.finished_goods || []).length > 0 ? (
+                  {(viewDetails?.part_names || []).length > 0 ? (
                     <div className="grid gap-3">
-                      {viewDetails.finished_goods.map((fg, i) => (
+                      {viewDetails.part_names.map((pn, i) => (
                         <div
                           key={i}
                           className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-gray-50/50"
                         >
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <Info
-                              label="Compound"
-                              value={fg.compound_name || fg.compound_code}
-                            />
-                            <Info label="EST" value={fg.est_qty} />
-                            <Info label="PROD" value={fg.prod_qty} />
-                            <Info label="Remain" value={fg.remain_qty} />
-                            <Info label="UOM" value={fg.uom} />
-                            <Info label="Category" value={fg.category} />
+                            <Info label="Compound" value={pn.compound_name || pn.compound_code} />
+                            <Info label="EST" value={pn.est_qty} />
+                            <Info label="PROD" value={pn.prod_qty} />
+                            <Info label="Remain" value={pn.remain_qty} />
+                            <Info label="UOM" value={pn.uom} />
+                            <Info label="Category" value={pn.category} />
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <EmptyState message="No finished goods found." />
+                    <EmptyState message="No part names found." />
                   )}
                 </section>
 
@@ -1365,9 +1366,7 @@ const Production_Start = () => {
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Raw Materials
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Raw Materials</h3>
                   </div>
                   {(viewDetails?.raw_materials || []).length > 0 ? (
                     <div className="grid gap-3">
@@ -1377,12 +1376,7 @@ const Production_Start = () => {
                           className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
                         >
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <Info
-                              label="Item"
-                              value={
-                                rm.raw_material_name || rm.raw_material_code
-                              }
-                            />
+                            <Info label="Item" value={rm.raw_material_name || rm.raw_material_code} />
                             <Info label="EST" value={rm.est_qty} />
                             <Info label="Used" value={rm.used_qty} />
                             <Info label="Remain" value={rm.remain_qty} />
@@ -1397,13 +1391,39 @@ const Production_Start = () => {
                   )}
                 </section>
 
+                {/* Accelerators */}
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
+                    <h3 className="text-lg font-semibold text-gray-900">Accelerator (Pakai)</h3>
+                  </div>
+                  {(viewDetails?.accelerators || []).length > 0 ? (
+                    <div className="grid gap-3">
+                      {viewDetails.accelerators.map((acc, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
+                        >
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <Info label="Name" value={acc.name} />
+                            <Info label="EST QTY" value={acc.est_qty || acc.quantity} />
+                            <Info label="Used QTY" value={acc.used_qty || 0} />
+                            <Info label="Remain QTY" value={acc.remain_qty || 0} />
+                            <Info label="Comment" value={acc.comment} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState message="No accelerators found." />
+                  )}
+                </section>
+
                 {/* Processes */}
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-green-600 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Processes
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Processes</h3>
                   </div>
                   {(viewDetails?.processes || []).length > 0 ? (
                     <div className="grid gap-3">
@@ -1415,11 +1435,8 @@ const Production_Start = () => {
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <Info label="Process" value={p.process_name} />
                             <Info label="Work Done" value={p.work_done} />
-                            <div>
-                              5
-                              <span className="font-medium text-gray-600">
-                                Status:
-                              </span>{" "}
+                            <div>5
+                              <span className="font-medium text-gray-600">Status:</span>{" "}
                               <span
                                 className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
                                   p.status === "completed"
@@ -1446,11 +1463,7 @@ const Production_Start = () => {
         )}
       </AnimatePresence>
 
-      <Pagination
-        page={page}
-        setPage={setPage}
-        hasNextPage={productions?.length === 10}
-      />
+      <Pagination page={page} setPage={setPage} hasNextPage={productions?.length === 10} />
     </div>
   );
 };

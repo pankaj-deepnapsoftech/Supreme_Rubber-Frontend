@@ -26,6 +26,7 @@ const QualityCheck = () => {
   const [showProdQcModal, setShowProdQcModal] = useState(false);
   const [prodQcList, setProdQcList] = useState([]);
   const [prodQcStatusMap, setProdQcStatusMap] = useState({}); // {_id: 'approved'|'rejected'}
+  const [prodQcQuantities, setProdQcQuantities] = useState({}); // {_id: {approved_qty: '', rejected_qty: ''}}
   const [getData, setGetData] = useState([]);
   const [selectedEntryItems, setSelectedEntryItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -287,10 +288,17 @@ const QualityCheck = () => {
                       !p.qc_done &&
                       p.ready_for_qc
                   )
-                  .map((p) => ({
-                    ...p,
-                    __qc_local_status: prodQcStatusMap[p._id] || undefined,
-                  }));
+                  .map((p) => {
+                    const pn = p.part_names?.[0] || {};
+                    const existingQty = prodQcQuantities[p._id] || {};
+                    return {
+                      ...p,
+                      __qc_local_status: prodQcStatusMap[p._id] || undefined,
+                      __approved_qty: existingQty.approved_qty || "",
+                      __rejected_qty: existingQty.rejected_qty || "",
+                      __prod_qty: pn.prod_qty || pn.est_qty || 0,
+                    };
+                  });
                 setProdQcList(completed);
               } catch (e) {
                 console.error("Failed to load productions for QC", e);
@@ -823,22 +831,27 @@ const QualityCheck = () => {
             </div>
 
             <div className="overflow-x-auto border rounded-lg shadow-inner">
-              <table className="w-full min-w-[800px] text-sm text-left table-fixed">
+              <table className="w-full min-w-[1100px] text-sm text-left table-fixed">
                 <thead>
                   <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white text-xs sm:text-sm uppercase tracking-wide">
                     <th className="px-3 sm:px-4 py-3 text-left">
                       Compound Code
                     </th>
+                    <th className="px-3 sm:px-4 py-3 text-left">
+                      Compound Name
+                    </th>
                     <th className="px-3 sm:px-4 py-3 text-left">Status</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Quantity</th>
                     <th className="px-3 sm:px-4 py-3 text-left">UOM</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Approved Qty</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">Rejected Qty</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {prodQcList && prodQcList.length ? (
                     prodQcList.map((prod, index) => {
-                      const fg = prod.finished_goods?.[0] || {};
+                      const pn = prod.part_names?.[0] || {};
                       const isRejected = prod.__qc_local_status === "rejected";
                       const isApproved = prod.__qc_local_status === "approved";
                       return (
@@ -849,9 +862,14 @@ const QualityCheck = () => {
                           }`}
                         >
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                            {fg?.compound_code ||
+                            {pn?.compound_code ||
                               prod?.bom?.compound_code ||
                               prod.production_id}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                            {pn?.compound_name ||
+                              prod?.bom?.compound_name ||
+                              "-"}
                           </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             <span
@@ -865,10 +883,67 @@ const QualityCheck = () => {
                             </span>
                           </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                            {fg?.prod_qty || fg?.est_qty || 0}
+                            {pn?.prod_qty || pn?.est_qty || 0}
                           </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
-                            {fg?.uom || "-"}
+                            {pn?.uom || "-"}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                            {isRejected || isApproved ? (
+                              <div className="text-gray-600 text-xs sm:text-sm font-medium">
+                                {prod.__approved_qty || prod.approved_qty || "-"}
+                              </div>
+                            ) : (
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={prod.__approved_qty || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  const approvedQty = parseFloat(value) || 0;
+                                  const totalQty = parseFloat(prod.__prod_qty || prod.part_names?.[0]?.prod_qty || prod.part_names?.[0]?.est_qty || 0);
+                                  const rejectedQty = Math.max(0, totalQty - approvedQty);
+                                  
+                                  setProdQcList((prev) =>
+                                    prev.map((p) =>
+                                      p._id === prod._id
+                                        ? { 
+                                            ...p, 
+                                            __approved_qty: value,
+                                            __rejected_qty: String(rejectedQty),
+                                          }
+                                        : p
+                                    )
+                                  );
+                                  setProdQcQuantities((prev) => ({
+                                    ...prev,
+                                    [prod._id]: {
+                                      ...prev[prod._id],
+                                      approved_qty: value,
+                                      rejected_qty: String(rejectedQty),
+                                    },
+                                  }));
+                                }}
+                                className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                min="0"
+                                max={prod.__prod_qty || 0}
+                              />
+                            )}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
+                            {isRejected || isApproved ? (
+                              <div className="text-gray-600 text-xs sm:text-sm font-medium">
+                                {prod.__rejected_qty || prod.rejected_qty || "-"}
+                              </div>
+                            ) : (
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={prod.__rejected_qty || ""}
+                                readOnly
+                                className="w-20 border border-gray-300 rounded-md px-2 py-1 text-sm bg-gray-50"
+                              />
+                            )}
                           </td>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             {isRejected ? (
@@ -880,48 +955,44 @@ const QualityCheck = () => {
                                 Approved
                               </div>
                             ) : (
-                              <div className="flex items-center gap-3">
-                                <button
-                                  className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
-                                  onClick={async () => {
-                                    try {
-                                      await axiosHandler.patch(
-                                        `/production/${prod._id}/approve`
-                                      );
-                                      toast.success("Production approved");
-                                      // Remove from list after approve
-                                      setProdQcList((prev) =>
-                                        prev.filter((p) => p._id !== prod._id)
-                                      );
-                                    } catch (e) {
-                                      console.error(e);
-                                      toast.error(
-                                        "Failed to approve production"
-                                      );
+                              <button
+                                className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
+                                onClick={async () => {
+                                  try {
+                                    const approvedQty = parseFloat(prod.__approved_qty || prod.approved_qty || 0);
+                                    const rejectedQty = parseFloat(prod.__rejected_qty || prod.rejected_qty || 0);
+                                    
+                                    if (approvedQty === 0 && rejectedQty === 0) {
+                                      toast.error("Please enter approved quantity");
+                                      return;
                                     }
-                                  }}
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  className="px-3 py-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 text-xs sm:text-sm font-medium"
-                                  onClick={async () => {
-                                    try {
-                                      await axiosHandler.patch(
-                                        `/production/${prod._id}/reject`
-                                      );
-                                      // Remove from list after reject
-                                      setProdQcList((prev) =>
-                                        prev.filter((p) => p._id !== prod._id)
-                                      );
-                                    } catch (e) {
-                                      console.error(e);
-                                    }
-                                  }}
-                                >
-                                  Reject
-                                </button>
-                              </div>
+                                    
+                                    await axiosHandler.patch(
+                                      `/production/${prod._id}/approve`,
+                                      {
+                                        approved_qty: approvedQty,
+                                        rejected_qty: rejectedQty,
+                                      }
+                                    );
+                                    toast.success("Production approved");
+                                    // Remove from list after approve
+                                    setProdQcList((prev) =>
+                                      prev.filter((p) => p._id !== prod._id)
+                                    );
+                                    setProdQcStatusMap((prev) => ({
+                                      ...prev,
+                                      [prod._id]: "approved",
+                                    }));
+                                  } catch (e) {
+                                    console.error(e);
+                                    toast.error(
+                                      "Failed to approve production"
+                                    );
+                                  }
+                                }}
+                              >
+                                Approve
+                              </button>
                             )}
                           </td>
                         </tr>
@@ -930,7 +1001,7 @@ const QualityCheck = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="8"
                         className="text-center text-gray-500 py-6 italic"
                       >
                         No completed productions found

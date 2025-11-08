@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   Menu,
   X,
+  History,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useMemo, useState } from "react";
@@ -58,6 +59,11 @@ const Sidebar = () => {
       name: "Quality Check",
       path: "/quality-check",
       icon: <CheckSquare size={20} />,
+    },
+    {
+      name: "QC History",
+      path: "/qc-history",
+      icon: <History size={20} />,
     },
     {
       name: "Production",

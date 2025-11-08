@@ -17,6 +17,7 @@ import ForgotPassword from "./Pages/ForgotPasswordPage";
 import OTPVerification from "./Pages/OTPVerificationPage";
 import VerifyEmail from "./Pages/verifyEmail";
 import PurchaseOrder from "./Pages/PurchaseOrder";
+import QC_History from "./Pages/QC_History";
 import { QualityCheckProvider } from "./Context/QualityCheckContext";
 
 const App = () => {
@@ -123,6 +124,14 @@ const App = () => {
             }
           />
 
+          <Route
+            path="qc-history"
+            element={
+              <ProtectedRoute path="/qc-history">
+                <QC_History />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="production"

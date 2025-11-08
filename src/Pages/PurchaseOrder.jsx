@@ -41,14 +41,14 @@ const PurchaseOrder = () => {
   const [supplierData, setSupplierData] = useState([]);
   const [Inventorydata, setInventoryData] = useState([]);
   
-  // Filter inventory data to show only raw materials (exclude finished goods)
-  // For purchase orders, we want items that can be bought and are not finished goods
+  // Filter inventory data to show only raw materials (exclude part names)
+  // For purchase orders, we want items that can be bought and are not part names
   const rawMaterialsOnly = Inventorydata.filter((item) => {
     const category = (item.category || "").toLowerCase().trim();
     const itemType = (item.item_type || "").toLowerCase();
     
-    // Exclude finished goods explicitly
-    if (category && category.includes("finished")) {
+    // Exclude part names explicitly
+    if (category && (category.includes("finished") || category.includes("part"))) {
       return false;
     }
     

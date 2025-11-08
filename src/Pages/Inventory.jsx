@@ -250,7 +250,7 @@ const Inventory = () => {
             {loading ? (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   className="text-center py-6 text-gray-500 italic bg-gray-50 rounded-b-2xl"
                 >
                   Loading products...
@@ -322,7 +322,7 @@ const Inventory = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   className="text-center py-6 text-gray-400 italic bg-gray-50 rounded-b-2xl"
                 >
                   No products found.
@@ -376,7 +376,7 @@ const Inventory = () => {
                     // Dropdown options for specific fields
                     const dropdownOptions = {
                       category: [
-                        "Finished Goods",
+                        "Part Name",
                         "Raw Material",
                         "FMB",
                         "CMB",
