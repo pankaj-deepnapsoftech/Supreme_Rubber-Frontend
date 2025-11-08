@@ -164,48 +164,65 @@ const QC_History = () => {
       </div>
 
       {/* Search & Download */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 mb-4 mt-4">
+        {/* Left section: Search + Filters */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Search bar */}
+          <div className="flex items-center border rounded-lg px-3 py-2 w-full sm:w-56 md:w-64">
+            <Search size={16} className="text-gray-400 mr-2" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full outline-none text-sm"
+            />
+          </div>
 
-          <div className="flex items-center border rounded-lg px-3 py-2 w-48 sm:w-56 md:w-64">
-          <Search size={16} className="text-gray-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full outline-none text-sm"
-          />
+          {/* Filter buttons */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterType("all")}
+              className={`px-3 py-1 rounded-lg border transition ${
+                filterType === "all"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilterType("production")}
+              className={`px-3 py-1 rounded-lg border transition ${
+                filterType === "production"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+            >
+              Production
+            </button>
+            <button
+              onClick={() => setFilterType("gateman")}
+              className={`px-3 py-1 rounded-lg border transition ${
+                filterType === "gateman"
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700"
+              }`}
+            >
+              Gateman
+            </button>
+          </div>
         </div>
 
+        {/* Right section: Download button */}
+        <div className="flex justify-end sm:justify-start">
           <button
-            onClick={() => setFilterType("all")}
-            className={`px-3 py-1 rounded-lg border transition ${filterType === "all" ? "bg-blue-600 text-white" : "bg-white text-gray-700"}`}
+            onClick={handleDownload}
+            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
           >
-            All
-          </button>
-          <button
-            onClick={() => setFilterType("production")}
-            className={`px-3 py-1 rounded-lg border transition ${filterType === "production" ? "bg-blue-600 text-white" : "bg-white text-gray-700"}`}
-          >
-            Production
-          </button>
-          <button
-            onClick={() => setFilterType("gateman")}
-            className={`px-3 py-1 rounded-lg border transition ${filterType === "gateman" ? "bg-blue-600 text-white" : "bg-white text-gray-700"}`}
-          >
-            Gateman
+            <Download size={16} />
           </button>
         </div>
- 
-        
- 
-        <button
-          onClick={handleDownload}
-          className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
-        >
-          <Download size={16} />
-        </button>
       </div>
 
       <div className="overflow-x-auto bg-white mt-10 rounded-2xl shadow-md border border-gray-100">
