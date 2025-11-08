@@ -580,8 +580,17 @@ const BOM = () => {
                       <h3 className="font-medium text-gray-700 dark:text-gray-300">
                         Raw Material #{rmIdx + 1}
                       </h3>
+                      {!viewMode && rawMaterials.length > 1 && (
+                        <button
+                          onClick={() =>
+                            setRawMaterials(rawMaterials.filter((_, i) => i !== rmIdx))
+                          }
+                          className="text-red-500 hover:text-red-600 text-sm"
+                        >
+                          ✕ Remove
+                        </button>
+                      )}
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                       <div className="md:col-span-3">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
