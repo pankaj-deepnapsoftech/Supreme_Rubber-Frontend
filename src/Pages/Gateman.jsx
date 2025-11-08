@@ -317,6 +317,8 @@ const Gateman = () => {
                 "Items",
                 "Qty",
                 "Status",
+                "PO File",
+                "Invoice File",
                 "Action",
               ].map((header, i) => (
                 <th key={i} className="py-3 px-4 text-center font-semibold">
@@ -329,7 +331,7 @@ const Gateman = () => {
             {loading ? (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="8"
                   className="text-center py-6 text-gray-500 italic bg-gray-50"
                 >
                   Loading data...
@@ -370,21 +372,106 @@ const Gateman = () => {
                     </span>{" "}
                   </td>
 
-                  {/* <td className="px-3 py-2">
-                      <span
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
-                          item?.status === "completed"
-                            ? "bg-green-100 text-green-700"
-                            : item?.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : item?.status === "Rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {item?.status || "-"}
-                      </span>
-                    </td> */}
+                  {/* PO File Column */}
+                  <td className="py-3 px-4 text-center">
+                    {g?.attached_po ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => window.open(g.attached_po, '_blank')}
+                          className="h-4 w-4 text-blue-500 cursor-pointer hover:text-blue-700"
+                          title="View PO File"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(g.attached_po);
+                              const blob = await response.blob();
+                              const urlParts = g.attached_po.split('/');
+                              const originalFilename = urlParts[urlParts.length - 1];
+                              const decodedFilename = decodeURIComponent(originalFilename);
+                              const blobUrl = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = blobUrl;
+                              link.download = decodedFilename || `PO_${g.po_number || 'document'}`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(blobUrl);
+                            } catch (error) {
+                              console.error('Download failed:', error);
+                              // Fallback to direct download
+                              const link = document.createElement('a');
+                              link.href = g.attached_po;
+                              link.download = '';
+                              link.target = '_blank';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }
+                          }}
+                          className="h-4 w-4 text-green-500 cursor-pointer hover:text-green-700"
+                          title="Download PO File"
+                        >
+                          <DownloadIcon size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">-</span>
+                    )}
+                  </td>
+
+                  {/* Invoice File Column */}
+                  <td className="py-3 px-4 text-center">
+                    {g?.attached_invoice ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => window.open(g.attached_invoice, '_blank')}
+                          className="h-4 w-4 text-blue-500 cursor-pointer hover:text-blue-700"
+                          title="View Invoice File"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(g.attached_invoice);
+                              const blob = await response.blob();
+                              const urlParts = g.attached_invoice.split('/');
+                              const originalFilename = urlParts[urlParts.length - 1];
+                              const decodedFilename = decodeURIComponent(originalFilename);
+                              const blobUrl = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = blobUrl;
+                              link.download = decodedFilename || `Invoice_${g.invoice_number || 'document'}`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(blobUrl);
+                            } catch (error) {
+                              console.error('Download failed:', error);
+                              // Fallback to direct download
+                              const link = document.createElement('a');
+                              link.href = g.attached_invoice;
+                              link.download = '';
+                              link.target = '_blank';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }
+                          }}
+                          className="h-4 w-4 text-green-500 cursor-pointer hover:text-green-700"
+                          title="Download Invoice File"
+                        >
+                          <DownloadIcon size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">-</span>
+                    )}
+                  </td>
+
                   <td className="py-3 px-4 text-center border-b">
                     <div className="flex items-center justify-center space-x-3">
                       <button
@@ -431,7 +518,7 @@ const Gateman = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="8"
                   className="text-center py-6 text-gray-400 italic bg-gray-50"
                 >
                   No matching entries found.
@@ -665,6 +752,110 @@ const Gateman = () => {
                     className="w-full border rounded-md px-3 py-2 mt-1"
                   />
                 </div>
+
+                {/* Show Files in view mode */}
+                {mode === "view" && edittable && (
+                  <div className="space-y-3">
+                    {edittable.attached_po && (
+                      <div className="border rounded-md p-3 bg-gray-50">
+                        <label className="block text-sm font-medium mb-2">
+                          PO File
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => window.open(edittable.attached_po, '_blank')}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
+                          >
+                            <Eye size={16} />
+                            View File
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(edittable.attached_po);
+                                const blob = await response.blob();
+                                const urlParts = edittable.attached_po.split('/');
+                                const originalFilename = urlParts[urlParts.length - 1];
+                                const decodedFilename = decodeURIComponent(originalFilename);
+                                const blobUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = blobUrl;
+                                link.download = decodedFilename || `PO_${edittable.po_number || 'document'}`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(blobUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct download
+                                const link = document.createElement('a');
+                                link.href = edittable.attached_po;
+                                link.download = '';
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm"
+                          >
+                            <DownloadIcon size={16} />
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {edittable.attached_invoice && (
+                      <div className="border rounded-md p-3 bg-gray-50">
+                        <label className="block text-sm font-medium mb-2">
+                          Invoice File
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => window.open(edittable.attached_invoice, '_blank')}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
+                          >
+                            <Eye size={16} />
+                            View File
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(edittable.attached_invoice);
+                                const blob = await response.blob();
+                                const urlParts = edittable.attached_invoice.split('/');
+                                const originalFilename = urlParts[urlParts.length - 1];
+                                const decodedFilename = decodeURIComponent(originalFilename);
+                                const blobUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = blobUrl;
+                                link.download = decodedFilename || `Invoice_${edittable.invoice_number || 'document'}`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(blobUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct download
+                                const link = document.createElement('a');
+                                link.href = edittable.attached_invoice;
+                                link.download = '';
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm"
+                          >
+                            <DownloadIcon size={16} />
+                            Download
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {mode !== "view" && (
                   <Button

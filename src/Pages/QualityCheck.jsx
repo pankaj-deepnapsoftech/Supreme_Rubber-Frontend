@@ -643,7 +643,7 @@ const QualityCheck = () => {
 
                 <div>
                   <label className="block text-sm font-medium">
-                    Attach Gateman
+                    Attach Report
                   </label>
                   <input
                     type="file"
