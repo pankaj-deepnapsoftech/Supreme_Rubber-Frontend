@@ -103,7 +103,7 @@ const Production_Start = () => {
       // Fetch detailed BOM data to ensure all fields are populated
       const res = await axiosHandler.get(`/bom/${bomId}`);
       const bom = res?.data?.bom;
-
+      console.log("bom data",bom)
       if (!bom) {
         setSelectedBom(null);
         setRawMaterials([]);
@@ -126,6 +126,8 @@ const Production_Start = () => {
         Array.isArray(bom.finished_goods) && bom.finished_goods.length > 0
           ? bom.finished_goods[0]
           : null;
+
+      console.log("finsihs",firstFinishedGood)
       const fgId =
         typeof firstFinishedGood?.finished_good_id_name === "string"
           ? firstFinishedGood.finished_good_id_name.split("-")[0]
@@ -138,15 +140,15 @@ const Production_Start = () => {
       const fgSnap = firstFinishedGood?.product_snapshot || null;
       // Get first quantity from finished_goods if available
       const firstEstQty =
-        firstFinishedGood &&
-        Array.isArray(firstFinishedGood.quantities) &&
-        firstFinishedGood.quantities.length > 0
-          ? String(firstFinishedGood.quantities[0])
+        bom &&
+          Array.isArray(bom?.quantity) &&
+          bom?.quantity.length > 0
+          ? String(bom?.quantity[0])
           : "";
       setFinishedGood({
         compound_code: firstCode || "",
         compound_name: bom.compound_name || "",
-        est_qty: firstEstQty,
+        est_qty: bom?.quantity,
         uom: fgSnap?.uom || productById?.uom || productMatch?.uom || "",
         prod_qty: "",
         remain_qty: firstEstQty || "",
@@ -468,6 +470,9 @@ const Production_Start = () => {
       prod.bom?.compound_code?.toLowerCase().includes(q)
     );
   });
+
+
+  console.log("finishGoods",finishedGood)
 
   const Info = ({ label, value }) => (
     <div>
