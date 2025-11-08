@@ -51,10 +51,16 @@ export default function DashboardMain() {
   const [inventoryPeriod, setInventoryPeriod] = useState("Weekly");
   const [inventoryLoading, setInventoryLoading] = useState(false);
 
+  const [latestProduction, setLatestProduction] = useState({
+    day: "",
+    count: 0,
+  });
+
   const currentYear = new Date().getFullYear();
   const years = [currentYear, currentYear - 1, currentYear - 2];
 
   // Fetch production graph data from API
+
   const fetchProductionGraphData = async (
     selectedPeriod = period,
     year = selectedYear
@@ -71,25 +77,35 @@ export default function DashboardMain() {
 
       const response = await axiosHandler.get(
         `/production/dashboard/graph?${params}`,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       if (response.data?.success) {
         const graphData = response.data.data.graphData;
 
-        // Transform data for the chart
         const chartData = graphData.map((item) => ({
           ...item,
-          productions: item.productions, // Single line for production count
+          productions: item.productions,
         }));
 
         setLineData(chartData);
+
+        // ✅ Get the most recent record (last item in the array)
+        if (chartData.length > 0) {
+          const last = chartData[chartData.length - 1];
+          setLatestProduction({
+            day:
+              selectedPeriod === "Weekly"
+                ? last.day
+                : selectedPeriod === "Monthly"
+                ? last.date
+                : last.month,
+            count: last.productions,
+          });
+        }
       }
     } catch (error) {
       console.error("Error fetching production graph data:", error);
-      // Fallback to dummy data on error
       setLineData(getDefaultData(selectedPeriod));
     } finally {
       setLoadingProductionGraph(false);
@@ -302,10 +318,16 @@ export default function DashboardMain() {
   const [statusLoading, setStatusLoading] = useState(false);
 
   const pieDataStatus = [
-    { name: "Completed", value: statusCount.completed, color: "#00C49F" },
-    { name: "In Progress", value: statusCount.inProgress, color: "#FFBB28" },
-    { name: "Pending", value: statusCount.notStarted, color: "#FF8042" },
+    { name: "Completed", value: statusCount.completed || 0, color: "#00C49F" },
+    {
+      name: "In Progress",
+      value: statusCount.inProgress || 0,
+      color: "#FFBB28",
+    },
+    { name: "Pending", value: statusCount.notStarted || 0, color: "#FF8042" },
   ];
+
+  // const completedCount = pieDataStatus.statusCount.completed
 
   const [prodBarPeriod, setProdBarPeriod] = useState("Weekly");
   const [prodBarLoading, setProdBarLoading] = useState(false);
@@ -389,8 +411,8 @@ export default function DashboardMain() {
             {/* CARD - Purchase Order */}
             <div
               onClick={() => navigate("/purchase-order")}
-              className="border border-[#fb7777] bg-[#f8dddd] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm 
-hover:shadow-lg hover:-translate-y-1 hover:bg-[#fce5e5] transition-all duration-300 ease-in-out cursor-pointer"
+              className="border border-[#b577fb] bg-[#ecddf8] rounded-[10px] p-2.5 flex justify-between items-center h-30 shadow-sm 
+hover:shadow-lg hover:-translate-y-1 hover:bg-[#f3e5fc] transition-all duration-300 ease-in-out cursor-pointer"
             >
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
@@ -486,7 +508,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
             {/* Row: Production Graph + Inventory */}
             <div className="flex flex-col lg:flex-row gap-6 w-full">
               {/* Production Graph */}
-              <div className="flex-1 bg-white h-auto lg:h-[400px] rounded-2xl p-5 shadow-sm">
+              <div className="flex-1 bg-white h-auto lg:h-[500px] rounded-2xl p-5 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-3">
                   <h2 className="font-semibold text-gray-700 text-lg">
                     Production Graph
@@ -579,12 +601,26 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                       </LineChart>
                     </ResponsiveContainer>
                   )}
+
+                  <div className="flex flex-col items-center mt-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-blue-500 rounded-full"></span>
+                      <span className="text-gray-700 font-semibold">
+                        {latestProduction.day
+                          ? `Day: ${latestProduction.day}`
+                          : "No data available"}
+                      </span>
+                    </div>
+                    <p className="text-blue-700 font-semibold text-lg">
+                      Production: {latestProduction.count || 0}
+                    </p>
+                  </div>
                 </div>
               </div>
-
               {/* Inventory */}
-              <div className="w-full lg:w-[400px] h-auto lg:h-[400px] bg-white rounded-2xl p-5 shadow-sm">
-                <div className="flex justify-between">
+              <div className="w-full lg:w-[400px] h-auto lg:h-[500px] bg-white rounded-2xl p-5 shadow-sm">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Inventory
                   </h2>
@@ -605,34 +641,62 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </select>
                 </div>
 
+                {/* Chart */}
                 {inventoryLoading ? (
                   <div className="flex items-center justify-center h-[300px] text-gray-500">
                     Loading inventory...
                   </div>
+                ) : pieDataInventory.length === 0 ? (
+                  <div className="flex items-center justify-center h-[300px] text-gray-400 italic">
+                    No records found
+                  </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={pieDataInventory}
-                        innerRadius={50}
-                        outerRadius={80}
-                        dataKey="value"
-                        label
-                      >
-                        {pieDataInventory.map((d, i) => (
-                          <Cell key={i} fill={d.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={pieDataInventory}
+                          dataKey="value"
+                          innerRadius={50}
+                          outerRadius={80}
+                          label
+                        >
+                          {pieDataInventory.map((d, i) => (
+                            <Cell key={i} fill={d.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    {/* Legend */}
+                    <div className="flex flex-col items-center w-full mt-4 text-sm space-y-2">
+                      {pieDataInventory.map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between w-full max-w-[150px]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            ></span>
+                            <span className="text-gray-700 font-medium">
+                              {item.name}:
+                            </span>
+                          </div>
+                          <span className="text-gray-600">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full mt-4">
               {/* Production Status */}
-              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex flex-col min-w-[300px] h-[350px] bg-white rounded-2xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Production Status
@@ -652,31 +716,53 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   <div className="flex items-center justify-center flex-1 text-gray-500">
                     Loading status...
                   </div>
-                ) : pieDataStatus.length === 0 ? (
+                ) : pieDataStatus.every((item) => item.value === 0) ? (
                   <div className="flex items-center justify-center flex-1 text-gray-400 italic">
                     No records found
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={pieDataStatus}
-                        dataKey="value"
-                        outerRadius={80}
-                        label
-                      >
-                        {pieDataStatus.map((d, i) => (
-                          <Cell key={i} fill={d.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="flex flex-col items-center flex-1">
+                    {/* Pie chart */}
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={pieDataStatus}
+                          dataKey="value"
+                          outerRadius={80}
+                          label
+                        >
+                          {pieDataStatus.map((d, i) => (
+                            <Cell key={i} fill={d.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    {/* Status legend */}
+                    <div className="flex flex-col items-center justify-around w-full mt-4 text-sm">
+                      {pieDataStatus.map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between w-full max-w-[100px]"
+                        >
+                          <span
+                            className="w-3 h-3  rounded-full"
+                            style={{ backgroundColor: item.color }}
+                          ></span>
+                          <span className="text-gray-700 font-medium">
+                            {item.name}:
+                          </span>
+
+                          <span className="text-gray-600">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-
               {/* Gate Entry */}
-              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex flex-col min-w-[300px] h-[350px] bg-white rounded-2xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Gate Entry
@@ -701,30 +787,52 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                     No records found
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={gateChartData}
-                        dataKey="value"
-                        innerRadius={50}
-                        outerRadius={80}
-                        label
-                      >
-                        {gateChartData.map((d, i) => (
-                          <Cell key={i} fill={d.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <>
+                    {/* Pie Chart */}
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={gateChartData}
+                          dataKey="value"
+                          innerRadius={50}
+                          outerRadius={80}
+                          label
+                        >
+                          {gateChartData.map((d, i) => (
+                            <Cell key={i} fill={d.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    {/* Gate entry legend */}
+                    <div className="flex flex-col items-center justify-around w-full mt-4 text-sm">
+                      {gateChartData.map((item) => (
+                        <div
+                          key={item.name}
+                          className="flex items-center justify-between w-full max-w-[100px]"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: item.color }}
+                            ></span>
+                            <span className="text-gray-700 font-medium">
+                              {item.name}:
+                            </span>
+                          </div>
+                          <span className="text-gray-600">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
-                <p className="text-center text-sm text-gray-600 mt-2">
-                  <b>Order ID:</b> 100 kg received
-                </p>
               </div>
 
               {/* Quality Check */}
-              <div className="flex flex-col min-w-[300px] h-[300px] bg-white rounded-2xl p-5 shadow-sm">
+              <div className="flex flex-col min-w-[300px] h-[350px] bg-white rounded-2xl p-5 shadow-sm">
+                {/* Header */}
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold text-gray-800 text-[15px]">
                     Quality Check
@@ -740,6 +848,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                   </select>
                 </div>
 
+                {/* Chart or Loader */}
                 {qcLoading ? (
                   <div className="flex items-center justify-center flex-1 text-gray-500">
                     Loading QC...
@@ -766,6 +875,27 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
                     </PieChart>
                   </ResponsiveContainer>
                 )}
+
+                {/* Styled Legend (like Gate Entry) */}
+                <div className="flex flex-col items-center justify-around w-full mt-4 text-sm space-y-2">
+                  {qcChartData.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between w-full max-w-[110px]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        ></span>
+                        <span className="text-gray-700 font-medium">
+                          {item.name}:
+                        </span>
+                      </div>
+                      <span className="text-gray-600">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
