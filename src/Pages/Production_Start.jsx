@@ -561,7 +561,8 @@ const Production_Start = () => {
                     <td className="px-4 sm:px-6 py-3">
                       {pn?.compound_name || prod.bom?.compound_name || "-"}
                     </td>
-                    <td className="px-4 sm:px-6 py-3">
+                    
+                    {/* <td className="px-4 sm:px-6 py-3">
                       {(() => {
                         const deriveStatus = (p) => {
                           const list = Array.isArray(p?.processes) ? p.processes : [];
@@ -645,7 +646,99 @@ const Production_Start = () => {
                           );
                         })()}
 
-                    </td>
+                    </td> */}
+                    <td className="px-2 sm:px-4 md:px-6 py-3 align-top">
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
+                          {/* Production Status Badge */}
+                          {(() => {
+                            const deriveStatus = (p) => {
+                              const list = Array.isArray(p?.processes) ? p.processes : [];
+                              if (!p?.status && list.length) {
+                                const allDone = list.every((pr) => pr.done === true || pr.status === "completed");
+                                const anyStarted = list.some((pr) => pr.start === true || pr.status === "in_progress");
+                                return allDone ? "completed" : anyStarted ? "in_progress" : "pending";
+                              }
+                              return p?.status || "pending";
+                            };
+
+                            const statusVal = (deriveStatus(prod) || "pending").toString().toLowerCase();
+                            const normalizedStatus =
+                              statusVal === "production start" || statusVal === "production_start"
+                                ? "completed"
+                                : statusVal;
+
+                            const label = (() => {
+                              if (normalizedStatus === "completed") return "Production Completed";
+                              if (normalizedStatus === "in_progress") return "Work in Progress";
+                              if (!normalizedStatus) return "Pending";
+                              return normalizedStatus
+                                .split(/[_\s]+/)
+                                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(" ");
+                            })();
+
+                            const cls =
+                              normalizedStatus === "completed"
+                                ? "bg-green-100 text-green-600"
+                                : normalizedStatus === "in_progress"
+                                ? "bg-yellow-100 text-yellow-600"
+                                : "bg-gray-100 text-gray-600";
+
+                            return (
+                              <span
+                                className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium text-center ${cls}`}
+                              >
+                                {label}
+                              </span>
+                            );
+                          })()}
+
+                          {/* Quantity Match Badge */}
+                          {(() => {
+                            const pnRemainQty = parseFloat(pn?.remain_qty) || 0;
+                            const isPnRemainZero = Math.abs(pnRemainQty) <= 1e-6;
+
+                            const rawMaterials = prod?.raw_materials || [];
+                            const allRmRemainZero =
+                              rawMaterials.length === 0 ||
+                              rawMaterials.every((rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6);
+
+                            if (isPnRemainZero && allRmRemainZero) {
+                              return (
+                                <span
+                                  className="px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-green-100 text-green-600 text-center"
+                                  title="All quantities consumed - Quantity matched"
+                                >
+                                  Quantity matched
+                                </span>
+                              );
+                            }
+
+                            const pnQty = parseFloat(pn?.prod_qty) || 0;
+                            const usedTotal = rawMaterials.reduce(
+                              (sum, rm) => sum + (parseFloat(rm?.used_qty) || 0),
+                              0
+                            );
+                            const isMatched = Math.abs(usedTotal - pnQty) <= 1e-6;
+
+                            return (
+                              <span
+                                className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium text-center ${
+                                  isMatched ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                                }`}
+                                title={`Part Name: ${pnQty}, Used: ${usedTotal.toFixed(2)}${
+                                  !isPnRemainZero ? `, Compound remain: ${pnRemainQty.toFixed(2)}` : ""
+                                }${!allRmRemainZero ? ", RM remain qty" : ""}`}
+                              >
+                                {isMatched ? "Quantity matched" : "Quantity mismatched"}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </td>
+
+
+
                     <td className="px-4 sm:px-6 py-3">{pn?.prod_qty || pn?.est_qty || 0}</td>
                     <td className="px-4 sm:px-6 py-3">{pn?.uom || "-"}</td>
                     <td className="px-4 sm:px-6 py-3 text-center">
