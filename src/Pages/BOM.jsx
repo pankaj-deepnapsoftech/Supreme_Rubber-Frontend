@@ -284,14 +284,14 @@ const BOM = () => {
           {/* Refresh + Download */}
           <button
             onClick={fetchBoms}
-            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+            className="p-2 rounded-lg cursor-pointer text-gray-800 border border-gray-300 hover:bg-gray-100 transition"
           >
             <RefreshCcw size={16} />
           </button>
 
           <button
             onClick={handleDownload}
-            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+            className="p-2 rounded-lg cursor-pointer text-gray-800 border border-gray-300 hover:bg-gray-100 transition"
           >
             <Download size={16} />
           </button>
