@@ -44,13 +44,16 @@ export const QualityCheckProvider = ({ children }) => {
   };
 
   // Create
-  const createReport = async (formData) => {
+  const createReport = async (data) => {
     try {
       setLoading(true);
-      const res = await axiosHandler.post("/quality-check", formData, {
+      // Check if data is FormData or regular object
+      const isFormData = data instanceof FormData;
+      const config = {
         withCredentials: true,
-        headers: { "Content-Type": "application/json" },
-      });
+        headers: isFormData ? {} : { "Content-Type": "application/json" },
+      };
+      const res = await axiosHandler.post("/quality-check", data, config);
       await getAllReports();
       return res.data.data;
     } catch (err) {
@@ -62,13 +65,16 @@ export const QualityCheckProvider = ({ children }) => {
   };
 
   // Update
-  const updateReport = async (id, updatedData) => {
+  const updateReport = async (id, data) => {
     try {
       setLoading(true);
-      const res = await axiosHandler.put(`/quality-check/${id}`, updatedData, {
+      // Check if data is FormData or regular object
+      const isFormData = data instanceof FormData;
+      const config = {
         withCredentials: true,
-        headers: { "Content-Type": "application/json" },
-      });
+        headers: isFormData ? {} : { "Content-Type": "application/json" },
+      };
+      const res = await axiosHandler.put(`/quality-check/${id}`, data, config);
       await getAllReports();
       return res.data.data;
     } catch (err) {

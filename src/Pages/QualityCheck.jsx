@@ -106,7 +106,7 @@ const QualityCheck = () => {
     setFormData({
       gateman_entry_id: selectedReport.gateman_entry_id?._id || "",
       items: itemsArray,
-      attached_report: null,
+      attached_report: selectedReport.attached_report || null,
     });
   }, [selectedReport, getData]);
   const handleClose = () => {
@@ -165,7 +165,7 @@ const QualityCheck = () => {
     }
 
     try {
-      const promises = validItems.map((item) => {
+      const promises = validItems.map(async (item) => {
         const payload = {
           gateman_entry_id: formData.gateman_entry_id,
           item_id: item.item_id,
@@ -173,10 +173,28 @@ const QualityCheck = () => {
           rejected_quantity: parseInt(item.rejected_quantity) || 0,
         };
 
-        if (selectedReport && selectedReport.item_id === item.item_id) {
-          return updateReport(selectedReport._id, payload);
+        // If file is attached (File object), use FormData
+        const isFileObject = formData.attached_report instanceof File;
+        if (isFileObject) {
+          const formDataToSend = new FormData();
+          formDataToSend.append("gateman_entry_id", payload.gateman_entry_id);
+          formDataToSend.append("item_id", payload.item_id);
+          formDataToSend.append("approved_quantity", payload.approved_quantity.toString());
+          formDataToSend.append("rejected_quantity", payload.rejected_quantity.toString());
+          formDataToSend.append("attached_report", formData.attached_report);
+
+          if (selectedReport && selectedReport.item_id === item.item_id) {
+            return updateReport(selectedReport._id, formDataToSend);
+          } else {
+            return createReport(formDataToSend);
+          }
         } else {
-          return createReport(payload);
+          // No file or file is URL string, use JSON
+          if (selectedReport && selectedReport.item_id === item.item_id) {
+            return updateReport(selectedReport._id, payload);
+          } else {
+            return createReport(payload);
+          }
         }
       });
 
@@ -340,6 +358,7 @@ const QualityCheck = () => {
               <th className="px-4 sm:px-6 py-3 font-medium">Approved</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Rejected</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Status</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Report File</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
                 Action
               </th>
@@ -348,7 +367,7 @@ const QualityCheck = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
+                <td colSpan="8" className="text-center py-6 text-gray-500">
                   Loading reports...
                 </td>
               </tr>
@@ -403,6 +422,56 @@ const QualityCheck = () => {
                       </span>
                     </td>
 
+                    {/* Report File Column */}
+                    <td className="px-4 sm:px-6 py-3 text-center">
+                      {item?.attached_report ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => window.open(item.attached_report, '_blank')}
+                            className="h-4 w-4 text-blue-500 cursor-pointer hover:text-blue-700"
+                            title="View Report File"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(item.attached_report);
+                                const blob = await response.blob();
+                                const urlParts = item.attached_report.split('/');
+                                const originalFilename = urlParts[urlParts.length - 1];
+                                const decodedFilename = decodeURIComponent(originalFilename);
+                                const blobUrl = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = blobUrl;
+                                link.download = decodedFilename || `Report_${item.item_name || 'document'}`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(blobUrl);
+                              } catch (error) {
+                                console.error('Download failed:', error);
+                                // Fallback to direct download
+                                const link = document.createElement('a');
+                                link.href = item.attached_report;
+                                link.download = '';
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }
+                            }}
+                            className="h-4 w-4 text-green-500 cursor-pointer hover:text-green-700"
+                            title="Download Report File"
+                          >
+                            <Download size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </td>
+
                     <td className="px-4 sm:px-6 py-3 text-center">
                       <div className="flex justify-center gap-3">
                         <Edit
@@ -434,10 +503,6 @@ const QualityCheck = () => {
                             }
                           }}
                         />
-                        <Download
-                          className="h-4 w-4 text-green-700 cursor-pointer"
-                          onClick={() => {}}
-                        />
                         <Eye
                           className="h-4 w-4 text-gray-600 cursor-pointer"
                           onClick={() => handleView(item?._id)}
@@ -448,7 +513,7 @@ const QualityCheck = () => {
                 ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
+                <td colSpan="8" className="text-center py-6 text-gray-500">
                   No reports found.
                 </td>
               </tr>
@@ -647,11 +712,68 @@ const QualityCheck = () => {
                   </label>
                   <input
                     type="file"
-                    name="attached_po"
-                    onChange={() => {}}
+                    name="attached_report"
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        attached_report: e.target.files[0],
+                      });
+                    }}
+                    disabled={modalMode === "view"}
                     className="w-full border rounded-md px-3 py-2 mt-1"
                   />
                 </div>
+
+                {/* Show Report File in view mode */}
+                {modalMode === "view" && selectedReport?.attached_report && (
+                  <div className="border rounded-md p-3 bg-gray-50">
+                    <label className="block text-sm font-medium mb-2">
+                      Report File
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => window.open(selectedReport.attached_report, '_blank')}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
+                      >
+                        <Eye size={16} />
+                        View File
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(selectedReport.attached_report);
+                            const blob = await response.blob();
+                            const urlParts = selectedReport.attached_report.split('/');
+                            const originalFilename = urlParts[urlParts.length - 1];
+                            const decodedFilename = decodeURIComponent(originalFilename);
+                            const blobUrl = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.download = decodedFilename || `Report_${selectedReport.item_name || 'document'}`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(blobUrl);
+                          } catch (error) {
+                            console.error('Download failed:', error);
+                            // Fallback to direct download
+                            const link = document.createElement('a');
+                            link.href = selectedReport.attached_report;
+                            link.download = '';
+                            link.target = '_blank';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm"
+                      >
+                        <Download size={16} />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {modalMode !== "view" && (
                   <button
