@@ -248,17 +248,22 @@ const Sidebar = () => {
           <div>
             
             <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <img
-                src="/CompanyLogo.png"
-                alt="Company Logo"
-                className="h-12"
-              />
-            </div>
+                <div className="flex justify-center items-center  mr-7">
+                  <div className="text-lg font-semibold uppercase flex justify-center items-center
+        bg-gradient-to-r from-blue-400 via-sky-500 to-indigo-600 
+        text-transparent bg-clip-text 
+        border border-blue-600 rounded-lg px-3 py-1 
+        transition-all duration-300 hover:scale-105">
+                    <span className="mr-1 text-center">Supreme</span>
+                    <span className="text-white text-center bg-blue-600 px-2 py-0.5 rounded-md text-sm">
+                      Rubber
+                    </span>
+                  </div>
+                </div>
             <button
             onClick={closeMobile}
             aria-label="Close menu"
-            className="inline-flex items-center justify-center p-2 rounded-md bg-gray-100 text-gray-700"
+            className="inline-flex items-center justify-center p-1  rounded-md bg-gray-100 text-gray-700"
           >
             <X size={18} />
           </button>

@@ -223,7 +223,7 @@ const Gateman = () => {
     }
   };
 
- console.log("values",formik.values.items)
+
 
 
   return (
@@ -704,6 +704,7 @@ const Gateman = () => {
                     Invoice Number
                   </label>
                   <input
+                    required
                     type="text"
                     name="invoice_number"
                     value={formik.values.invoice_number}
