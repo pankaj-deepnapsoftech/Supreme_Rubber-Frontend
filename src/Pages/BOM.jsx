@@ -17,6 +17,7 @@ import { useInventory } from "@/Context/InventoryContext";
 import { useFormik } from "formik";
 import axiosHandler from "@/config/axiosconfig";
 import Pagination from "@/Components/Pagination/Pagination";
+import { toast } from "react-toastify";
 
 const BOM = () => {
   const [page, setPage] = useState(1);
@@ -108,8 +109,10 @@ const BOM = () => {
 
         if (editMode) {
           await axiosHandler.put("/bom", payload, { withCredentials: true });
+          toast.success("BOM updated successfully");
         } else {
           await axiosHandler.post("/bom", payload, { withCredentials: true });
+          toast.success("BOM created successfully");
         }
         await fetchBoms();
         resetForm();
@@ -460,8 +463,10 @@ const BOM = () => {
                                 data: { id: item._id },
                                 withCredentials: true,
                               });
+                              toast.success("BOM deleted successfully");
                               fetchBoms();
                             } catch (e) {
+                              toast.error("Failed to delete BOM");
                               console.error("Error deleting BOM", e);
                             }
                           }}

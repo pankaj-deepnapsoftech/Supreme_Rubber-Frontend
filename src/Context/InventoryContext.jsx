@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axiosHandler from "@/config/axiosconfig";
+import { toast } from "react-toastify";
 
 export const InventoryContext = createContext();
 
@@ -13,9 +14,11 @@ export const InventoryProvider = ({ children }) => {
     try {
       const res = await axiosHandler.post("/product", data);
       await getAllProducts(); // Refresh list
+      toast.success("Product created successfully");
       return res.data;
     } catch (error) {
       console.error("❌ Error creating product:", error);
+      toast.error("Failed to create product");
       throw error;
     }
   };
@@ -24,9 +27,11 @@ export const InventoryProvider = ({ children }) => {
     try {
       const res = await axiosHandler.put("/product", data);
       await getAllProducts();
+      toast.success("Product updated successfully");
       return res.data;
     } catch (error) {
       console.error("❌ Error updating product:", error);
+      toast.error("Failed to update product");
       throw error;
     }
   };
@@ -35,9 +40,11 @@ export const InventoryProvider = ({ children }) => {
     try {
       const res = await axiosHandler.delete("/product", { data: { id } });
       await getAllProducts();
+      toast.success("Product deleted successfully");
       return res.data;
     } catch (error) {
       console.error("❌ Error deleting product:", error);
+      toast.error("Failed to delete product");
       throw error;
     }
   };

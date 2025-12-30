@@ -15,6 +15,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useInventory } from "@/Context/InventoryContext";
 import Pagination from "@/Components/Pagination/Pagination";
+import { toast } from "react-toastify";
 
 const Inventory = () => {
   const [page, setPage] = useState(1);
@@ -66,6 +67,7 @@ const Inventory = () => {
       } else {
         await createProduct(values);
       }
+      
       resetForm();
       setShowModal(false);
       setEditMode(false);
