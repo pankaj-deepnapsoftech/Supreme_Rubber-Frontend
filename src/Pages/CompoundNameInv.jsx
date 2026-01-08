@@ -266,7 +266,6 @@ const CompoundNameInv = () => {
 
                   return (
                     item.name.toLowerCase().includes(q) ||
-                    item.category.toLowerCase().includes(q) ||
                     item.product_id.toLowerCase().includes(q)
                   );
                 })
