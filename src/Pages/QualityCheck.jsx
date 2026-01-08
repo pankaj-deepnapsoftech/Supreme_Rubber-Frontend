@@ -286,7 +286,7 @@ const QualityCheck = () => {
 
           <Button
             onClick={() => setShowGtModal(true)}
-            className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+            className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
             Gateman
           </Button>
@@ -325,13 +325,21 @@ const QualityCheck = () => {
                 setShowProdQcModal(true);
               }
             }}
-            className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-5 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
+            className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
-            Production QC
+            Finished-Good QC
           </Button>
+          <Button
+          className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
+Raw Material QC
+          </Button>
+           <Button
+          className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
+Compound QC          </Button>
+
         </div>
 
-        <div className="flex justify-end items-center gap-4 text-gray-600 w-full">
+        <div className="flex mt-3 justify-end items-center gap-4 text-gray-600 w-full">
           <button
             className="p-2 rounded-lg cursor-pointer border border-gray-300 hover:bg-gray-100 transition"
             onClick={getAllReports}

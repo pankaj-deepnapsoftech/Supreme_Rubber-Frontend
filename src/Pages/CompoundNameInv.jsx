@@ -378,7 +378,13 @@ const CompoundNameInv = () => {
 
                     // Dropdown options for specific fields
                     const dropdownOptions = {
-                      category: ["Part Name", "Raw Material", "FMB", "CMB"],
+                      category: [
+                        "Part Name",
+                        "Raw Material",
+                        "Compound Name",
+                        "FMB",
+                        "CMB",
+                      ],
                       uom: [
                         "Kg",
                         "Litre",

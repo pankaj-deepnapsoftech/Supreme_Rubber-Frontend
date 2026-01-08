@@ -380,6 +380,7 @@ const Inventory = () => {
                       category: [
                         "Part Name",
                         "Raw Material",
+                        "Compound Name",
                         "FMB",
                         "CMB",
                       ],

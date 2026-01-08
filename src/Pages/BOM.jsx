@@ -31,6 +31,8 @@ const BOM = () => {
   const [selectedBom, setSelectedBom] = useState(null);
   const [viewMode, setViewMode] = useState(false);
 
+  const [bomType, setBomType] = useState("");
+
   // New state for arrays
   const [compoundCodes, setCompoundCodes] = useState([""]);
   const [compoundName, setCompoundName] = useState("");
@@ -353,10 +355,9 @@ const BOM = () => {
         <table className="w-full min-w-[900px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r text-center from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
-            <th className="px-4 sm:px-6 py-3 font-medium">Compound Codes</th>
-            <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Compound Codes</th>
+              <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
 
-            
               <th className="px-4 sm:px-6 py-3 font-medium">Part Names</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Created Date</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
@@ -381,10 +382,12 @@ const BOM = () => {
                   const partNamesStr = (item.part_names || [])
                     .join(" ")
                     .toLowerCase();
-                  const compoundNameStr = (item.compound_name || "").toLowerCase();
+                  const compoundNameStr = (
+                    item.compound_name || ""
+                  ).toLowerCase();
                   return (
-                    compoundCodesStr.includes(q) || 
-                    partNamesStr.includes(q) || 
+                    compoundCodesStr.includes(q) ||
+                    partNamesStr.includes(q) ||
                     compoundNameStr.includes(q)
                   );
                 })
@@ -404,11 +407,17 @@ const BOM = () => {
                     <td className="px-4 sm:px-6 py-3">
                       {(() => {
                         // Try to get part names from part_name_details first
-                        if (item.part_name_details && item.part_name_details.length > 0) {
+                        if (
+                          item.part_name_details &&
+                          item.part_name_details.length > 0
+                        ) {
                           const names = item.part_name_details
                             .map((pnd) => {
                               // First try product_snapshot name
-                              if (pnd.product_snapshot && pnd.product_snapshot.name) {
+                              if (
+                                pnd.product_snapshot &&
+                                pnd.product_snapshot.name
+                              ) {
                                 return pnd.product_snapshot.name;
                               }
                               // Then try part_name_id_name
@@ -430,7 +439,9 @@ const BOM = () => {
                           }
                         }
                         // Fallback to part_names array if part_name_details is not available or empty
-                        const partNames = (item.part_names || []).filter((p) => p && p.trim() !== "");
+                        const partNames = (item.part_names || []).filter(
+                          (p) => p && p.trim() !== ""
+                        );
                         if (partNames.length > 0) {
                           return partNames.join(", ");
                         }
@@ -526,60 +537,82 @@ const BOM = () => {
               </button>
 
               {/* Title */}
-              <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Bill of Materials (BOM)
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Manage compounds, part names, raw materials, and processes.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Bill of Materials (BOM)
+                  </h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                    Manage compounds, part names, raw materials, and processes.
+                  </p>
+                </div>
+
+                <select
+                  className="h-12 w-50 border rounded-xl border-gray-300"
+                  value={bomType}
+                  onChange={(e) => setBomType(e.target.value)}
+                >
+                  <option value="select-option">Select an option</option>
+
+                  <option value="compound">Compound</option>
+                  <option value="part-name">Part Name</option>
+                </select>
+              </div>
               <hr className="border-gray-300 dark:border-gray-600 mb-8" />
 
-              {/* Compound Section */}
-              <section className="mb-10">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  Compound Details
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {/* Compound Name */}
-                  <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Compound Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter compound name"
-                      value={compoundName}
-                      onChange={(e) => setCompoundName(e.target.value)}
-                      disabled={viewMode}
-                      className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    />
-                  </div>
+              {bomType === "" || bomType === "select-option" ? (
+                <div className="text-center text-gray-600 dark:text-gray-300 py-20">
+                  Please select a BOM type from the dropdown above to proceed.
+                </div>
+              ) : null}
 
-                  {/* Compound Codes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Compound Code
-                    </label>
-                    {compoundCodes.map((code, idx) => (
-                      <input
-                        key={idx}
-                        type="text"
-                        placeholder="Enter compound code"
-                        value={code}
-                        onChange={(e) => {
-                          const next = [...compoundCodes];
-                          next[idx] = e.target.value;
-                          setCompoundCodes(next);
-                        }}
-                        disabled={viewMode}
-                        className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                      />
-                    ))}
-                  </div>
+              {bomType === "compound" ? (
+                <>
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      Compound Details
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      {/* Compound Name */}
+                      <div className="md:col-span-3">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Compound Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter compound name"
+                          value={compoundName}
+                          onChange={(e) => setCompoundName(e.target.value)}
+                          disabled={viewMode}
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        />
+                      </div>
 
-                  {/* Part Names */}
-                  {/* <div>
+                      {/* Compound Codes */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Compound Code
+                        </label>
+                        {compoundCodes.map((code, idx) => (
+                          <input
+                            key={idx}
+                            type="text"
+                            placeholder="Enter compound code"
+                            value={code}
+                            onChange={(e) => {
+                              const next = [...compoundCodes];
+                              next[idx] = e.target.value;
+                              setCompoundCodes(next);
+                            }}
+                            disabled={viewMode}
+                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                          />
+                        ))}
+                      </div>
+
+                      {/* Part Names */}
+                      {/* <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Part Name
                     </label>
@@ -600,566 +633,1433 @@ const BOM = () => {
                     ))}
                   </div> */}
 
-                  {/* Hardnesses */}
-                  <div>
+                      {/* Hardnesses */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Hardness
+                        </label>
+                        {hardnesses.map((hardness, idx) => (
+                          <input
+                            key={idx}
+                            type="text"
+                            placeholder="Enter hardness"
+                            value={hardness}
+                            onChange={(e) => {
+                              const next = [...hardnesses];
+                              next[idx] = e.target.value;
+                              setHardnesses(next);
+                            }}
+                            disabled={viewMode}
+                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Part Name Section */}
+                  {/* <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Part Name
+                    </h2>
+                    {partNameDetails.map((pnd, pndIdx) => (
+                      <div
+                        key={pndIdx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Part Name #{pndIdx + 1}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Part Name (ID + Name)
+                            </label>
+                            <select
+                              value={pnd.part_name_id_name}
+                              onChange={(e) => {
+                                const next = [...partNameDetails];
+                                next[pndIdx].part_name_id_name = e.target.value;
+                                setPartNameDetails(next);
+                              }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            >
+                              <option value="">Select Part Name...</option>
+                              {partNameOptions.map((pndOption) => (
+                                <option
+                                  key={pndOption._id}
+                                  value={`${pndOption._id}-${pndOption.name}`}
+                                >
+                                  {pndOption.name} ({pndOption.product_id})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                        
+                          {["quantities", "tolerances", "comments"].map(
+                            (key) => (
+                              <div key={key}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                                  {key}
+                                </label>
+                                {pnd[key].map((value, idx2) => (
+                                  <input
+                                    key={idx2}
+                                    type={
+                                      key === "quantities" ? "number" : "text"
+                                    }
+                                    placeholder={key.slice(0, -1)}
+                                    value={value}
+                                    onChange={(e) => {
+                                      const next = [...partNameDetails];
+                                      next[pndIdx][key][idx2] = e.target.value;
+                                      setPartNameDetails(next);
+                                    }}
+                                    disabled={viewMode}
+                                    className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                                  />
+                                ))}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </section> */}
+
+                  {/* Raw Materials Section */}
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                      Raw Materials
+                    </h2>
+                    {rawMaterials.map((rm, rmIdx) => (
+                      <div
+                        key={rmIdx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Raw Material #{rmIdx + 1}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Raw Material
+                            </label>
+                            <select
+                              value={rm.raw_material_id}
+                              onChange={(e) => {
+                                const next = [...rawMaterials];
+                                const selected = rawMaterialsOptions.find(
+                                  (opt) => opt._id === e.target.value
+                                );
+                                next[rmIdx].raw_material_id = e.target.value;
+                                next[rmIdx].raw_material_name = selected
+                                  ? selected.name
+                                  : "";
+                                setRawMaterials(next);
+                              }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                            >
+                              <option value="">Select Raw Material...</option>
+                              {rawMaterialsOptions.map((rmOption) => (
+                                <option key={rmOption._id} value={rmOption._id}>
+                                  {rmOption.name} ({rmOption.product_id})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {["tolerances", "quantities", "comments"].map(
+                            (key) => (
+                              <div key={key}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                                  {key}
+                                </label>
+                                {rm[key].map((value, idx2) => (
+                                  <input
+                                    key={idx2}
+                                    type={
+                                      key === "quantities" ? "number" : "text"
+                                    }
+                                    placeholder={key.slice(0, -1)}
+                                    value={value}
+                                    onChange={(e) => {
+                                      const next = [...rawMaterials];
+                                      next[rmIdx][key][idx2] = e.target.value;
+                                      setRawMaterials(next);
+                                    }}
+                                    disabled={viewMode}
+                                    className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                                  />
+                                ))}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {!viewMode && (
+                      <button
+                        onClick={() =>
+                          setRawMaterials([
+                            ...rawMaterials,
+                            {
+                              raw_material_id: "",
+                              raw_material_name: "",
+                              tolerances: [""],
+                              quantities: [""],
+                              comments: [""],
+                            },
+                          ])
+                        }
+                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                      >
+                        + Add Raw Material
+                      </button>
+                    )}
+
+                    {/* Raw Materials Summary Table */}
+                    {rawMaterials.length > 0 &&
+                      rawMaterials.some((rm) => rm.raw_material_name) && (
+                        <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
+                          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 mt-6">
+                            Raw Materials Summary
+                          </h3>
+                          <table className="w-full text-sm text-left min-w-[600px]">
+                            <thead>
+                              <tr className="bg-purple-600 text-white uppercase text-xs tracking-wide">
+                                <th className="px-4 sm:px-6 py-3 font-medium">
+                                  Raw Material Name
+                                </th>
+                                <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                  Total Quantity
+                                </th>
+                                <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                  Tolerances
+                                </th>
+                                <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                  Comments
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rawMaterials
+                                .filter(
+                                  (rm) =>
+                                    rm.raw_material_name &&
+                                    rm.raw_material_name.trim() !== ""
+                                )
+                                .map((rm, idx) => {
+                                  // Calculate total quantity
+                                  const totalQty = (rm.quantities || [])
+                                    .filter(
+                                      (q) =>
+                                        q !== "" &&
+                                        q !== null &&
+                                        q !== undefined
+                                    )
+                                    .reduce((sum, q) => {
+                                      const num = parseFloat(q);
+                                      return sum + (isNaN(num) ? 0 : num);
+                                    }, 0);
+
+                                  // Get tolerances (unique values or first value)
+                                  const tolerances = (
+                                    rm.tolerances || []
+                                  ).filter((t) => t && t.trim() !== "");
+                                  const toleranceDisplay =
+                                    tolerances.length > 0
+                                      ? tolerances.length === 1
+                                        ? tolerances[0]
+                                        : tolerances.join(", ")
+                                      : "-";
+
+                                  // Get comments (unique values or first value)
+                                  const comments = (rm.comments || []).filter(
+                                    (c) => c && c.trim() !== ""
+                                  );
+                                  const commentDisplay =
+                                    comments.length > 0
+                                      ? comments.length === 1
+                                        ? comments[0]
+                                        : comments.join(", ")
+                                      : "-";
+
+                                  return (
+                                    <tr
+                                      key={idx}
+                                      className={`border-t ${
+                                        idx % 2 === 0
+                                          ? "bg-white dark:bg-gray-800"
+                                          : "bg-gray-50 dark:bg-gray-700"
+                                      }`}
+                                    >
+                                      <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
+                                        {rm.raw_material_name}
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                        {totalQty.toFixed(2)}
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                        {toleranceDisplay}
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                        {commentDisplay}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              {rawMaterials.filter(
+                                (rm) =>
+                                  rm.raw_material_name &&
+                                  rm.raw_material_name.trim() !== ""
+                              ).length === 0 && (
+                                <tr>
+                                  <td
+                                    colSpan="4"
+                                    className="text-center py-6 text-gray-500"
+                                  >
+                                    No raw materials added yet.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                            <tfoot>
+                              <tr className="bg-purple-100 dark:bg-purple-900 font-semibold">
+                                <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">
+                                  Total
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                                  {rawMaterials
+                                    .filter(
+                                      (rm) =>
+                                        rm.raw_material_name &&
+                                        rm.raw_material_name.trim() !== ""
+                                    )
+                                    .reduce((total, rm) => {
+                                      const qty = (rm.quantities || [])
+                                        .filter(
+                                          (q) =>
+                                            q !== "" &&
+                                            q !== null &&
+                                            q !== undefined
+                                        )
+                                        .reduce((sum, q) => {
+                                          const num = parseFloat(q);
+                                          return sum + (isNaN(num) ? 0 : num);
+                                        }, 0);
+                                      return total + qty;
+                                    }, 0)
+                                    .toFixed(2)}
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                                  -
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                                  -
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      )}
+                  </section>
+
+                  {/* Accelerator Section */}
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Accelerator (Pakai)
+                    </h2>
+                    {accelerators.map((acc, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Accelerator #{idx + 1}
+                          </h3>
+                          {!viewMode && accelerators.length > 1 && (
+                            <button
+                              onClick={() =>
+                                setAccelerators(
+                                  accelerators.filter((_, i) => i !== idx)
+                                )
+                              }
+                              className="text-red-500 hover:text-red-600 text-sm"
+                            >
+                              ✕ Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          {/* Accelerator Name */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Accelerator Name
+                            </label>
+                            <input
+                              type="text"
+                              value={acc.name}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].name = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter Accelerator name"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                          {/* Tolerance */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Tolerance
+                            </label>
+                            <input
+                              type="text"
+                              value={acc.tolerance}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].tolerance = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter tolerance"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                          {/* Quantity */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              value={acc.quantity}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].quantity = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter quantity"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                          {/* Comment */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Comments
+                            </label>
+                            <input
+                              type="text"
+                              value={acc.comment}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].comment = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter comment"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {!viewMode && (
+                      <button
+                        onClick={() =>
+                          setAccelerators([
+                            ...accelerators,
+                            {
+                              name: "",
+                              tolerance: "",
+                              quantity: "",
+                              comment: "",
+                            },
+                          ])
+                        }
+                        className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                      >
+                        + Add Accelerator
+                      </button>
+                    )}
+
+                    {/* Raw Materials + Accelerators Combined Summary Table */}
+                    {((rawMaterials.length > 0 &&
+                      rawMaterials.some((rm) => rm.raw_material_name)) ||
+                      (accelerators.length > 0 &&
+                        accelerators.some((acc) => acc.name))) && (
+                      <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 mt-6">
+                          Raw Materials + Accelerators Summary
+                        </h3>
+                        <table className="w-full text-sm text-left min-w-[600px]">
+                          <thead>
+                            <tr className="bg-gradient-to-r from-purple-600 to-green-600 text-white uppercase text-xs tracking-wide">
+                              <th className="px-4 sm:px-6 py-3 font-medium">
+                                Category
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                Total Quantity
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                Details
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {/* Raw Materials Total Row */}
+                            {rawMaterials.some(
+                              (rm) =>
+                                rm.raw_material_name &&
+                                rm.raw_material_name.trim() !== ""
+                            ) && (
+                              <tr className="border-t bg-white dark:bg-gray-800">
+                                <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
+                                  Raw Materials
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300 font-semibold">
+                                  {rawMaterials
+                                    .filter(
+                                      (rm) =>
+                                        rm.raw_material_name &&
+                                        rm.raw_material_name.trim() !== ""
+                                    )
+                                    .reduce((total, rm) => {
+                                      const qty = (rm.quantities || [])
+                                        .filter(
+                                          (q) =>
+                                            q !== "" &&
+                                            q !== null &&
+                                            q !== undefined
+                                        )
+                                        .reduce((sum, q) => {
+                                          const num = parseFloat(q);
+                                          return sum + (isNaN(num) ? 0 : num);
+                                        }, 0);
+                                      return total + qty;
+                                    }, 0)
+                                    .toFixed(2)}
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                  {
+                                    rawMaterials.filter(
+                                      (rm) =>
+                                        rm.raw_material_name &&
+                                        rm.raw_material_name.trim() !== ""
+                                    ).length
+                                  }{" "}
+                                  item(s)
+                                </td>
+                              </tr>
+                            )}
+
+                            {/* Accelerators Total Row */}
+                            {accelerators.some(
+                              (acc) => acc.name && acc.name.trim() !== ""
+                            ) && (
+                              <tr className="border-t bg-white dark:bg-gray-800">
+                                <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
+                                  Accelerators
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300 font-semibold">
+                                  {accelerators
+                                    .filter(
+                                      (acc) =>
+                                        acc.name && acc.name.trim() !== ""
+                                    )
+                                    .reduce((total, acc) => {
+                                      const qty = parseFloat(acc.quantity);
+                                      return total + (isNaN(qty) ? 0 : qty);
+                                    }, 0)
+                                    .toFixed(2)}
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                  {
+                                    accelerators.filter(
+                                      (acc) =>
+                                        acc.name && acc.name.trim() !== ""
+                                    ).length
+                                  }{" "}
+                                  item(s)
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                          <tfoot>
+                            <tr className="bg-gradient-to-r from-purple-100 to-green-100 dark:from-purple-900 dark:to-green-900 font-bold">
+                              <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100 text-lg">
+                                Grand Total
+                              </td>
+                              <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100 text-lg">
+                                {
+                                  // Raw Materials Total
+                                  (
+                                    rawMaterials
+                                      .filter(
+                                        (rm) =>
+                                          rm.raw_material_name &&
+                                          rm.raw_material_name.trim() !== ""
+                                      )
+                                      .reduce((total, rm) => {
+                                        const qty = (rm.quantities || [])
+                                          .filter(
+                                            (q) =>
+                                              q !== "" &&
+                                              q !== null &&
+                                              q !== undefined
+                                          )
+                                          .reduce((sum, q) => {
+                                            const num = parseFloat(q);
+                                            return sum + (isNaN(num) ? 0 : num);
+                                          }, 0);
+                                        return total + qty;
+                                      }, 0) +
+                                    // Accelerators Total
+                                    accelerators
+                                      .filter(
+                                        (acc) =>
+                                          acc.name && acc.name.trim() !== ""
+                                      )
+                                      .reduce((total, acc) => {
+                                        const qty = parseFloat(acc.quantity);
+                                        return total + (isNaN(qty) ? 0 : qty);
+                                      }, 0)
+                                  ).toFixed(2)
+                                }
+                              </td>
+                              <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100 text-lg">
+                                {rawMaterials.filter(
+                                  (rm) =>
+                                    rm.raw_material_name &&
+                                    rm.raw_material_name.trim() !== ""
+                                ).length +
+                                  accelerators.filter(
+                                    (acc) => acc.name && acc.name.trim() !== ""
+                                  ).length}{" "}
+                                total item(s)
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Processes */}
+                  <section className="mb-12">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                      Processes
+                    </h2>
+                    <div className="flex flex-col gap-3">
+                      {processRows.map((proc, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <input
+                            placeholder={`Process ${idx + 1}`}
+                            className="flex-1 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-yellow-500 transition"
+                            value={proc}
+                            onChange={(e) => {
+                              const next = [...processRows];
+                              next[idx] = e.target.value;
+                              setProcessRows(next);
+                            }}
+                            disabled={viewMode}
+                          />
+                          {!viewMode && (
+                            <button
+                              onClick={() => {
+                                if (processRows.length > 1) {
+                                  setProcessRows(
+                                    processRows.filter((_, i) => i !== idx)
+                                  );
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-600 transition"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {!viewMode && (
+                      <div className="flex justify-end mt-6">
+                        <button
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                          onClick={() => setProcessRows([...processRows, ""])}
+                        >
+                          + Add Process
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                </>
+              ) : (
+                <>
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      Compound Details
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      {/* Compound Name */}
+                      <div className="md:col-span-3">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Compound Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Enter compound name"
+                          value={compoundName}
+                          onChange={(e) => setCompoundName(e.target.value)}
+                          disabled={viewMode}
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        />
+                      </div>
+
+                      {/* Compound Codes */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Compound Code
+                        </label>
+                        {compoundCodes.map((code, idx) => (
+                          <input
+                            key={idx}
+                            type="text"
+                            placeholder="Enter compound code"
+                            value={code}
+                            onChange={(e) => {
+                              const next = [...compoundCodes];
+                              next[idx] = e.target.value;
+                              setCompoundCodes(next);
+                            }}
+                            disabled={viewMode}
+                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                          />
+                        ))}
+                      </div>
+
+                      {/* Part Names */}
+                      {/* <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Hardness
+                      Part Name
                     </label>
-                    {hardnesses.map((hardness, idx) => (
+                    {partNames.map((name, idx) => (
                       <input
                         key={idx}
                         type="text"
-                        placeholder="Enter hardness"
-                        value={hardness}
+                        placeholder="Enter part name"
+                        value={name}
                         onChange={(e) => {
-                          const next = [...hardnesses];
+                          const next = [...partNames];
                           next[idx] = e.target.value;
-                          setHardnesses(next);
+                          setPartNames(next);
                         }}
                         disabled={viewMode}
                         className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
                       />
                     ))}
-                  </div>
-                </div>
-              </section>
+                  </div> */}
 
-              {/* Part Name Section */}
-              <section className="mb-10">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Part Name
-                </h2>
-                {partNameDetails.map((pnd, pndIdx) => (
-                  <div
-                    key={pndIdx}
-                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-medium text-gray-700 dark:text-gray-300">
-                        Part Name #{pndIdx + 1}
-                      </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      {/* Part Name Selector */}
-                      <div className="md:col-span-3">
+                      {/* Hardnesses */}
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Part Name (ID + Name)
+                          Hardness
                         </label>
-                        <select
-                          value={pnd.part_name_id_name}
-                          onChange={(e) => {
-                            const next = [...partNameDetails];
-                            next[pndIdx].part_name_id_name = e.target.value;
-                            setPartNameDetails(next);
-                          }}
-                          disabled={viewMode}
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                        >
-                          <option value="">Select Part Name...</option>
-                          {partNameOptions.map((pndOption) => (
-                            <option
-                              key={pndOption._id}
-                              value={`${pndOption._id}-${pndOption.name}`}
-                            >
-                              {pndOption.name} ({pndOption.product_id})
-                            </option>
-                          ))}
-                        </select>
+                        {hardnesses.map((hardness, idx) => (
+                          <input
+                            key={idx}
+                            type="text"
+                            placeholder="Enter hardness"
+                            value={hardness}
+                            onChange={(e) => {
+                              const next = [...hardnesses];
+                              next[idx] = e.target.value;
+                              setHardnesses(next);
+                            }}
+                            disabled={viewMode}
+                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                          />
+                        ))}
                       </div>
+                    </div>
+                  </section>
 
-                      {/* Quantities */}
-                      {["quantities", "tolerances", "comments"].map((key) => (
-                        <div key={key}>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
-                            {key}
-                          </label>
-                          {pnd[key].map((value, idx2) => (
-                            <input
-                              key={idx2}
-                              type={key === "quantities" ? "number" : "text"}
-                              placeholder={key.slice(0, -1)}
-                              value={value}
+                  {/* Part Name Section */}
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Part Name
+                    </h2>
+                    {partNameDetails.map((pnd, pndIdx) => (
+                      <div
+                        key={pndIdx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Part Name #{pndIdx + 1}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          {/* Part Name Selector */}
+                          <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Part Name (ID + Name)
+                            </label>
+                            <select
+                              value={pnd.part_name_id_name}
                               onChange={(e) => {
                                 const next = [...partNameDetails];
-                                next[pndIdx][key][idx2] = e.target.value;
+                                next[pndIdx].part_name_id_name = e.target.value;
                                 setPartNameDetails(next);
                               }}
                               disabled={viewMode}
-                              className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                            />
-                          ))}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            >
+                              <option value="">Select Part Name...</option>
+                              {partNameOptions.map((pndOption) => (
+                                <option
+                                  key={pndOption._id}
+                                  value={`${pndOption._id}-${pndOption.name}`}
+                                >
+                                  {pndOption.name} ({pndOption.product_id})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Quantities */}
+                          {["quantities", "tolerances", "comments"].map(
+                            (key) => (
+                              <div key={key}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                                  {key}
+                                </label>
+                                {pnd[key].map((value, idx2) => (
+                                  <input
+                                    key={idx2}
+                                    type={
+                                      key === "quantities" ? "number" : "text"
+                                    }
+                                    placeholder={key.slice(0, -1)}
+                                    value={value}
+                                    onChange={(e) => {
+                                      const next = [...partNameDetails];
+                                      next[pndIdx][key][idx2] = e.target.value;
+                                      setPartNameDetails(next);
+                                    }}
+                                    disabled={viewMode}
+                                    className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                                  />
+                                ))}
+                              </div>
+                            )
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </section>
-
-              {/* Raw Materials Section */}
-              <section className="mb-10">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                  Raw Materials
-                </h2>
-                {rawMaterials.map((rm, rmIdx) => (
-                  <div
-                    key={rmIdx}
-                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-medium text-gray-700 dark:text-gray-300">
-                        Raw Material #{rmIdx + 1}
-                      </h3>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      <div className="md:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Raw Material
-                        </label>
-                        <select
-                          value={rm.raw_material_id}
-                          onChange={(e) => {
-                            const next = [...rawMaterials];
-                            const selected = rawMaterialsOptions.find(
-                              (opt) => opt._id === e.target.value
-                            );
-                            next[rmIdx].raw_material_id = e.target.value;
-                            next[rmIdx].raw_material_name = selected
-                              ? selected.name
-                              : "";
-                            setRawMaterials(next);
-                          }}
-                          disabled={viewMode}
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
-                        >
-                          <option value="">Select Raw Material...</option>
-                          {rawMaterialsOptions.map((rmOption) => (
-                            <option key={rmOption._id} value={rmOption._id}>
-                              {rmOption.name} ({rmOption.product_id})
-                            </option>
-                          ))}
-                        </select>
                       </div>
+                    ))}
+                  </section>
 
-                      {["tolerances", "quantities", "comments"].map((key) => (
-                        <div key={key}>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
-                            {key}
-                          </label>
-                          {rm[key].map((value, idx2) => (
-                            <input
-                              key={idx2}
-                              type={key === "quantities" ? "number" : "text"}
-                              placeholder={key.slice(0, -1)}
-                              value={value}
+                  {/* Raw Materials Section */}
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                      Raw Materials
+                    </h2>
+                    {rawMaterials.map((rm, rmIdx) => (
+                      <div
+                        key={rmIdx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Raw Material #{rmIdx + 1}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Raw Material
+                            </label>
+                            <select
+                              value={rm.raw_material_id}
                               onChange={(e) => {
                                 const next = [...rawMaterials];
-                                next[rmIdx][key][idx2] = e.target.value;
+                                const selected = rawMaterialsOptions.find(
+                                  (opt) => opt._id === e.target.value
+                                );
+                                next[rmIdx].raw_material_id = e.target.value;
+                                next[rmIdx].raw_material_name = selected
+                                  ? selected.name
+                                  : "";
                                 setRawMaterials(next);
                               }}
                               disabled={viewMode}
-                              className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                            >
+                              <option value="">Select Raw Material...</option>
+                              {rawMaterialsOptions.map((rmOption) => (
+                                <option key={rmOption._id} value={rmOption._id}>
+                                  {rmOption.name} ({rmOption.product_id})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {["tolerances", "quantities", "comments"].map(
+                            (key) => (
+                              <div key={key}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                                  {key}
+                                </label>
+                                {rm[key].map((value, idx2) => (
+                                  <input
+                                    key={idx2}
+                                    type={
+                                      key === "quantities" ? "number" : "text"
+                                    }
+                                    placeholder={key.slice(0, -1)}
+                                    value={value}
+                                    onChange={(e) => {
+                                      const next = [...rawMaterials];
+                                      next[rmIdx][key][idx2] = e.target.value;
+                                      setRawMaterials(next);
+                                    }}
+                                    disabled={viewMode}
+                                    className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 transition"
+                                  />
+                                ))}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {!viewMode && (
+                      <button
+                        onClick={() =>
+                          setRawMaterials([
+                            ...rawMaterials,
+                            {
+                              raw_material_id: "",
+                              raw_material_name: "",
+                              tolerances: [""],
+                              quantities: [""],
+                              comments: [""],
+                            },
+                          ])
+                        }
+                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                      >
+                        + Add Raw Material
+                      </button>
+                    )}
+
+                    {/* Raw Materials Summary Table */}
+                    {rawMaterials.length > 0 &&
+                      rawMaterials.some((rm) => rm.raw_material_name) && (
+                        <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
+                          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 mt-6">
+                            Raw Materials Summary
+                          </h3>
+                          <table className="w-full text-sm text-left min-w-[600px]">
+                            <thead>
+                              <tr className="bg-purple-600 text-white uppercase text-xs tracking-wide">
+                                <th className="px-4 sm:px-6 py-3 font-medium">
+                                  Raw Material Name
+                                </th>
+                                <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                  Total Quantity
+                                </th>
+                                <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                  Tolerances
+                                </th>
+                                <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                  Comments
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rawMaterials
+                                .filter(
+                                  (rm) =>
+                                    rm.raw_material_name &&
+                                    rm.raw_material_name.trim() !== ""
+                                )
+                                .map((rm, idx) => {
+                                  // Calculate total quantity
+                                  const totalQty = (rm.quantities || [])
+                                    .filter(
+                                      (q) =>
+                                        q !== "" &&
+                                        q !== null &&
+                                        q !== undefined
+                                    )
+                                    .reduce((sum, q) => {
+                                      const num = parseFloat(q);
+                                      return sum + (isNaN(num) ? 0 : num);
+                                    }, 0);
+
+                                  // Get tolerances (unique values or first value)
+                                  const tolerances = (
+                                    rm.tolerances || []
+                                  ).filter((t) => t && t.trim() !== "");
+                                  const toleranceDisplay =
+                                    tolerances.length > 0
+                                      ? tolerances.length === 1
+                                        ? tolerances[0]
+                                        : tolerances.join(", ")
+                                      : "-";
+
+                                  // Get comments (unique values or first value)
+                                  const comments = (rm.comments || []).filter(
+                                    (c) => c && c.trim() !== ""
+                                  );
+                                  const commentDisplay =
+                                    comments.length > 0
+                                      ? comments.length === 1
+                                        ? comments[0]
+                                        : comments.join(", ")
+                                      : "-";
+
+                                  return (
+                                    <tr
+                                      key={idx}
+                                      className={`border-t ${
+                                        idx % 2 === 0
+                                          ? "bg-white dark:bg-gray-800"
+                                          : "bg-gray-50 dark:bg-gray-700"
+                                      }`}
+                                    >
+                                      <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
+                                        {rm.raw_material_name}
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                        {totalQty.toFixed(2)}
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                        {toleranceDisplay}
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                        {commentDisplay}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              {rawMaterials.filter(
+                                (rm) =>
+                                  rm.raw_material_name &&
+                                  rm.raw_material_name.trim() !== ""
+                              ).length === 0 && (
+                                <tr>
+                                  <td
+                                    colSpan="4"
+                                    className="text-center py-6 text-gray-500"
+                                  >
+                                    No raw materials added yet.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                            <tfoot>
+                              <tr className="bg-purple-100 dark:bg-purple-900 font-semibold">
+                                <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">
+                                  Total
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                                  {rawMaterials
+                                    .filter(
+                                      (rm) =>
+                                        rm.raw_material_name &&
+                                        rm.raw_material_name.trim() !== ""
+                                    )
+                                    .reduce((total, rm) => {
+                                      const qty = (rm.quantities || [])
+                                        .filter(
+                                          (q) =>
+                                            q !== "" &&
+                                            q !== null &&
+                                            q !== undefined
+                                        )
+                                        .reduce((sum, q) => {
+                                          const num = parseFloat(q);
+                                          return sum + (isNaN(num) ? 0 : num);
+                                        }, 0);
+                                      return total + qty;
+                                    }, 0)
+                                    .toFixed(2)}
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                                  -
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
+                                  -
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      )}
+                  </section>
+
+                  {/* Accelerator Section */}
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Accelerator (Pakai)
+                    </h2>
+                    {accelerators.map((acc, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Accelerator #{idx + 1}
+                          </h3>
+                          {!viewMode && accelerators.length > 1 && (
+                            <button
+                              onClick={() =>
+                                setAccelerators(
+                                  accelerators.filter((_, i) => i !== idx)
+                                )
+                              }
+                              className="text-red-500 hover:text-red-600 text-sm"
+                            >
+                              ✕ Remove
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          {/* Accelerator Name */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Accelerator Name
+                            </label>
+                            <input
+                              type="text"
+                              value={acc.name}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].name = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter Accelerator name"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
                             />
-                          ))}
+                          </div>
+                          {/* Tolerance */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Tolerance
+                            </label>
+                            <input
+                              type="text"
+                              value={acc.tolerance}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].tolerance = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter tolerance"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                          {/* Quantity */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Quantity
+                            </label>
+                            <input
+                              type="number"
+                              value={acc.quantity}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].quantity = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter quantity"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                          {/* Comment */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Comments
+                            </label>
+                            <input
+                              type="text"
+                              value={acc.comment}
+                              onChange={(e) => {
+                                const next = [...accelerators];
+                                next[idx].comment = e.target.value;
+                                setAccelerators(next);
+                              }}
+                              disabled={viewMode}
+                              placeholder="Enter comment"
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {!viewMode && (
+                      <button
+                        onClick={() =>
+                          setAccelerators([
+                            ...accelerators,
+                            {
+                              name: "",
+                              tolerance: "",
+                              quantity: "",
+                              comment: "",
+                            },
+                          ])
+                        }
+                        className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                      >
+                        + Add Accelerator
+                      </button>
+                    )}
+
+                    {/* Raw Materials + Accelerators Combined Summary Table */}
+                    {((rawMaterials.length > 0 &&
+                      rawMaterials.some((rm) => rm.raw_material_name)) ||
+                      (accelerators.length > 0 &&
+                        accelerators.some((acc) => acc.name))) && (
+                      <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 mt-6">
+                          Raw Materials + Accelerators Summary
+                        </h3>
+                        <table className="w-full text-sm text-left min-w-[600px]">
+                          <thead>
+                            <tr className="bg-gradient-to-r from-purple-600 to-green-600 text-white uppercase text-xs tracking-wide">
+                              <th className="px-4 sm:px-6 py-3 font-medium">
+                                Category
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                Total Quantity
+                              </th>
+                              <th className="px-4 sm:px-6 py-3 font-medium text-center">
+                                Details
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {/* Raw Materials Total Row */}
+                            {rawMaterials.some(
+                              (rm) =>
+                                rm.raw_material_name &&
+                                rm.raw_material_name.trim() !== ""
+                            ) && (
+                              <tr className="border-t bg-white dark:bg-gray-800">
+                                <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
+                                  Raw Materials
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300 font-semibold">
+                                  {rawMaterials
+                                    .filter(
+                                      (rm) =>
+                                        rm.raw_material_name &&
+                                        rm.raw_material_name.trim() !== ""
+                                    )
+                                    .reduce((total, rm) => {
+                                      const qty = (rm.quantities || [])
+                                        .filter(
+                                          (q) =>
+                                            q !== "" &&
+                                            q !== null &&
+                                            q !== undefined
+                                        )
+                                        .reduce((sum, q) => {
+                                          const num = parseFloat(q);
+                                          return sum + (isNaN(num) ? 0 : num);
+                                        }, 0);
+                                      return total + qty;
+                                    }, 0)
+                                    .toFixed(2)}
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                  {
+                                    rawMaterials.filter(
+                                      (rm) =>
+                                        rm.raw_material_name &&
+                                        rm.raw_material_name.trim() !== ""
+                                    ).length
+                                  }{" "}
+                                  item(s)
+                                </td>
+                              </tr>
+                            )}
+
+                            {/* Accelerators Total Row */}
+                            {accelerators.some(
+                              (acc) => acc.name && acc.name.trim() !== ""
+                            ) && (
+                              <tr className="border-t bg-white dark:bg-gray-800">
+                                <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
+                                  Accelerators
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300 font-semibold">
+                                  {accelerators
+                                    .filter(
+                                      (acc) =>
+                                        acc.name && acc.name.trim() !== ""
+                                    )
+                                    .reduce((total, acc) => {
+                                      const qty = parseFloat(acc.quantity);
+                                      return total + (isNaN(qty) ? 0 : qty);
+                                    }, 0)
+                                    .toFixed(2)}
+                                </td>
+                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
+                                  {
+                                    accelerators.filter(
+                                      (acc) =>
+                                        acc.name && acc.name.trim() !== ""
+                                    ).length
+                                  }{" "}
+                                  item(s)
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                          <tfoot>
+                            <tr className="bg-gradient-to-r from-purple-100 to-green-100 dark:from-purple-900 dark:to-green-900 font-bold">
+                              <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100 text-lg">
+                                Grand Total
+                              </td>
+                              <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100 text-lg">
+                                {
+                                  // Raw Materials Total
+                                  (
+                                    rawMaterials
+                                      .filter(
+                                        (rm) =>
+                                          rm.raw_material_name &&
+                                          rm.raw_material_name.trim() !== ""
+                                      )
+                                      .reduce((total, rm) => {
+                                        const qty = (rm.quantities || [])
+                                          .filter(
+                                            (q) =>
+                                              q !== "" &&
+                                              q !== null &&
+                                              q !== undefined
+                                          )
+                                          .reduce((sum, q) => {
+                                            const num = parseFloat(q);
+                                            return sum + (isNaN(num) ? 0 : num);
+                                          }, 0);
+                                        return total + qty;
+                                      }, 0) +
+                                    // Accelerators Total
+                                    accelerators
+                                      .filter(
+                                        (acc) =>
+                                          acc.name && acc.name.trim() !== ""
+                                      )
+                                      .reduce((total, acc) => {
+                                        const qty = parseFloat(acc.quantity);
+                                        return total + (isNaN(qty) ? 0 : qty);
+                                      }, 0)
+                                  ).toFixed(2)
+                                }
+                              </td>
+                              <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100 text-lg">
+                                {rawMaterials.filter(
+                                  (rm) =>
+                                    rm.raw_material_name &&
+                                    rm.raw_material_name.trim() !== ""
+                                ).length +
+                                  accelerators.filter(
+                                    (acc) => acc.name && acc.name.trim() !== ""
+                                  ).length}{" "}
+                                total item(s)
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Processes */}
+                  <section className="mb-12">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                      Processes
+                    </h2>
+                    <div className="flex flex-col gap-3">
+                      {processRows.map((proc, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <input
+                            placeholder={`Process ${idx + 1}`}
+                            className="flex-1 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-yellow-500 transition"
+                            value={proc}
+                            onChange={(e) => {
+                              const next = [...processRows];
+                              next[idx] = e.target.value;
+                              setProcessRows(next);
+                            }}
+                            disabled={viewMode}
+                          />
+                          {!viewMode && (
+                            <button
+                              onClick={() => {
+                                if (processRows.length > 1) {
+                                  setProcessRows(
+                                    processRows.filter((_, i) => i !== idx)
+                                  );
+                                }
+                              }}
+                              className="text-red-500 hover:text-red-600 transition"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
-                  </div>
-                ))}
 
-                {!viewMode && (
-                  <button
-                    onClick={() =>
-                      setRawMaterials([
-                        ...rawMaterials,
-                        {
-                          raw_material_id: "",
-                          raw_material_name: "",
-                          tolerances: [""],
-                          quantities: [""],
-                          comments: [""],
-                        },
-                      ])
-                    }
-                    className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
-                  >
-                    + Add Raw Material
-                  </button>
-                )}
-
-                {/* Raw Materials Summary Table */}
-                {rawMaterials.length > 0 && rawMaterials.some(rm => rm.raw_material_name) && (
-                  <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 mt-6">
-                      Raw Materials Summary
-                    </h3>
-                    <table className="w-full text-sm text-left min-w-[600px]">
-                      <thead>
-                        <tr className="bg-purple-600 text-white uppercase text-xs tracking-wide">
-                          <th className="px-4 sm:px-6 py-3 font-medium">Raw Material Name</th>
-                          <th className="px-4 sm:px-6 py-3 font-medium text-center">Total Quantity</th>
-                          <th className="px-4 sm:px-6 py-3 font-medium text-center">Tolerances</th>
-                          <th className="px-4 sm:px-6 py-3 font-medium text-center">Comments</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rawMaterials
-                          .filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "")
-                          .map((rm, idx) => {
-                            // Calculate total quantity
-                            const totalQty = (rm.quantities || [])
-                              .filter(q => q !== "" && q !== null && q !== undefined)
-                              .reduce((sum, q) => {
-                                const num = parseFloat(q);
-                                return sum + (isNaN(num) ? 0 : num);
-                              }, 0);
-                            
-                            // Get tolerances (unique values or first value)
-                            const tolerances = (rm.tolerances || []).filter(t => t && t.trim() !== "");
-                            const toleranceDisplay = tolerances.length > 0 
-                              ? (tolerances.length === 1 ? tolerances[0] : tolerances.join(", "))
-                              : "-";
-                            
-                            // Get comments (unique values or first value)
-                            const comments = (rm.comments || []).filter(c => c && c.trim() !== "");
-                            const commentDisplay = comments.length > 0 
-                              ? (comments.length === 1 ? comments[0] : comments.join(", "))
-                              : "-";
-                            
-                            return (
-                              <tr
-                                key={idx}
-                                className={`border-t ${
-                                  idx % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-700"
-                                }`}
-                              >
-                                <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
-                                  {rm.raw_material_name}
-                                </td>
-                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
-                                  {totalQty.toFixed(2)}
-                                </td>
-                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
-                                  {toleranceDisplay}
-                                </td>
-                                <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
-                                  {commentDisplay}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        {rawMaterials.filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "").length === 0 && (
-                          <tr>
-                            <td colSpan="4" className="text-center py-6 text-gray-500">
-                              No raw materials added yet.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                      <tfoot>
-                        <tr className="bg-purple-100 dark:bg-purple-900 font-semibold">
-                          <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100">
-                            Total
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
-                            {rawMaterials
-                              .filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "")
-                              .reduce((total, rm) => {
-                                const qty = (rm.quantities || [])
-                                  .filter(q => q !== "" && q !== null && q !== undefined)
-                                  .reduce((sum, q) => {
-                                    const num = parseFloat(q);
-                                    return sum + (isNaN(num) ? 0 : num);
-                                  }, 0);
-                                return total + qty;
-                              }, 0)
-                              .toFixed(2)}
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
-                            -
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100">
-                            -
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                )}
-              </section>
-
-              {/* Accelerator Section */}
-              <section className="mb-10">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Accelerator (Pakai)
-                </h2>
-                {accelerators.map((acc, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-medium text-gray-700 dark:text-gray-300">
-                        Accelerator #{idx + 1}
-                      </h3>
-                      {!viewMode && accelerators.length > 1 && (
+                    {!viewMode && (
+                      <div className="flex justify-end mt-6">
                         <button
-                          onClick={() =>
-                            setAccelerators(accelerators.filter((_, i) => i !== idx))
-                          }
-                          className="text-red-500 hover:text-red-600 text-sm"
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                          onClick={() => setProcessRows([...processRows, ""])}
                         >
-                          ✕ Remove
+                          + Add Process
                         </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      {/* Accelerator Name */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Accelerator Name
-                        </label>
-                        <input
-                          type="text"
-                          value={acc.name}
-                          onChange={(e) => {
-                            const next = [...accelerators];
-                            next[idx].name = e.target.value;
-                            setAccelerators(next);
-                          }}
-                          disabled={viewMode}
-                          placeholder="Enter Accelerator name"
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                        />
                       </div>
-                      {/* Tolerance */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Tolerance
-                        </label>
-                        <input
-                          type="text"
-                          value={acc.tolerance}
-                          onChange={(e) => {
-                            const next = [...accelerators];
-                            next[idx].tolerance = e.target.value;
-                            setAccelerators(next);
-                          }}
-                          disabled={viewMode}
-                          placeholder="Enter tolerance"
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                        />
-                      </div>
-                      {/* Quantity */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Quantity
-                        </label>
-                        <input
-                          type="number"
-                          value={acc.quantity}
-                          onChange={(e) => {
-                            const next = [...accelerators];
-                            next[idx].quantity = e.target.value;
-                            setAccelerators(next);
-                          }}
-                          disabled={viewMode}
-                          placeholder="Enter quantity"
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                        />
-                      </div>
-                      {/* Comment */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Comments
-                        </label>
-                        <input
-                          type="text"
-                          value={acc.comment}
-                          onChange={(e) => {
-                            const next = [...accelerators];
-                            next[idx].comment = e.target.value;
-                            setAccelerators(next);
-                          }}
-                          disabled={viewMode}
-                          placeholder="Enter comment"
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {!viewMode && (
-                  <button
-                    onClick={() =>
-                      setAccelerators([
-                        ...accelerators,
-                        { name: "", tolerance: "", quantity: "", comment: "" },
-                      ])
-                    }
-                    className="bg-green-600 hover:bg-green-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
-                  >
-                    + Add Accelerator
-                  </button>
-                )}
-
-                {/* Raw Materials + Accelerators Combined Summary Table */}
-                {((rawMaterials.length > 0 && rawMaterials.some(rm => rm.raw_material_name)) || 
-                  (accelerators.length > 0 && accelerators.some(acc => acc.name))) && (
-                  <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 mt-6">
-                      Raw Materials + Accelerators Summary
-                    </h3>
-                    <table className="w-full text-sm text-left min-w-[600px]">
-                      <thead>
-                        <tr className="bg-gradient-to-r from-purple-600 to-green-600 text-white uppercase text-xs tracking-wide">
-                          <th className="px-4 sm:px-6 py-3 font-medium">Category</th>
-                          <th className="px-4 sm:px-6 py-3 font-medium text-center">Total Quantity</th>
-                          <th className="px-4 sm:px-6 py-3 font-medium text-center">Details</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* Raw Materials Total Row */}
-                        {rawMaterials.some(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "") && (
-                          <tr className="border-t bg-white dark:bg-gray-800">
-                            <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
-                              Raw Materials
-                            </td>
-                            <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300 font-semibold">
-                              {rawMaterials
-                                .filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "")
-                                .reduce((total, rm) => {
-                                  const qty = (rm.quantities || [])
-                                    .filter(q => q !== "" && q !== null && q !== undefined)
-                                    .reduce((sum, q) => {
-                                      const num = parseFloat(q);
-                                      return sum + (isNaN(num) ? 0 : num);
-                                    }, 0);
-                                  return total + qty;
-                                }, 0)
-                                .toFixed(2)}
-                            </td>
-                            <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
-                              {rawMaterials.filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "").length} item(s)
-                            </td>
-                          </tr>
-                        )}
-                        
-                        {/* Accelerators Total Row */}
-                        {accelerators.some(acc => acc.name && acc.name.trim() !== "") && (
-                          <tr className="border-t bg-white dark:bg-gray-800">
-                            <td className="px-4 sm:px-6 py-3 font-medium text-gray-900 dark:text-gray-100">
-                              Accelerators
-                            </td>
-                            <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300 font-semibold">
-                              {accelerators
-                                .filter(acc => acc.name && acc.name.trim() !== "")
-                                .reduce((total, acc) => {
-                                  const qty = parseFloat(acc.quantity);
-                                  return total + (isNaN(qty) ? 0 : qty);
-                                }, 0)
-                                .toFixed(2)}
-                            </td>
-                            <td className="px-4 sm:px-6 py-3 text-center text-gray-700 dark:text-gray-300">
-                              {accelerators.filter(acc => acc.name && acc.name.trim() !== "").length} item(s)
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                      <tfoot>
-                        <tr className="bg-gradient-to-r from-purple-100 to-green-100 dark:from-purple-900 dark:to-green-900 font-bold">
-                          <td className="px-4 sm:px-6 py-3 text-gray-900 dark:text-gray-100 text-lg">
-                            Grand Total
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100 text-lg">
-                            {(
-                              // Raw Materials Total
-                              rawMaterials
-                                .filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "")
-                                .reduce((total, rm) => {
-                                  const qty = (rm.quantities || [])
-                                    .filter(q => q !== "" && q !== null && q !== undefined)
-                                    .reduce((sum, q) => {
-                                      const num = parseFloat(q);
-                                      return sum + (isNaN(num) ? 0 : num);
-                                    }, 0);
-                                  return total + qty;
-                                }, 0) +
-                              // Accelerators Total
-                              accelerators
-                                .filter(acc => acc.name && acc.name.trim() !== "")
-                                .reduce((total, acc) => {
-                                  const qty = parseFloat(acc.quantity);
-                                  return total + (isNaN(qty) ? 0 : qty);
-                                }, 0)
-                            ).toFixed(2)}
-                          </td>
-                          <td className="px-4 sm:px-6 py-3 text-center text-gray-900 dark:text-gray-100 text-lg">
-                            {(
-                              (rawMaterials.filter(rm => rm.raw_material_name && rm.raw_material_name.trim() !== "").length) +
-                              (accelerators.filter(acc => acc.name && acc.name.trim() !== "").length)
-                            )} total item(s)
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                )}
-              </section>
-
-              {/* Processes */}
-              <section className="mb-12">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                  Processes
-                </h2>
-                <div className="flex flex-col gap-3">
-                  {processRows.map((proc, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        placeholder={`Process ${idx + 1}`}
-                        className="flex-1 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-yellow-500 transition"
-                        value={proc}
-                        onChange={(e) => {
-                          const next = [...processRows];
-                          next[idx] = e.target.value;
-                          setProcessRows(next);
-                        }}
-                        disabled={viewMode}
-                      />
-                      {!viewMode && (
-                        <button
-                          onClick={() => {
-                            if (processRows.length > 1) {
-                              setProcessRows(
-                                processRows.filter((_, i) => i !== idx)
-                              );
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-600 transition"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {!viewMode && (
-                  <div className="flex justify-end mt-6">
-                    <button
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
-                      onClick={() => setProcessRows([...processRows, ""])}
-                    >
-                      + Add Process
-                    </button>
-                  </div>
-                )}
-              </section>
+                    )}
+                  </section>
+                </>
+              )}
 
               {/* Submit Button */}
               {!viewMode && (
