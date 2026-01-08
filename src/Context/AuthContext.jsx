@@ -163,6 +163,27 @@ const deleteUser = async (id) => {
   }
 };
 
+const createEmployee = async (employeeData) => {
+  try {
+    const res = await axiosHandler.post("/auth/employee", employeeData);
+    toast.success(res?.data?.message || "Employee created successfully!");
+    return res.data;
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to create employee");
+    throw error;
+  }
+};
+
+const checkAdminExists = async () => {
+  try {
+    const res = await axiosHandler.get("/auth/check-admin");
+    return res.data.adminExists;
+  } catch (error) {
+    console.error("Error checking admin:", error);
+    return false;
+  }
+};
+
 
 
 
@@ -190,6 +211,8 @@ const deleteUser = async (id) => {
         setAllUsers,
         updateUserRole,
         deleteUser,
+        createEmployee,
+        checkAdminExists,
         token
       }}
     >

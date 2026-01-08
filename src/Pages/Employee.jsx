@@ -8,11 +8,17 @@ import {
   Edit,
   Trash2,
   X,
+  Mail,
+  Phone,
+  Lock,
+  User,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/Context/AuthContext";
 import { useUserRole } from "@/Context/UserRoleContext";
 import Pagination from "@/Components/Pagination/Pagination";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
 const Employee = () => {
   const {
@@ -22,6 +28,7 @@ const Employee = () => {
     getUserById,
     updateUserRole,
     deleteUser,
+    createEmployee,
   } = useAuth();
   const { roles, loading: rolesLoading } = useUserRole();
   const [page, setPage] = useState(1);
@@ -29,6 +36,7 @@ const Employee = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [updating, setUpdating] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -78,12 +86,65 @@ const Employee = () => {
       setUpdating(true);
       await updateUserRole(selectedEmployee._id, selectedRole);
       setShowModal(false);
+      fetchEmployees();
     } catch (error) {
       console.error("Error updating role:", error);
     } finally {
       setUpdating(false);
     }
   };
+
+  // Create Employee Form
+  const formik = useFormik({
+    initialValues: {
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      password: "",
+      role: "",
+    },
+    validationSchema: Yup.object({
+      first_name: Yup.string()
+        .min(2, "First Name must be at least 2 characters")
+        .max(40, "First Name cannot exceed 40 characters")
+        .required("First Name is required"),
+      last_name: Yup.string().max(40, "Last Name cannot exceed 40 characters"),
+      email: Yup.string()
+        .email("Invalid email address")
+        .required("Email is required"),
+      phone: Yup.string()
+        .matches(/^[7-9]\d{9}$/, "Please provide a valid Indian mobile number")
+        .required("Phone number is required"),
+      password: Yup.string()
+        .min(8, "Password must be at least 8 characters")
+        .required("Password is required"),
+      role: Yup.string().required("Role is required"),
+    }),
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const payload = {
+          ...values,
+          first_name:
+            values.first_name.charAt(0).toUpperCase() +
+            values.first_name.slice(1),
+          last_name:
+            values.last_name.length > 0
+              ? values.last_name.charAt(0).toUpperCase() +
+                values.last_name.slice(1)
+              : "",
+        };
+        await createEmployee(payload);
+        resetForm();
+        setShowCreateModal(false);
+        fetchEmployees();
+      } catch (error) {
+        console.error("Error creating employee:", error);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
   useEffect(() => {
     if (user) fetchEmployees();
   }, [user, page]);
@@ -126,6 +187,14 @@ const Employee = () => {
         </div>
 
         <div className="flex items-center space-x-4 text-gray-500">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            <Plus size={16} />
+            <span className="text-sm font-medium">Add Employee</span>
+          </button>
+
           <div className="relative group ml-3">
             <button
              onClick={() => setFilterOpen(!filterOpen)}
@@ -316,6 +385,210 @@ const Employee = () => {
         setPage={setPage}
         hasNextPage={allUsers?.length === 10}
       />
+
+      {/* Create Employee Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative bg-white rounded-2xl shadow-2xl w-[90%] max-w-2xl max-h-[90vh] overflow-y-auto p-6"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  Add New Employee
+                </h2>
+                <X
+                  size={24}
+                  className="cursor-pointer text-gray-500 hover:text-gray-700"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    formik.resetForm();
+                  }}
+                />
+              </div>
+
+              <form onSubmit={formik.handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* First Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                      <User size={18} className="text-gray-400 mr-2" />
+                      <input
+                        type="text"
+                        name="first_name"
+                        value={formik.values.first_name}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full outline-none text-sm"
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    {formik.touched.first_name && formik.errors.first_name && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.first_name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Last Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                      <User size={18} className="text-gray-400 mr-2" />
+                      <input
+                        type="text"
+                        name="last_name"
+                        value={formik.values.last_name}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full outline-none text-sm"
+                        placeholder="Enter last name (optional)"
+                      />
+                    </div>
+                    {formik.touched.last_name && formik.errors.last_name && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.last_name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                      <Mail size={18} className="text-gray-400 mr-2" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formik.values.email}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full outline-none text-sm"
+                        placeholder="Enter email"
+                      />
+                    </div>
+                    {formik.touched.email && formik.errors.email && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                      <Phone size={18} className="text-gray-400 mr-2" />
+                      <input
+                        type="text"
+                        name="phone"
+                        value={formik.values.phone}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full outline-none text-sm"
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                    {formik.touched.phone && formik.errors.phone && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                      <Lock size={18} className="text-gray-400 mr-2" />
+                      <input
+                        type="password"
+                        name="password"
+                        value={formik.values.password}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full outline-none text-sm"
+                        placeholder="Enter password"
+                      />
+                    </div>
+                    {formik.touched.password && formik.errors.password && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.password}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Role */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Role <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="role"
+                      value={formik.values.role}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      disabled={rolesLoading}
+                    >
+                      <option value="">Select a role</option>
+                      {roles.map((role) => (
+                        <option key={role._id} value={role._id}>
+                          {role.role}
+                        </option>
+                      ))}
+                    </select>
+                    {formik.touched.role && formik.errors.role && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formik.errors.role}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      formik.resetForm();
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formik.isSubmitting}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {formik.isSubmitting ? "Creating..." : "Create Employee"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

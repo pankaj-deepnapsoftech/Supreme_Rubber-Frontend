@@ -4,10 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import { Loader2, Lock, Mail, Factory, Phone } from "lucide-react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 const Register = () => {
-  const { register } = useAuth();
+  const { register, checkAdminExists } = useAuth();
   const navigate = useNavigate();
+  const [adminExists, setAdminExists] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   const formik = useFormik({
     initialValues: {
@@ -36,6 +40,13 @@ const Register = () => {
         .required("Confirm password is required"),
     }),
     onSubmit: async (values, { setSubmitting, setStatus }) => {
+      // Check if admin exists before submitting
+      if (adminExists) {
+        toast.error("Admin already exists. Please contact the existing admin.");
+        setSubmitting(false);
+        return;
+      }
+
       try {
         setStatus(null);
 
@@ -57,6 +68,22 @@ const Register = () => {
       }
     },
   });
+
+  // Check if admin exists on component mount
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        setChecking(true);
+        const exists = await checkAdminExists();
+        setAdminExists(exists);
+      } catch (error) {
+        console.error("Error checking admin:", error);
+      } finally {
+        setChecking(false);
+      }
+    };
+    checkAdmin();
+  }, [checkAdminExists]);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-900 via-slate-900 to-indigo-900 overflow-hidden text-white">
@@ -228,18 +255,37 @@ const Register = () => {
 
         {/* Submit button */}
         <motion.button
-          whileHover={{
+          whileHover={!adminExists ? {
             scale: 1.05,
             boxShadow: "0px 0px 25px rgba(0,255,255,0.5)",
-          }}
-          whileTap={{ scale: 0.97 }}
+          } : {}}
+          whileTap={!adminExists ? { scale: 0.97 } : {}}
           type="submit"
-          disabled={formik.isSubmitting}
-          className="w-full bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-700 text-white py-2.5 rounded-xl font-semibold shadow-lg transition-all duration-300 mt-6"
-          onClick={formik.handleSubmit}
+          disabled={formik.isSubmitting || adminExists || checking}
+          className={`w-full py-2.5 rounded-xl font-semibold shadow-lg transition-all duration-300 mt-6 ${
+            adminExists || checking
+              ? "bg-gray-500 cursor-not-allowed text-white"
+              : "bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-700 text-white"
+          }`}
+          onClick={(e) => {
+            if (adminExists) {
+              toast.error("Admin already exists. Please contact the existing admin.");
+              e.preventDefault();
+              return;
+            }
+            formik.handleSubmit(e);
+          }}
           style={{ marginTop: 24 }}
         >
-          {formik.isSubmitting ? <Loader2 size={20} className="animate-spin mx-auto" /> : "Register"}
+          {checking ? (
+            <Loader2 size={20} className="animate-spin mx-auto" />
+          ) : formik.isSubmitting ? (
+            <Loader2 size={20} className="animate-spin mx-auto" />
+          ) : adminExists ? (
+            "Registration Disabled - Admin Exists"
+          ) : (
+            "Register"
+          )}
         </motion.button>
 
         <p className="text-sm text-center mt-6 text-slate-400">
