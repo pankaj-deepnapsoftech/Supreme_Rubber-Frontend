@@ -552,21 +552,14 @@ const BOM = () => {
                   value={bomType}
                   onChange={(e) => setBomType(e.target.value)}
                 >
-                  <option value="select-option">Select an option</option>
-
+                  <option value="">Select an option</option>
                   <option value="compound">Compound</option>
                   <option value="part-name">Part Name</option>
                 </select>
               </div>
               <hr className="border-gray-300 dark:border-gray-600 mb-8" />
 
-              {bomType === "" || bomType === "select-option" ? (
-                <div className="text-center text-gray-600 dark:text-gray-300 py-20">
-                  Please select a BOM type from the dropdown above to proceed.
-                </div>
-              ) : null}
-
-              {bomType === "compound" ? (
+              {bomType === "compound" && (
                 <>
                   <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
@@ -1312,7 +1305,9 @@ const BOM = () => {
                     )}
                   </section>
                 </>
-              ) : (
+              )}
+
+              {bomType === "part-name" && (
                 <>
                   <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
@@ -1404,7 +1399,7 @@ const BOM = () => {
                   </section>
 
                   {/* Part Name Section */}
-                  <section className="mb-10">
+                  {/* <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                       Part Name
@@ -1421,7 +1416,6 @@ const BOM = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                          {/* Part Name Selector */}
                           <div className="md:col-span-3">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Part Name (ID + Name)
@@ -1448,7 +1442,6 @@ const BOM = () => {
                             </select>
                           </div>
 
-                          {/* Quantities */}
                           {["quantities", "tolerances", "comments"].map(
                             (key) => (
                               <div key={key}>
@@ -1478,10 +1471,10 @@ const BOM = () => {
                         </div>
                       </div>
                     ))}
-                  </section>
+                  </section> */}
 
                   {/* Raw Materials Section */}
-                  <section className="mb-10">
+                  {/* <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
                       Raw Materials
@@ -1577,7 +1570,6 @@ const BOM = () => {
                       </button>
                     )}
 
-                    {/* Raw Materials Summary Table */}
                     {rawMaterials.length > 0 &&
                       rawMaterials.some((rm) => rm.raw_material_name) && (
                         <div className="mt-6 border rounded-lg overflow-x-auto shadow-sm">
@@ -1722,10 +1714,10 @@ const BOM = () => {
                           </table>
                         </div>
                       )}
-                  </section>
+                  </section> */}
 
                   {/* Accelerator Section */}
-                  <section className="mb-10">
+                  {/* <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                       Accelerator (Pakai)
@@ -1753,7 +1745,6 @@ const BOM = () => {
                           )}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                          {/* Accelerator Name */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Accelerator Name
@@ -1771,7 +1762,6 @@ const BOM = () => {
                               className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
                             />
                           </div>
-                          {/* Tolerance */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Tolerance
@@ -1789,7 +1779,6 @@ const BOM = () => {
                               className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
                             />
                           </div>
-                          {/* Quantity */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Quantity
@@ -1807,7 +1796,6 @@ const BOM = () => {
                               className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
                             />
                           </div>
-                          {/* Comment */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               Comments
@@ -1847,7 +1835,6 @@ const BOM = () => {
                       </button>
                     )}
 
-                    {/* Raw Materials + Accelerators Combined Summary Table */}
                     {((rawMaterials.length > 0 &&
                       rawMaterials.some((rm) => rm.raw_material_name)) ||
                       (accelerators.length > 0 &&
@@ -1871,7 +1858,6 @@ const BOM = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {/* Raw Materials Total Row */}
                             {rawMaterials.some(
                               (rm) =>
                                 rm.raw_material_name &&
@@ -1917,7 +1903,6 @@ const BOM = () => {
                               </tr>
                             )}
 
-                            {/* Accelerators Total Row */}
                             {accelerators.some(
                               (acc) => acc.name && acc.name.trim() !== ""
                             ) && (
@@ -2061,6 +2046,11 @@ const BOM = () => {
                 </>
               )}
 
+              {bomType === "" &&  (
+                <div className="text-center text-gray-500">No BOM Type Selected</div>
+              )}
+
+             
               {/* Submit Button */}
               {!viewMode && (
                 <div className="flex justify-center mt-8">
