@@ -19,17 +19,19 @@ import VerifyEmail from "./Pages/verifyEmail";
 import PurchaseOrder from "./Pages/PurchaseOrder";
 import QC_History from "./Pages/QC_History";
 import { QualityCheckProvider } from "./Context/QualityCheckContext";
+import RawMaterialInv from "./Pages/RawMaterialInv";
+import PartNameInv from "./Pages/PartNameInv";
+import CompoundNameInv from "./Pages/CompoundNameInv";
 
 const App = () => {
   return (
     <Router>
       <Routes>
-
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<OTPVerification />} />
-        <Route path="/verify-email" element={<VerifyEmail  />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/"
           element={
@@ -38,7 +40,6 @@ const App = () => {
             </ProtectedRoute>
           }
         >
-
           <Route
             index
             element={
@@ -47,7 +48,6 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
 
           <Route
             path="supplier"
@@ -58,7 +58,6 @@ const App = () => {
             }
           />
 
-
           <Route
             path="employee"
             element={
@@ -67,7 +66,6 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-
 
           <Route
             path="user-role"
@@ -95,15 +93,41 @@ const App = () => {
             }
           />
 
-          <Route
+          {/* <Route
             path="inventory"
             element={
               <ProtectedRoute path="/inventory">
                 <Inventory />
               </ProtectedRoute>
             }
+          /> */}
+
+          <Route
+            path="raw-material"
+            element={
+              <ProtectedRoute path="/raw-material">
+                <RawMaterialInv />
+              </ProtectedRoute>
+            }
           />
 
+          <Route
+            path="part-name"
+            element={
+              <ProtectedRoute path="/part-name">
+                <PartNameInv />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="compound-name"
+            element={
+              <ProtectedRoute path="/compound-name">
+                <CompoundNameInv />
+              </ProtectedRoute>
+            }
+          />
 
           {/* <Route
             path="quality-check"
@@ -141,9 +165,7 @@ const App = () => {
               </ProtectedRoute>
             }
           >
-
             <Route index element={<Navigate to="/production/bom" replace />} />
-
 
             <Route
               path="bom"
@@ -153,7 +175,6 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-
 
             <Route
               path="start"
@@ -165,7 +186,6 @@ const App = () => {
             />
           </Route>
         </Route>
-
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
