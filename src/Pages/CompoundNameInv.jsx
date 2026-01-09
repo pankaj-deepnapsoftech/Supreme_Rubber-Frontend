@@ -62,9 +62,9 @@ const CompoundNameInv = () => {
     }),
     onSubmit: async (values, { resetForm }) => {
       if (editMode) {
-        await updateProduct(values);
+        await updateProduct(values, page);
       } else {
-        await createProduct(values);
+        await createProduct(values, page);
       }
 
       resetForm();
@@ -83,7 +83,7 @@ const CompoundNameInv = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
-      await deleteProduct(id);
+      await deleteProduct(id, page);
     }
   };
 
@@ -105,7 +105,7 @@ const CompoundNameInv = () => {
   };
 
   const handleRefresh = () => {
-    getAllProducts();
+    getAllProducts(page);
   };
   const handleFilter = (category) => {
     setSelectedCategory(category);

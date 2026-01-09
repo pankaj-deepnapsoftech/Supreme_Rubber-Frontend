@@ -28,7 +28,6 @@ const Inventory = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showFilter, setShowFilter] = useState(false);
 
-
   const {
     products,
     createProduct,
@@ -63,11 +62,11 @@ const Inventory = () => {
     }),
     onSubmit: async (values, { resetForm }) => {
       if (editMode) {
-        await updateProduct(values);
+        await updateProduct(values, page);
       } else {
-        await createProduct(values);
+        await createProduct(values, page);
       }
-      
+
       resetForm();
       setShowModal(false);
       setEditMode(false);
@@ -84,7 +83,7 @@ const Inventory = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
-      await deleteProduct(id);
+      await deleteProduct(id, page);
     }
   };
 
@@ -106,7 +105,7 @@ const Inventory = () => {
   };
 
   const handleRefresh = () => {
-    getAllProducts();
+    getAllProducts(page);
   };
   const handleFilter = (category) => {
     setSelectedCategory(category);
@@ -151,79 +150,80 @@ const Inventory = () => {
 
       {/* Search & Icons */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-4">
-  {/* 🔍 Search Bar */}
-  <div className="flex items-center border rounded-lg px-3 py-2 w-48 sm:w-56 md:w-64">
-    <Search size={16} className="text-gray-400 mr-2" />
-    <input
-      type="text"
-      placeholder="Search..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="w-full outline-none text-sm"
-    />
-  </div>
-
-  {/* ⚙️ Filter + Refresh + Download */}
-  <div className="flex items-center space-x-3 text-gray-600">
-    {/* Filter Dropdown */}
-    <div className="relative">
-      <button
-        onClick={() => setShowFilter((prev) => !prev)}
-        className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
-      >
-        <Filter size={16} className="text-gray-700" />
-      </button>
-
-      {showFilter && (
-        <div className="absolute right-0 top-9 bg-white border shadow-md rounded-md w-44 z-10 max-h-60 overflow-y-auto">
-          <p
-            onClick={() => handleFilter("All")}
-            className="cursor-pointer hover:bg-gray-100 px-3 py-2 text-sm rounded"
-          >
-            All
-          </p>
-
-          {[...new Set(
-            products
-              .map((p) => p.category?.trim())
-              .filter((cat) => cat && cat !== "")
-          )]
-            .sort()
-            .map((cat) => (
-              <p
-                key={cat}
-                onClick={() => handleFilter(cat)}
-                className={`cursor-pointer hover:bg-gray-100 px-3 py-2 text-sm rounded ${
-                  selectedCategory === cat
-                    ? "bg-blue-100 text-blue-600 font-medium"
-                    : "text-gray-700"
-                }`}
-              >
-                {cat}
-              </p>
-            ))}
+        {/* 🔍 Search Bar */}
+        <div className="flex items-center border rounded-lg px-3 py-2 w-48 sm:w-56 md:w-64">
+          <Search size={16} className="text-gray-400 mr-2" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full outline-none text-sm"
+          />
         </div>
-      )}
-    </div>
 
-    {/* Refresh Button */}
-    <button
-      onClick={handleRefresh}
-      className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
-    >
-      <RefreshCcw size={16} />
-    </button>
+        {/* ⚙️ Filter + Refresh + Download */}
+        <div className="flex items-center space-x-3 text-gray-600">
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowFilter((prev) => !prev)}
+              className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
+            >
+              <Filter size={16} className="text-gray-700" />
+            </button>
 
-    {/* Download Button */}
-    <button
-      onClick={handleDownload}
-      className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
-    >
-      <Download size={16} />
-    </button>
-  </div>
-</div>
+            {showFilter && (
+              <div className="absolute right-0 top-9 bg-white border shadow-md rounded-md w-44 z-10 max-h-60 overflow-y-auto">
+                <p
+                  onClick={() => handleFilter("All")}
+                  className="cursor-pointer hover:bg-gray-100 px-3 py-2 text-sm rounded"
+                >
+                  All
+                </p>
 
+                {[
+                  ...new Set(
+                    products
+                      .map((p) => p.category?.trim())
+                      .filter((cat) => cat && cat !== "")
+                  ),
+                ]
+                  .sort()
+                  .map((cat) => (
+                    <p
+                      key={cat}
+                      onClick={() => handleFilter(cat)}
+                      className={`cursor-pointer hover:bg-gray-100 px-3 py-2 text-sm rounded ${
+                        selectedCategory === cat
+                          ? "bg-blue-100 text-blue-600 font-medium"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {cat}
+                    </p>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
+          >
+            <RefreshCcw size={16} />
+          </button>
+
+          {/* Download Button */}
+          <button
+            onClick={handleDownload}
+            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
+          >
+            <Download size={16} />
+          </button>
+        </div>
+      </div>
 
       <div className="overflow-x-auto bg-white mt-10 rounded-2xl shadow-md border border-gray-100">
         <table className="min-w-full border-collapse text-sm text-left">
@@ -238,10 +238,7 @@ const Inventory = () => {
                 "UOM",
                 "Actions",
               ].map((header, i) => (
-                <th
-                  key={i}
-                  className={`py-3 px-4 text-center font-semibold `}
-                >
+                <th key={i} className={`py-3 px-4 text-center font-semibold `}>
                   {header}
                 </th>
               ))}
@@ -285,7 +282,7 @@ const Inventory = () => {
                       {item.name}
                     </td>
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.current_stock} 
+                      {item.current_stock}
                     </td>
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.reject_stock || 0}
