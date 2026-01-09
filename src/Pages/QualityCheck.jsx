@@ -1062,6 +1062,13 @@ const QualityCheck = () => {
                                       prod.part_names?.[0]?.est_qty ||
                                       0
                                   );
+                                  
+                                  // Validation: Approved QTY should not exceed production quantity
+                                  if (approvedQty > totalQty) {
+                                    toast.error(`Approved quantity cannot exceed production quantity (${totalQty})`);
+                                    return; // Don't update if validation fails
+                                  }
+                                  
                                   const rejectedQty = Math.max(
                                     0,
                                     totalQty - approvedQty
@@ -1134,6 +1141,12 @@ const QualityCheck = () => {
                                         prod.rejected_qty ||
                                         0
                                     );
+                                    const totalQty = parseFloat(
+                                      prod.__prod_qty ||
+                                        prod.part_names?.[0]?.prod_qty ||
+                                        prod.part_names?.[0]?.est_qty ||
+                                        0
+                                    );
 
                                     if (
                                       approvedQty === 0 &&
@@ -1141,6 +1154,15 @@ const QualityCheck = () => {
                                     ) {
                                       toast.error(
                                         "Please enter approved quantity"
+                                      );
+                                      return;
+                                    }
+
+                                    // Validation: Approved QTY + Rejected QTY should not exceed production quantity
+                                    const totalApprovedRejected = approvedQty + rejectedQty;
+                                    if (totalApprovedRejected > totalQty) {
+                                      toast.error(
+                                        `Total approved and rejected quantity (${totalApprovedRejected}) cannot exceed production quantity (${totalQty})`
                                       );
                                       return;
                                     }

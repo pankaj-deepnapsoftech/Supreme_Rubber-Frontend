@@ -321,6 +321,16 @@ const Production_Start = () => {
 
   // Handle Part Name field changes
   const handlePartNameChange = (field, value) => {
+    // Validation: PROD QTY should not exceed EST QTY
+    if (field === "prod_qty") {
+      const estQty = parseFloat(partName.est_qty) || 0;
+      const prodQty = parseFloat(value) || 0;
+      if (prodQty > estQty) {
+        toast.error(`Production quantity cannot exceed estimated quantity (${estQty})`);
+        return; // Don't update if validation fails
+      }
+    }
+    
     setPartName((prev) => {
       const updated = { ...prev, [field]: value };
       // Calculate remain_qty and (if est changes) we'll scale RMs below
@@ -364,6 +374,17 @@ const Production_Start = () => {
 
   // Handle Raw Material changes
   const handleRawMaterialChange = (idx, field, value) => {
+    // Validation: Used QTY should not exceed EST QTY
+    if (field === "used_qty") {
+      const rm = rawMaterials[idx];
+      const estQty = parseFloat(rm?.est_qty) || 0;
+      const usedQty = parseFloat(value) || 0;
+      if (usedQty > estQty) {
+        toast.error(`Used quantity cannot exceed estimated quantity (${estQty}) for ${rm?.raw_material_name || "raw material"}`);
+        return; // Don't update if validation fails
+      }
+    }
+    
     setRawMaterials((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], [field]: value };
@@ -380,6 +401,17 @@ const Production_Start = () => {
 
   // Handle Accelerator changes
   const handleAcceleratorChange = (idx, field, value) => {
+    // Validation: Used QTY should not exceed EST QTY
+    if (field === "used_qty") {
+      const acc = accelerators[idx];
+      const estQty = parseFloat(acc?.est_qty || acc?.quantity) || 0;
+      const usedQty = parseFloat(value) || 0;
+      if (usedQty > estQty) {
+        toast.error(`Used quantity cannot exceed estimated quantity (${estQty}) for ${acc?.name || "accelerator"}`);
+        return; // Don't update if validation fails
+      }
+    }
+    
     setAccelerators((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], [field]: value };
