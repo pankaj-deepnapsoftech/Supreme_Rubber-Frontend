@@ -149,9 +149,24 @@ const Production_Start = () => {
       const firstPartNameDetail = Array.isArray(bom.part_name_details) && bom.part_name_details.length > 0 ? bom.part_name_details[0] : null;
       const pndId = typeof firstPartNameDetail?.part_name_id_name === "string" ? firstPartNameDetail.part_name_id_name.split("-")[0] : null;
       const productById = (products || []).find((p) => p?._id === pndId);
-      const productMatch = (products || []).find(
-        (p) => p?.product_id === firstCode || p?.name === (bom.compound_name || "")
-      );
+      
+      // For compound BOMs, find the compound product by name and category
+      let productMatch = null;
+      if (bom.bom_type === "compound" && bom.compound_name) {
+        // Find compound product by name and category "Compound Name"
+        productMatch = (products || []).find(
+          (p) => p?.category === "Compound Name" && 
+                 p?.name?.toLowerCase() === bom.compound_name?.toLowerCase()
+        );
+      }
+      
+      // Fallback: find by product_id or name
+      if (!productMatch) {
+        productMatch = (products || []).find(
+          (p) => p?.product_id === firstCode || p?.name === (bom.compound_name || "")
+        );
+      }
+      
       const pndSnap = firstPartNameDetail?.product_snapshot || null;
       // Get first quantity from part_name_details if available
       const firstEstQty = firstPartNameDetail && Array.isArray(firstPartNameDetail.quantities) && firstPartNameDetail.quantities.length > 0
@@ -161,11 +176,15 @@ const Production_Start = () => {
       const estQtyValue = bom.compound_weight && bom.compound_weight.trim() !== "" 
         ? bom.compound_weight 
         : firstEstQty;
+      
+      // For compound BOMs, default UOM to "Kg" if not found
+      const resolvedUom = pndSnap?.uom || productById?.uom || productMatch?.uom || (bom.bom_type === "compound" ? "Kg" : "");
+      
       setPartName({
         compound_code: firstCode || "",
         compound_name: bom.compound_name || "",
         est_qty: estQtyValue,
-        uom: pndSnap?.uom || productById?.uom || productMatch?.uom || "",
+        uom: resolvedUom,
         prod_qty: "",
         remain_qty: estQtyValue || "",
         category: pndSnap?.category || productById?.category || productMatch?.category || "",
