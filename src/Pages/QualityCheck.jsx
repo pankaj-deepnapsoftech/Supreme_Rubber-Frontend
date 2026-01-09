@@ -288,9 +288,9 @@ const QualityCheck = () => {
             onClick={() => setShowGtModal(true)}
             className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
-            Gateman
+           Gateman
           </Button>
-          
+
           <Button
             onClick={async () => {
               try {
@@ -329,14 +329,12 @@ const QualityCheck = () => {
           >
             Finished-Good QC
           </Button>
-          <Button
-          className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
-Raw Material QC
+          <Button className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
+            Raw Material QC
           </Button>
-           <Button
-          className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
-Compound QC          </Button>
-
+          <Button className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
+            Compound QC{" "}
+          </Button>
         </div>
 
         <div className="flex mt-3 justify-end items-center gap-4 text-gray-600 w-full">
@@ -435,7 +433,9 @@ Compound QC          </Button>
                       {item?.attached_report ? (
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => window.open(item.attached_report, '_blank')}
+                            onClick={() =>
+                              window.open(item.attached_report, "_blank")
+                            }
                             className="h-4 w-4 text-blue-500 cursor-pointer hover:text-blue-700"
                             title="View Report File"
                           >
@@ -444,26 +444,34 @@ Compound QC          </Button>
                           <button
                             onClick={async () => {
                               try {
-                                const response = await fetch(item.attached_report);
+                                const response = await fetch(
+                                  item.attached_report
+                                );
                                 const blob = await response.blob();
-                                const urlParts = item.attached_report.split('/');
-                                const originalFilename = urlParts[urlParts.length - 1];
-                                const decodedFilename = decodeURIComponent(originalFilename);
-                                const blobUrl = window.URL.createObjectURL(blob);
-                                const link = document.createElement('a');
+                                const urlParts =
+                                  item.attached_report.split("/");
+                                const originalFilename =
+                                  urlParts[urlParts.length - 1];
+                                const decodedFilename =
+                                  decodeURIComponent(originalFilename);
+                                const blobUrl =
+                                  window.URL.createObjectURL(blob);
+                                const link = document.createElement("a");
                                 link.href = blobUrl;
-                                link.download = decodedFilename || `Report_${item.item_name || 'document'}`;
+                                link.download =
+                                  decodedFilename ||
+                                  `Report_${item.item_name || "document"}`;
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
                                 window.URL.revokeObjectURL(blobUrl);
                               } catch (error) {
-                                console.error('Download failed:', error);
+                                console.error("Download failed:", error);
                                 // Fallback to direct download
-                                const link = document.createElement('a');
+                                const link = document.createElement("a");
                                 link.href = item.attached_report;
-                                link.download = '';
-                                link.target = '_blank';
+                                link.download = "";
+                                link.target = "_blank";
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
@@ -740,7 +748,9 @@ Compound QC          </Button>
                     </label>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => window.open(selectedReport.attached_report, '_blank')}
+                        onClick={() =>
+                          window.open(selectedReport.attached_report, "_blank")
+                        }
                         className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm"
                       >
                         <Eye size={16} />
@@ -749,26 +759,35 @@ Compound QC          </Button>
                       <button
                         onClick={async () => {
                           try {
-                            const response = await fetch(selectedReport.attached_report);
+                            const response = await fetch(
+                              selectedReport.attached_report
+                            );
                             const blob = await response.blob();
-                            const urlParts = selectedReport.attached_report.split('/');
-                            const originalFilename = urlParts[urlParts.length - 1];
-                            const decodedFilename = decodeURIComponent(originalFilename);
+                            const urlParts =
+                              selectedReport.attached_report.split("/");
+                            const originalFilename =
+                              urlParts[urlParts.length - 1];
+                            const decodedFilename =
+                              decodeURIComponent(originalFilename);
                             const blobUrl = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
+                            const link = document.createElement("a");
                             link.href = blobUrl;
-                            link.download = decodedFilename || `Report_${selectedReport.item_name || 'document'}`;
+                            link.download =
+                              decodedFilename ||
+                              `Report_${
+                                selectedReport.item_name || "document"
+                              }`;
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
                             window.URL.revokeObjectURL(blobUrl);
                           } catch (error) {
-                            console.error('Download failed:', error);
+                            console.error("Download failed:", error);
                             // Fallback to direct download
-                            const link = document.createElement('a');
+                            const link = document.createElement("a");
                             link.href = selectedReport.attached_report;
-                            link.download = '';
-                            link.target = '_blank';
+                            link.download = "";
+                            link.target = "_blank";
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
@@ -973,8 +992,12 @@ Compound QC          </Button>
                     <th className="px-3 sm:px-4 py-3 text-left">Status</th>
                     <th className="px-3 sm:px-4 py-3 text-left">Quantity</th>
                     <th className="px-3 sm:px-4 py-3 text-left">UOM</th>
-                    <th className="px-3 sm:px-4 py-3 text-left">Approved Qty</th>
-                    <th className="px-3 sm:px-4 py-3 text-left">Rejected Qty</th>
+                    <th className="px-3 sm:px-4 py-3 text-left">
+                      Approved Qty
+                    </th>
+                    <th className="px-3 sm:px-4 py-3 text-left">
+                      Rejected Qty
+                    </th>
                     <th className="px-3 sm:px-4 py-3 text-left">Action</th>
                   </tr>
                 </thead>
@@ -1021,7 +1044,9 @@ Compound QC          </Button>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             {isRejected || isApproved ? (
                               <div className="text-gray-600 text-xs sm:text-sm font-medium">
-                                {prod.__approved_qty || prod.approved_qty || "-"}
+                                {prod.__approved_qty ||
+                                  prod.approved_qty ||
+                                  "-"}
                               </div>
                             ) : (
                               <input
@@ -1031,14 +1056,22 @@ Compound QC          </Button>
                                 onChange={(e) => {
                                   const value = e.target.value;
                                   const approvedQty = parseFloat(value) || 0;
-                                  const totalQty = parseFloat(prod.__prod_qty || prod.part_names?.[0]?.prod_qty || prod.part_names?.[0]?.est_qty || 0);
-                                  const rejectedQty = Math.max(0, totalQty - approvedQty);
-                                  
+                                  const totalQty = parseFloat(
+                                    prod.__prod_qty ||
+                                      prod.part_names?.[0]?.prod_qty ||
+                                      prod.part_names?.[0]?.est_qty ||
+                                      0
+                                  );
+                                  const rejectedQty = Math.max(
+                                    0,
+                                    totalQty - approvedQty
+                                  );
+
                                   setProdQcList((prev) =>
                                     prev.map((p) =>
                                       p._id === prod._id
-                                        ? { 
-                                            ...p, 
+                                        ? {
+                                            ...p,
                                             __approved_qty: value,
                                             __rejected_qty: String(rejectedQty),
                                           }
@@ -1063,7 +1096,9 @@ Compound QC          </Button>
                           <td className="px-3 sm:px-4 py-3 whitespace-nowrap">
                             {isRejected || isApproved ? (
                               <div className="text-gray-600 text-xs sm:text-sm font-medium">
-                                {prod.__rejected_qty || prod.rejected_qty || "-"}
+                                {prod.__rejected_qty ||
+                                  prod.rejected_qty ||
+                                  "-"}
                               </div>
                             ) : (
                               <input
@@ -1089,14 +1124,27 @@ Compound QC          </Button>
                                 className="px-3 py-1.5 rounded-md bg-green-100 text-green-600 hover:bg-green-200 text-xs sm:text-sm font-medium"
                                 onClick={async () => {
                                   try {
-                                    const approvedQty = parseFloat(prod.__approved_qty || prod.approved_qty || 0);
-                                    const rejectedQty = parseFloat(prod.__rejected_qty || prod.rejected_qty || 0);
-                                    
-                                    if (approvedQty === 0 && rejectedQty === 0) {
-                                      toast.error("Please enter approved quantity");
+                                    const approvedQty = parseFloat(
+                                      prod.__approved_qty ||
+                                        prod.approved_qty ||
+                                        0
+                                    );
+                                    const rejectedQty = parseFloat(
+                                      prod.__rejected_qty ||
+                                        prod.rejected_qty ||
+                                        0
+                                    );
+
+                                    if (
+                                      approvedQty === 0 &&
+                                      rejectedQty === 0
+                                    ) {
+                                      toast.error(
+                                        "Please enter approved quantity"
+                                      );
                                       return;
                                     }
-                                    
+
                                     await axiosHandler.patch(
                                       `/production/${prod._id}/approve`,
                                       {
@@ -1115,9 +1163,7 @@ Compound QC          </Button>
                                     }));
                                   } catch (e) {
                                     console.error(e);
-                                    toast.error(
-                                      "Failed to approve production"
-                                    );
+                                    toast.error("Failed to approve production");
                                   }
                                 }}
                               >

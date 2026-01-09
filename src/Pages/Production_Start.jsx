@@ -24,6 +24,8 @@ const Production_Start = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentProductionId, setCurrentProductionId] = useState("");
   const [viewDetails, setViewDetails] = useState(null);
+  const [bomTypeFilter, setBomTypeFilter] = useState("");
+
 
   // BOM and form data
   const [boms, setBoms] = useState([]);
@@ -33,7 +35,7 @@ const Production_Start = () => {
   // Searchable BOM selector state
   const [bomSearch, setBomSearch] = useState("");
   const [showBomResults, setShowBomResults] = useState(false);
-  const [bomTypeFilter, setBomTypeFilter] = useState(""); // Filter: "", "compound", "part-name"
+ const [bomType, setBomType] = useState("");
   // Part Name data
   const [partName, setPartName] = useState({
     compound_code: "",
@@ -94,6 +96,21 @@ const Production_Start = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // Fetch BOMs when bomType filter changes
+  useEffect(() => {
+    if (bomType) {
+      fetchBoms(bomType);
+      // Clear selected BOM when filter changes
+      setSelectedBomId("");
+      setSelectedBom(null);
+      setBomSearch("");
+      setShowBomResults(false);
+    } else {
+      fetchBoms();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bomType]);
+
   // Handle BOM selection
   const handleBomSelect = async (bomId) => {
     if (!bomId) {
@@ -132,9 +149,24 @@ const Production_Start = () => {
       const firstPartNameDetail = Array.isArray(bom.part_name_details) && bom.part_name_details.length > 0 ? bom.part_name_details[0] : null;
       const pndId = typeof firstPartNameDetail?.part_name_id_name === "string" ? firstPartNameDetail.part_name_id_name.split("-")[0] : null;
       const productById = (products || []).find((p) => p?._id === pndId);
-      const productMatch = (products || []).find(
-        (p) => p?.product_id === firstCode || p?.name === (bom.compound_name || "")
-      );
+      
+      // For compound BOMs, find the compound product by name and category
+      let productMatch = null;
+      if (bom.bom_type === "compound" && bom.compound_name) {
+        // Find compound product by name and category "Compound Name"
+        productMatch = (products || []).find(
+          (p) => p?.category === "Compound Name" && 
+                 p?.name?.toLowerCase() === bom.compound_name?.toLowerCase()
+        );
+      }
+      
+      // Fallback: find by product_id or name
+      if (!productMatch) {
+        productMatch = (products || []).find(
+          (p) => p?.product_id === firstCode || p?.name === (bom.compound_name || "")
+        );
+      }
+      
       const pndSnap = firstPartNameDetail?.product_snapshot || null;
       // Get first quantity from part_name_details if available
       const firstEstQty = firstPartNameDetail && Array.isArray(firstPartNameDetail.quantities) && firstPartNameDetail.quantities.length > 0
@@ -144,11 +176,15 @@ const Production_Start = () => {
       const estQtyValue = bom.compound_weight && bom.compound_weight.trim() !== "" 
         ? bom.compound_weight 
         : firstEstQty;
+      
+      // For compound BOMs, default UOM to "Kg" if not found
+      const resolvedUom = pndSnap?.uom || productById?.uom || productMatch?.uom || (bom.bom_type === "compound" ? "Kg" : "");
+      
       setPartName({
         compound_code: firstCode || "",
         compound_name: bom.compound_name || "",
         est_qty: estQtyValue,
-        uom: pndSnap?.uom || productById?.uom || productMatch?.uom || "",
+        uom: resolvedUom,
         prod_qty: "",
         remain_qty: estQtyValue || "",
         category: pndSnap?.category || productById?.category || productMatch?.category || "",
@@ -451,8 +487,11 @@ const Production_Start = () => {
 
   // Reset form
   const resetForm = () => {
+    setBomType("");
     setSelectedBomId("");
     setSelectedBom(null);
+    setBomSearch("");
+    setShowBomResults(false);
     setEditMode(false);
     setCurrentProductionId("");
     setPartName({
@@ -527,14 +566,11 @@ const Production_Start = () => {
         </div>
 
         <div className="flex items-center gap-4 text-gray-600">
-
           <button
             onClick={fetchProductions}
-            className="p-2 cursor-pointer rounded-lg  text-gray-800  border border-gray-300 hover:bg-gray-100 transition">
-            <RefreshCcw
-              size={16}
-
-            />
+            className="p-2 cursor-pointer rounded-lg  text-gray-800  border border-gray-300 hover:bg-gray-100 transition"
+          >
+            <RefreshCcw size={16} />
           </button>
         </div>
       </div>
@@ -567,11 +603,14 @@ const Production_Start = () => {
                 return (
                   <tr
                     key={prod._id}
-                    className={`border-t text-center whitespace-nowrap ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      } `}
+                    className={`border-t text-center whitespace-nowrap ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } `}
                   >
                     <td className="px-4 sm:px-6 py-3">
-                      {pn?.compound_code || prod.bom?.compound_code || prod.production_id}
+                      {pn?.compound_code ||
+                        prod.bom?.compound_code ||
+                        prod.production_id}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       {pn?.compound_name || prod.bom?.compound_name || "-"}
@@ -667,28 +706,49 @@ const Production_Start = () => {
                         {/* Production Status Badge */}
                         {(() => {
                           const deriveStatus = (p) => {
-                            const list = Array.isArray(p?.processes) ? p.processes : [];
+                            const list = Array.isArray(p?.processes)
+                              ? p.processes
+                              : [];
                             if (!p?.status && list.length) {
-                              const allDone = list.every((pr) => pr.done === true || pr.status === "completed");
-                              const anyStarted = list.some((pr) => pr.start === true || pr.status === "in_progress");
-                              return allDone ? "completed" : anyStarted ? "in_progress" : "pending";
+                              const allDone = list.every(
+                                (pr) =>
+                                  pr.done === true || pr.status === "completed"
+                              );
+                              const anyStarted = list.some(
+                                (pr) =>
+                                  pr.start === true ||
+                                  pr.status === "in_progress"
+                              );
+                              return allDone
+                                ? "completed"
+                                : anyStarted
+                                ? "in_progress"
+                                : "pending";
                             }
                             return p?.status || "pending";
                           };
 
-                          const statusVal = (deriveStatus(prod) || "pending").toString().toLowerCase();
+                          const statusVal = (deriveStatus(prod) || "pending")
+                            .toString()
+                            .toLowerCase();
                           const normalizedStatus =
-                            statusVal === "production start" || statusVal === "production_start"
+                            statusVal === "production start" ||
+                            statusVal === "production_start"
                               ? "completed"
                               : statusVal;
 
                           const label = (() => {
-                            if (normalizedStatus === "completed") return "Production Completed";
-                            if (normalizedStatus === "in_progress") return "Work in Progress";
+                            if (normalizedStatus === "completed")
+                              return "Production Completed";
+                            if (normalizedStatus === "in_progress")
+                              return "Work in Progress";
                             if (!normalizedStatus) return "Pending";
                             return normalizedStatus
                               .split(/[_\s]+/)
-                              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
                               .join(" ");
                           })();
 
@@ -696,8 +756,8 @@ const Production_Start = () => {
                             normalizedStatus === "completed"
                               ? "bg-green-100 text-green-600"
                               : normalizedStatus === "in_progress"
-                                ? "bg-yellow-100 text-yellow-600"
-                                : "bg-gray-100 text-gray-600";
+                              ? "bg-yellow-100 text-yellow-600"
+                              : "bg-gray-100 text-gray-600";
 
                           return (
                             <span
@@ -716,7 +776,11 @@ const Production_Start = () => {
                           const rawMaterials = prod?.raw_materials || [];
                           const allRmRemainZero =
                             rawMaterials.length === 0 ||
-                            rawMaterials.every((rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6);
+                            rawMaterials.every(
+                              (rm) =>
+                                Math.abs(parseFloat(rm?.remain_qty) || 0) <=
+                                1e-6
+                            );
 
                           if (isPnRemainZero && allRmRemainZero) {
                             return (
@@ -738,31 +802,43 @@ const Production_Start = () => {
 
                           return (
                             <span
-                              className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium text-center ${isMatched ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                                }`}
-                              title={`Part Name: ${pnQty}, Used: ${usedTotal.toFixed(2)}${!isPnRemainZero ? `, Compound remain: ${pnRemainQty.toFixed(2)}` : ""
-                                }${!allRmRemainZero ? ", RM remain qty" : ""}`}
+                              className={`px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium text-center ${
+                                isMatched
+                                  ? "bg-green-100 text-green-600"
+                                  : "bg-red-100 text-red-600"
+                              }`}
+                              title={`Part Name: ${pnQty}, Used: ${usedTotal.toFixed(
+                                2
+                              )}${
+                                !isPnRemainZero
+                                  ? `, Compound remain: ${pnRemainQty.toFixed(
+                                      2
+                                    )}`
+                                  : ""
+                              }${!allRmRemainZero ? ", RM remain qty" : ""}`}
                             >
-                              {isMatched ? "Quantity matched" : "Quantity mismatched"}
+                              {isMatched
+                                ? "Quantity matched"
+                                : "Quantity mismatched"}
                             </span>
                           );
                         })()}
                       </div>
                     </td>
 
-
-
-                    <td className="px-4 sm:px-6 py-3">{pn?.prod_qty || pn?.est_qty || 0}</td>
+                    <td className="px-4 sm:px-6 py-3">
+                      {pn?.prod_qty || pn?.est_qty || 0}
+                    </td>
                     <td className="px-4 sm:px-6 py-3">{pn?.uom || "-"}</td>
                     <td className="px-4 sm:px-6 py-3  text-center ">
                       <div className="flex justify-center items-center pb-4 space-x-3">
-
-
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"
                           onClick={async () => {
                             try {
-                              const res = await axiosHandler.get(`/production/${prod._id}`);
+                              const res = await axiosHandler.get(
+                                `/production/${prod._id}`
+                              );
                               const data = res?.data?.production;
                               if (!data) return;
                               setEditMode(true);
@@ -784,16 +860,21 @@ const Production_Start = () => {
                                 total_cost: String(pn.total_cost ?? ""),
                               });
                               // Prefill RMs
-                              const currentEstQtyForRM = parseFloat(partName.est_qty) || 1;
+                              const currentEstQtyForRM =
+                                parseFloat(partName.est_qty) || 1;
                               setRawMaterials(
                                 (data.raw_materials || []).map((rm) => {
                                   const estQty = parseFloat(rm.est_qty) || 0;
                                   // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
-                                  const baseQty = currentEstQtyForRM ? estQty / currentEstQtyForRM : 0;
+                                  const baseQty = currentEstQtyForRM
+                                    ? estQty / currentEstQtyForRM
+                                    : 0;
                                   return {
                                     raw_material_id: rm.raw_material_id || null,
-                                    raw_material_name: rm.raw_material_name || "",
-                                    raw_material_code: rm.raw_material_code || "",
+                                    raw_material_name:
+                                      rm.raw_material_name || "",
+                                    raw_material_code:
+                                      rm.raw_material_code || "",
                                     est_qty: String(rm.est_qty ?? ""),
                                     base_qty: baseQty,
                                     uom: rm.uom || "",
@@ -808,13 +889,18 @@ const Production_Start = () => {
                                 })
                               );
                               // Prefill accelerators
-                              const currentEstQty = parseFloat(partName.est_qty) || 1;
+                              const currentEstQty =
+                                parseFloat(partName.est_qty) || 1;
                               setAccelerators(
                                 (data.accelerators || []).map((acc) => {
-                                  const estQty = parseFloat(acc.est_qty || acc.quantity) || 0;
+                                  const estQty =
+                                    parseFloat(acc.est_qty || acc.quantity) ||
+                                    0;
                                   const usedQty = parseFloat(acc.used_qty) || 0;
                                   // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
-                                  const baseQty = currentEstQty ? estQty / currentEstQty : estQty;
+                                  const baseQty = currentEstQty
+                                    ? estQty / currentEstQty
+                                    : estQty;
                                   return {
                                     name: acc.name || "",
                                     tolerance: acc.tolerance || "",
@@ -822,7 +908,9 @@ const Production_Start = () => {
                                     est_qty: String(estQty),
                                     base_qty: baseQty,
                                     used_qty: String(usedQty),
-                                    remain_qty: String((estQty - usedQty).toFixed(2)),
+                                    remain_qty: String(
+                                      (estQty - usedQty).toFixed(2)
+                                    ),
                                     comment: acc.comment || "",
                                   };
                                 })
@@ -834,12 +922,20 @@ const Production_Start = () => {
                                   work_done: String(p.work_done ?? ""),
                                   start: !!p.start,
                                   done: !!p.done,
-                                  status: p.status || (p.done ? "completed" : p.start ? "in_progress" : "pending"),
+                                  status:
+                                    p.status ||
+                                    (p.done
+                                      ? "completed"
+                                      : p.start
+                                      ? "in_progress"
+                                      : "pending"),
                                 }))
                               );
                             } catch (e) {
                               console.error(e);
-                              toast.error("Failed to load production details for edit");
+                              toast.error(
+                                "Failed to load production details for edit"
+                              );
                             }
                           }}
                         />
@@ -848,7 +944,9 @@ const Production_Start = () => {
                           onClick={async () => {
                             if (!confirm("Delete this production?")) return;
                             try {
-                              await axiosHandler.delete("/production", { data: { id: prod._id } });
+                              await axiosHandler.delete("/production", {
+                                data: { id: prod._id },
+                              });
                               toast.success("Production deleted");
                               fetchProductions();
                             } catch (e) {
@@ -861,7 +959,9 @@ const Production_Start = () => {
                           className="h-4 w-4 text-gray-600 cursor-pointer"
                           onClick={async () => {
                             try {
-                              const res = await axiosHandler.get(`/production/${prod._id}`);
+                              const res = await axiosHandler.get(
+                                `/production/${prod._id}`
+                              );
                               setViewDetails(res?.data?.production || null);
                             } catch (e) {
                               console.error(e);
@@ -873,14 +973,20 @@ const Production_Start = () => {
                       {(() => {
                         const alreadySent = prod?.ready_for_qc === true;
                         const alreadyQCed = prod?.qc_done === true;
-                        const isCompleted = prod?.status === 'completed';
+                        const isCompleted = prod?.status === "completed";
                         if (!isCompleted) return null;
-                        if (alreadyQCed) return (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">QC Done</span>
-                        );
-                        if (alreadySent) return (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600">Waiting for QC</span>
-                        );
+                        if (alreadyQCed)
+                          return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">
+                              QC Done
+                            </span>
+                          );
+                        if (alreadySent)
+                          return (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600">
+                              Waiting for QC
+                            </span>
+                          );
 
                         // Check Compound Details remain_qty is 0
                         const pnRemainQty = parseFloat(pn?.remain_qty) || 0;
@@ -888,18 +994,29 @@ const Production_Start = () => {
 
                         // Check all Raw Materials remain_qty are 0
                         const rawMaterials = prod?.raw_materials || [];
-                        const allRmRemainZero = rawMaterials.length === 0 || rawMaterials.every(
-                          (rm) => Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
-                        );
+                        const allRmRemainZero =
+                          rawMaterials.length === 0 ||
+                          rawMaterials.every(
+                            (rm) =>
+                              Math.abs(parseFloat(rm?.remain_qty) || 0) <= 1e-6
+                          );
 
                         // Block sending to QC until Compound remain_qty is 0 AND all Raw Materials remain_qty are 0
                         if (!isPnRemainZero || !allRmRemainZero) {
                           return (
                             <span
                               className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-600"
-                              title={!isPnRemainZero ? `Compound remain qty: ${pnRemainQty.toFixed(2)}` : `Some raw materials still have remaining quantity`}
+                              title={
+                                !isPnRemainZero
+                                  ? `Compound remain qty: ${pnRemainQty.toFixed(
+                                      2
+                                    )}`
+                                  : `Some raw materials still have remaining quantity`
+                              }
                             >
-                              {!isPnRemainZero ? "Compound qty remaining" : "Raw materials qty remaining"}
+                              {!isPnRemainZero
+                                ? "Compound qty remaining"
+                                : "Raw materials qty remaining"}
                             </span>
                           );
                         }
@@ -918,12 +1035,14 @@ const Production_Start = () => {
   hover:shadow-lg transition-all duration-200"
                             onClick={async () => {
                               try {
-                                await axiosHandler.patch(`/production/${prod._id}/ready-for-qc`);
-                                toast.success('Sent to Quality Check');
+                                await axiosHandler.patch(
+                                  `/production/${prod._id}/ready-for-qc`
+                                );
+                                toast.success("Sent to Quality Check");
                                 fetchProductions();
                               } catch (e) {
                                 console.error(e);
-                                toast.error('Failed to send to Quality Check');
+                                toast.error("Failed to send to Quality Check");
                               }
                             }}
                           >
@@ -964,217 +1083,443 @@ const Production_Start = () => {
               className="relative bg-white rounded-2xl shadow-lg w-[95%] sm:w-[90%] md:w-[85%] lg:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 md:p-8"
             >
               <button
-                onClick={() => { resetForm(); setShowModal(false); }}
+                onClick={() => {
+                  resetForm();
+                  setShowModal(false);
+                }}
                 className="absolute top-3 right-4 text-2xl text-gray-600 hover:text-red-500 transition"
               >
                 ✕
               </button>
 
               <button
-                onClick={() => { resetForm(); setShowModal(false); }}
+                onClick={() => {
+                  resetForm();
+                  setShowModal(false);
+                }}
                 className="text-2xl mb-4 hover:text-blue-500 transition"
               >
                 ←
               </button>
 
-              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-6 sm:mb-8">
-                Add New Production
-              </h1>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 dark:text-gray-100 mb-5">
+                    Add New Production
+                  </h1>
+                </div>
+
+                 <select
+                   className="h-12 w-50 border rounded-xl border-gray-300"
+                   value={bomType}
+                   onChange={(e) => {
+                     setBomType(e.target.value);
+                     // Clear form when filter changes
+                     setSelectedBomId("");
+                     setSelectedBom(null);
+                     setBomSearch("");
+                     setShowBomResults(false);
+                     setPartName({
+                       compound_code: "",
+                       compound_name: "",
+                       est_qty: "",
+                       uom: "",
+                       prod_qty: "",
+                       remain_qty: "",
+                       category: "",
+                       comment: "",
+                     });
+                     setRawMaterials([]);
+                     setAccelerators([]);
+                     setProcesses([]);
+                   }}
+                 >
+                   <option value="">Select an option</option>
+                   <option value="compound">Compound</option>
+                   <option value="part-name">Part Name</option>
+                 </select>
+              </div>
 
               <form onSubmit={handleSubmit}>
                 {/* ---------- Part Name Section ---------- */}
-                <section className="mb-10">
-                  <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Compound Details
-                    </h2>
-                    {/* BOM Type Filter */}
-                    <select
-                      value={bomTypeFilter}
-                      onChange={async (e) => {
-                        const selectedType = e.target.value;
-                        setBomTypeFilter(selectedType);
-                        setBomSearch("");
-                        setSelectedBomId("");
-                        setSelectedBom(null);
-                        setShowBomResults(false);
-                        // Fetch BOMs with filter
-                        await fetchBoms(selectedType);
-                      }}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
-                    >
-                      <option value="">All BOMs</option>
-                      <option value="compound">Compound</option>
-                      <option value="part-name">Part Name</option>
-                    </select>
-                  </div>
 
-                  <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
-                    {[
-                      "Compound Details",
-                      "Part Name",
-                      "EST. QTY",
-                      "UOM",
-                      "PROD. QTY",
-                      "Remain QTY",
-                      "Category",
-                      "Comment",
-                    ].map((head) => (
-                      <div key={head} className="p-2 text-center truncate">
-                        {head}
+                {bomType === "compound" && (
+                  <section className="mb-10">
+                    <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Compound Details
+                      </h2>
+                    </div>
+
+                    <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                      {[
+                        "Compound Details",
+                        
+                        "EST. QTY",
+                        "UOM",
+                        "PROD. QTY",
+                        "Remain QTY",
+                        "Category",
+                        "Comment",
+                      ].map((head) => (
+                        <div key={head} className="p-2 text-center truncate">
+                          {head}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-8 gap-3 mt-3">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search Compound"
+                          value={bomSearch}
+                          onChange={(e) => {
+                            setBomSearch(e.target.value);
+                            setShowBomResults(true);
+                          }}
+                          onFocus={() => setShowBomResults(true)}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                        />
+                        {showBomResults && (
+                          <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
+                            {boms
+                              .filter((b) => {
+                                // Filter by BOM type (bomType state)
+                                if (bomType && b.bom_type !== bomType) {
+                                  return false;
+                                }
+                                // Filter by search query
+                                const q = (bomSearch || "").toLowerCase();
+                                const name = (
+                                  b.compound_name || ""
+                                ).toLowerCase();
+                                const code = (
+                                  Array.isArray(b.compound_codes) &&
+                                  b.compound_codes[0]
+                                    ? b.compound_codes[0]
+                                    : ""
+                                ).toLowerCase();
+                                return (
+                                  !q || name.includes(q) || code.includes(q)
+                                );
+                              })
+                              .slice(0, 50)
+                              .map((b) => {
+                                const label = `${b.compound_name || "Unnamed"}${
+                                  Array.isArray(b.compound_codes) &&
+                                  b.compound_codes[0]
+                                    ? ` (${b.compound_codes[0]})`
+                                    : ""
+                                }`;
+                                return (
+                                  <div
+                                    key={b._id}
+                                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
+                                      selectedBomId === b._id
+                                        ? "bg-gray-50"
+                                        : ""
+                                    }`}
+                                    onMouseDown={(e) => {
+                                      // prevent input blur before click handler
+                                      e.preventDefault();
+                                    }}
+                                    onClick={() => {
+                                      setSelectedBomId(b._id);
+                                      setBomSearch(label);
+                                      setShowBomResults(false);
+                                      handleBomSelect(b._id);
+                                    }}
+                                  >
+                                    {label}
+                                  </div>
+                                );
+                              })}
+                            {boms.length === 0 && (
+                              <div className="px-3 py-2 text-sm text-gray-500">
+                                No BOMs
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-8 gap-3 mt-3">
-                    <div className="relative">
+                      
                       <input
-                        type="text"
-                        placeholder="Search Compound"
-                        value={bomSearch}
-                        onChange={(e) => {
-                          setBomSearch(e.target.value);
-                          setShowBomResults(true);
-                        }}
-                        onFocus={() => setShowBomResults(true)}
+                        type="number"
+                        placeholder="Enter Quantity"
+                        value={partName.est_qty}
+                        onChange={(e) =>
+                          handlePartNameChange("est_qty", e.target.value)
+                        }
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                       />
-                      {showBomResults && (
-                        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
-                          {boms
-                            .filter((b) => {
-                              // Filter by BOM type
-                              if (bomTypeFilter && b.bom_type !== bomTypeFilter) {
-                                return false;
-                              }
-                              // Filter by search query
-                              const q = (bomSearch || "").toLowerCase();
-                              const name = (b.compound_name || "").toLowerCase();
-                              const code = ((Array.isArray(b.compound_codes) && b.compound_codes[0]) ? b.compound_codes[0] : "").toLowerCase();
-                              return !q || name.includes(q) || code.includes(q);
-                            })
-                            .slice(0, 50)
-                            .map((b) => {
-                              const label = `${b.compound_name || "Unnamed"}${(Array.isArray(b.compound_codes) && b.compound_codes[0]) ? ` (${b.compound_codes[0]})` : ""}`;
-                              return (
-                                <div
-                                  key={b._id}
-                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${selectedBomId === b._id ? "bg-gray-50" : ""}`}
-                                  onMouseDown={(e) => {
-                                    // prevent input blur before click handler
-                                    e.preventDefault();
-                                  }}
-                                  onClick={() => {
-                                    setSelectedBomId(b._id);
-                                    setBomSearch(label);
-                                    setShowBomResults(false);
-                                    handleBomSelect(b._id);
-                                  }}
-                                >
-                                  {label}
-                                </div>
-                              );
-                            })}
-                          {boms.length === 0 && (
-                            <div className="px-3 py-2 text-sm text-gray-500">No BOMs</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Part Name"
-                      value={(() => {
-                        // First try to get from _selectedBom (has full details from API)
-                        if (_selectedBom) {
-                          if (_selectedBom.part_name_details && _selectedBom.part_name_details.length > 0) {
-                            const firstPartName = _selectedBom.part_name_details[0];
-                            if (firstPartName.product_snapshot && firstPartName.product_snapshot.name) {
-                              return firstPartName.product_snapshot.name;
-                            }
-                            if (firstPartName.part_name_id_name) {
-                              const parts = firstPartName.part_name_id_name.split("-");
-                              if (parts.length > 1) {
-                                return parts.slice(1).join("-");
-                              }
-                              return firstPartName.part_name_id_name;
-                            }
-                          }
-                          if (_selectedBom.part_names && _selectedBom.part_names.length > 0) {
-                            return _selectedBom.part_names.filter((p) => p && p.trim() !== "").join(", ");
-                          }
+                      <input
+                        type="text"
+                        placeholder="Enter UOM"
+                        value={partName.uom}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Enter Quantity"
+                        value={partName.prod_qty}
+                        onChange={(e) =>
+                          handlePartNameChange("prod_qty", e.target.value)
                         }
-                        // Fallback to boms array
-                        if (selectedBomId) {
-                          const selectedBom = boms.find((b) => b._id === selectedBomId);
-                          if (selectedBom) {
-                            if (selectedBom.part_name_details && selectedBom.part_name_details.length > 0) {
-                              const firstPartName = selectedBom.part_name_details[0];
-                              if (firstPartName.product_snapshot && firstPartName.product_snapshot.name) {
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Remain QTY"
+                        value={partName.remain_qty}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Enter Category"
+                        value={partName.category}
+                        readOnly
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Comment"
+                        value={partName.comment}
+                        onChange={(e) =>
+                          handlePartNameChange("comment", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+                      />
+                    </div>
+                  </section>
+                )}
+
+                {bomType === "part-name" && (
+                  <section className="mb-10">
+                    <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Part Details
+                      </h2>
+                    </div>
+
+                    <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                      {[
+                        "Part Details",
+                        "Part Name",
+                        "EST. QTY",
+                        "UOM",
+                        "PROD. QTY",
+                        "Remain QTY",
+                        "Category",
+                        "Comment",
+                      ].map((head) => (
+                        <div key={head} className="p-2 text-center truncate">
+                          {head}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-8 gap-3 mt-3">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search Part"
+                          value={bomSearch}
+                          onChange={(e) => {
+                            setBomSearch(e.target.value);
+                            setShowBomResults(true);
+                          }}
+                          onFocus={() => setShowBomResults(true)}
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                        />
+                        {showBomResults && (
+                          <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
+                            {boms
+                              .filter((b) => {
+                                // Filter by BOM type (bomType state)
+                                if (bomType && b.bom_type !== bomType) {
+                                  return false;
+                                }
+                                // Filter by search query
+                                const q = (bomSearch || "").toLowerCase();
+                                const name = (
+                                  b.compound_name || ""
+                                ).toLowerCase();
+                                const code = (
+                                  Array.isArray(b.compound_codes) &&
+                                  b.compound_codes[0]
+                                    ? b.compound_codes[0]
+                                    : ""
+                                ).toLowerCase();
+                                return (
+                                  !q || name.includes(q) || code.includes(q)
+                                );
+                              })
+                              .slice(0, 50)
+                              .map((b) => {
+                                const label = `${b.compound_name || "Unnamed"}${
+                                  Array.isArray(b.compound_codes) &&
+                                  b.compound_codes[0]
+                                    ? ` (${b.compound_codes[0]})`
+                                    : ""
+                                }`;
+                                return (
+                                  <div
+                                    key={b._id}
+                                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
+                                      selectedBomId === b._id
+                                        ? "bg-gray-50"
+                                        : ""
+                                    }`}
+                                    onMouseDown={(e) => {
+                                      // prevent input blur before click handler
+                                      e.preventDefault();
+                                    }}
+                                    onClick={() => {
+                                      setSelectedBomId(b._id);
+                                      setBomSearch(label);
+                                      setShowBomResults(false);
+                                      handleBomSelect(b._id);
+                                    }}
+                                  >
+                                    {label}
+                                  </div>
+                                );
+                              })}
+                            {boms.length === 0 && (
+                              <div className="px-3 py-2 text-sm text-gray-500">
+                                No BOMs
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Part Name"
+                        value={(() => {
+                          // First try to get from _selectedBom (has full details from API)
+                          if (_selectedBom) {
+                            if (
+                              _selectedBom.part_name_details &&
+                              _selectedBom.part_name_details.length > 0
+                            ) {
+                              const firstPartName =
+                                _selectedBom.part_name_details[0];
+                              if (
+                                firstPartName.product_snapshot &&
+                                firstPartName.product_snapshot.name
+                              ) {
                                 return firstPartName.product_snapshot.name;
                               }
                               if (firstPartName.part_name_id_name) {
-                                const parts = firstPartName.part_name_id_name.split("-");
+                                const parts =
+                                  firstPartName.part_name_id_name.split("-");
                                 if (parts.length > 1) {
                                   return parts.slice(1).join("-");
                                 }
                                 return firstPartName.part_name_id_name;
                               }
                             }
-                            if (selectedBom.part_names && selectedBom.part_names.length > 0) {
-                              return selectedBom.part_names.filter((p) => p && p.trim() !== "").join(", ");
+                            if (
+                              _selectedBom.part_names &&
+                              _selectedBom.part_names.length > 0
+                            ) {
+                              return _selectedBom.part_names
+                                .filter((p) => p && p.trim() !== "")
+                                .join(", ");
                             }
                           }
+                          // Fallback to boms array
+                          if (selectedBomId) {
+                            const selectedBom = boms.find(
+                              (b) => b._id === selectedBomId
+                            );
+                            if (selectedBom) {
+                              if (
+                                selectedBom.part_name_details &&
+                                selectedBom.part_name_details.length > 0
+                              ) {
+                                const firstPartName =
+                                  selectedBom.part_name_details[0];
+                                if (
+                                  firstPartName.product_snapshot &&
+                                  firstPartName.product_snapshot.name
+                                ) {
+                                  return firstPartName.product_snapshot.name;
+                                }
+                                if (firstPartName.part_name_id_name) {
+                                  const parts =
+                                    firstPartName.part_name_id_name.split("-");
+                                  if (parts.length > 1) {
+                                    return parts.slice(1).join("-");
+                                  }
+                                  return firstPartName.part_name_id_name;
+                                }
+                              }
+                              if (
+                                selectedBom.part_names &&
+                                selectedBom.part_names.length > 0
+                              ) {
+                                return selectedBom.part_names
+                                  .filter((p) => p && p.trim() !== "")
+                                  .join(", ");
+                              }
+                            }
+                          }
+                          return "";
+                        })()}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Enter Quantity"
+                        value={partName.est_qty}
+                        onChange={(e) =>
+                          handlePartNameChange("est_qty", e.target.value)
                         }
-                        return "";
-                      })()}
-                     
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Enter Quantity"
-                      value={partName.est_qty}
-                      onChange={(e) => handlePartNameChange("est_qty", e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Enter UOM"
-                      value={partName.uom}
-                     
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Enter Quantity"
-                      value={partName.prod_qty}
-                      onChange={(e) => handlePartNameChange("prod_qty", e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Remain QTY"
-                      value={partName.remain_qty}
-                      
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Enter Category"
-                      value={partName.category}
-                      readOnly
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Comment"
-                      value={partName.comment}
-                      onChange={(e) => handlePartNameChange("comment", e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
-                    />
-                  </div>
-                </section>
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Enter UOM"
+                        value={partName.uom}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Enter Quantity"
+                        value={partName.prod_qty}
+                        onChange={(e) =>
+                          handlePartNameChange("prod_qty", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Remain QTY"
+                        value={partName.remain_qty}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Enter Category"
+                        value={partName.category}
+                        readOnly
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Comment"
+                        value={partName.comment}
+                        onChange={(e) =>
+                          handlePartNameChange("comment", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
+                      />
+                    </div>
+                  </section>
+                )}
 
                 {/* ---------- Raw Materials Section ---------- */}
                 <section className="mb-10">
@@ -1203,9 +1548,16 @@ const Production_Start = () => {
                       </div>
 
                       {rawMaterials.map((rm, idx) => (
-                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3">
+                        <div
+                          key={idx}
+                          className="grid grid-cols-1 sm:grid-cols-7 gap-3 mt-3"
+                        >
                           <input
-                            value={`${rm.raw_material_name || ""}${rm.raw_material_code ? ` (${rm.raw_material_code})` : ""}`}
+                            value={`${rm.raw_material_name || ""}${
+                              rm.raw_material_code
+                                ? ` (${rm.raw_material_code})`
+                                : ""
+                            }`}
                             readOnly
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                           />
@@ -1227,7 +1579,13 @@ const Production_Start = () => {
                             type="number"
                             placeholder="Used QTY"
                             value={rm.used_qty}
-                            onChange={(e) => handleRawMaterialChange(idx, "used_qty", e.target.value)}
+                            onChange={(e) =>
+                              handleRawMaterialChange(
+                                idx,
+                                "used_qty",
+                                e.target.value
+                              )
+                            }
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                           <input
@@ -1248,7 +1606,13 @@ const Production_Start = () => {
                             type="text"
                             placeholder="Comment"
                             value={rm.comment || ""}
-                            onChange={(e) => handleRawMaterialChange(idx, "comment", e.target.value)}
+                            onChange={(e) =>
+                              handleRawMaterialChange(
+                                idx,
+                                "comment",
+                                e.target.value
+                              )
+                            }
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                         </div>
@@ -1256,7 +1620,8 @@ const Production_Start = () => {
                     </>
                   ) : selectedBomId ? (
                     <div className="text-center py-4 text-gray-500 text-sm">
-                      No raw materials found for the selected BOM. Please check if the BOM has raw materials configured.
+                      No raw materials found for the selected BOM. Please check
+                      if the BOM has raw materials configured.
                     </div>
                   ) : (
                     <div className="text-center py-4 text-gray-500 text-sm">
@@ -1293,7 +1658,10 @@ const Production_Start = () => {
                       </div>
 
                       {accelerators.map((acc, idx) => (
-                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-5 gap-3 mt-3">
+                        <div
+                          key={idx}
+                          className="grid grid-cols-1 sm:grid-cols-5 gap-3 mt-3"
+                        >
                           <input
                             type="text"
                             placeholder="Name"
@@ -1312,7 +1680,13 @@ const Production_Start = () => {
                             type="number"
                             placeholder="Used QTY"
                             value={acc.used_qty || ""}
-                            onChange={(e) => handleAcceleratorChange(idx, "used_qty", e.target.value)}
+                            onChange={(e) =>
+                              handleAcceleratorChange(
+                                idx,
+                                "used_qty",
+                                e.target.value
+                              )
+                            }
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                           <input
@@ -1326,7 +1700,13 @@ const Production_Start = () => {
                             type="text"
                             placeholder="Comment"
                             value={acc.comment || ""}
-                            onChange={(e) => handleAcceleratorChange(idx, "comment", e.target.value)}
+                            onChange={(e) =>
+                              handleAcceleratorChange(
+                                idx,
+                                "comment",
+                                e.target.value
+                              )
+                            }
                             className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                           />
                         </div>
@@ -1356,12 +1736,13 @@ const Production_Start = () => {
                             Process {idx + 1}
                           </h3>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${proc.status === "completed"
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              proc.status === "completed"
                                 ? "text-green-600 bg-green-100"
                                 : proc.status === "in_progress"
-                                  ? "text-yellow-600 bg-yellow-100"
-                                  : "text-gray-600 bg-gray-100"
-                              }`}
+                                ? "text-yellow-600 bg-yellow-100"
+                                : "text-gray-600 bg-gray-100"
+                            }`}
                           >
                             {proc.status}
                           </span>
@@ -1382,7 +1763,13 @@ const Production_Start = () => {
                           type="number"
                           placeholder="1000"
                           value={proc.work_done}
-                          onChange={(e) => handleProcessChange(idx, "work_done", e.target.value)}
+                          onChange={(e) =>
+                            handleProcessChange(
+                              idx,
+                              "work_done",
+                              e.target.value
+                            )
+                          }
                           className="border border-gray-300 rounded-md px-3 py-2 w-full text-sm focus:ring-1 focus:ring-blue-400 mb-2"
                         />
 
@@ -1392,7 +1779,13 @@ const Production_Start = () => {
                               type="checkbox"
                               className="accent-blue-600"
                               checked={proc.start}
-                              onChange={(e) => handleProcessChange(idx, "start", e.target.checked)}
+                              onChange={(e) =>
+                                handleProcessChange(
+                                  idx,
+                                  "start",
+                                  e.target.checked
+                                )
+                              }
                             />
                             Start
                           </label>
@@ -1401,7 +1794,13 @@ const Production_Start = () => {
                               type="checkbox"
                               className="accent-blue-600"
                               checked={proc.done}
-                              onChange={(e) => handleProcessChange(idx, "done", e.target.checked)}
+                              onChange={(e) =>
+                                handleProcessChange(
+                                  idx,
+                                  "done",
+                                  e.target.checked
+                                )
+                              }
                             />
                             Done
                           </label>
@@ -1444,7 +1843,9 @@ const Production_Start = () => {
             >
               {/* Sticky Header */}
               <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 flex justify-between items-center px-6 py-4 z-10">
-                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Production Details</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                  Production Details
+                </h2>
                 <button
                   onClick={() => setViewDetails(null)}
                   className="text-gray-500 hover:text-red-500 text-2xl transition"
@@ -1458,13 +1859,19 @@ const Production_Start = () => {
                 {/* Header Info */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-linear-to-br from-blue-50 to-white rounded-xl shadow-sm p-4">
                   <div>
-                    <span className="font-medium text-gray-600">Production ID:</span>
-                    <p className="text-gray-900">{viewDetails?.production_id || "-"}</p>
+                    <span className="font-medium text-gray-600">
+                      Production ID:
+                    </span>
+                    <p className="text-gray-900">
+                      {viewDetails?.production_id || "-"}
+                    </p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">BOM:</span>
                     <p className="text-gray-900">
-                      {viewDetails?.bom?.compound_name || viewDetails?.bom?.compound_code || "-"}
+                      {viewDetails?.bom?.compound_name ||
+                        viewDetails?.bom?.compound_code ||
+                        "-"}
                     </p>
                   </div>
                 </div>
@@ -1473,7 +1880,9 @@ const Production_Start = () => {
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">Part Names</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Part Names
+                    </h3>
                   </div>
                   {(viewDetails?.part_names || []).length > 0 ? (
                     <div className="grid gap-3">
@@ -1483,7 +1892,10 @@ const Production_Start = () => {
                           className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-gray-50/50"
                         >
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <Info label="Compound" value={pn.compound_name || pn.compound_code} />
+                            <Info
+                              label="Compound"
+                              value={pn.compound_name || pn.compound_code}
+                            />
                             <Info label="EST" value={pn.est_qty} />
                             <Info label="PROD" value={pn.prod_qty} />
                             <Info label="Remain" value={pn.remain_qty} />
@@ -1502,7 +1914,9 @@ const Production_Start = () => {
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">Raw Materials</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Raw Materials
+                    </h3>
                   </div>
                   {(viewDetails?.raw_materials || []).length > 0 ? (
                     <div className="grid gap-3">
@@ -1512,7 +1926,12 @@ const Production_Start = () => {
                           className="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
                         >
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <Info label="Item" value={rm.raw_material_name || rm.raw_material_code} />
+                            <Info
+                              label="Item"
+                              value={
+                                rm.raw_material_name || rm.raw_material_code
+                              }
+                            />
                             <Info label="EST" value={rm.est_qty} />
                             <Info label="Used" value={rm.used_qty} />
                             <Info label="Remain" value={rm.remain_qty} />
@@ -1531,7 +1950,9 @@ const Production_Start = () => {
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-green-500 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">Accelerator (Pakai)</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Accelerator (Pakai)
+                    </h3>
                   </div>
                   {(viewDetails?.accelerators || []).length > 0 ? (
                     <div className="grid gap-3">
@@ -1542,9 +1963,15 @@ const Production_Start = () => {
                         >
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <Info label="Name" value={acc.name} />
-                            <Info label="EST QTY" value={acc.est_qty || acc.quantity} />
+                            <Info
+                              label="EST QTY"
+                              value={acc.est_qty || acc.quantity}
+                            />
                             <Info label="Used QTY" value={acc.used_qty || 0} />
-                            <Info label="Remain QTY" value={acc.remain_qty || 0} />
+                            <Info
+                              label="Remain QTY"
+                              value={acc.remain_qty || 0}
+                            />
                             <Info label="Comment" value={acc.comment} />
                           </div>
                         </div>
@@ -1559,7 +1986,9 @@ const Production_Start = () => {
                 <section>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-6 bg-green-600 rounded-full"></div>
-                    <h3 className="text-lg font-semibold text-gray-900">Processes</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Processes
+                    </h3>
                   </div>
                   {(viewDetails?.processes || []).length > 0 ? (
                     <div className="grid gap-3">
@@ -1571,15 +2000,19 @@ const Production_Start = () => {
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <Info label="Process" value={p.process_name} />
                             <Info label="Work Done" value={p.work_done} />
-                            <div>5
-                              <span className="font-medium text-gray-600">Status:</span>{" "}
+                            <div>
+                              5
+                              <span className="font-medium text-gray-600">
+                                Status:
+                              </span>{" "}
                               <span
-                                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${p.status === "completed"
+                                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                  p.status === "completed"
                                     ? "bg-green-100 text-green-700"
                                     : p.status === "in_progress"
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-gray-100 text-gray-700"
-                                  }`}
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
                               >
                                 {p.status}
                               </span>
@@ -1598,7 +2031,11 @@ const Production_Start = () => {
         )}
       </AnimatePresence>
 
-      <Pagination page={page} setPage={setPage} hasNextPage={productions?.length === 10} />
+      <Pagination
+        page={page}
+        setPage={setPage}
+        hasNextPage={productions?.length === 10}
+      />
     </div>
   );
 };
