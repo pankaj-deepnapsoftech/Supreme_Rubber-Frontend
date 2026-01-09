@@ -96,6 +96,21 @@ const Production_Start = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // Fetch BOMs when bomType filter changes
+  useEffect(() => {
+    if (bomType) {
+      fetchBoms(bomType);
+      // Clear selected BOM when filter changes
+      setSelectedBomId("");
+      setSelectedBom(null);
+      setBomSearch("");
+      setShowBomResults(false);
+    } else {
+      fetchBoms();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bomType]);
+
   // Handle BOM selection
   const handleBomSelect = async (bomId) => {
     if (!bomId) {
@@ -453,8 +468,11 @@ const Production_Start = () => {
 
   // Reset form
   const resetForm = () => {
+    setBomType("");
     setSelectedBomId("");
     setSelectedBom(null);
+    setBomSearch("");
+    setShowBomResults(false);
     setEditMode(false);
     setCurrentProductionId("");
     setPartName({
@@ -1072,15 +1090,35 @@ const Production_Start = () => {
                   </h1>
                 </div>
 
-                <select
-                  className="h-12 w-50 border rounded-xl border-gray-300"
-                  value={bomType}
-                  onChange={(e) => setBomType(e.target.value)}
-                >
-                  <option value="">Select an option</option>
-                  <option value="compound">Compound</option>
-                  <option value="part-name">Part Name</option>
-                </select>
+                 <select
+                   className="h-12 w-50 border rounded-xl border-gray-300"
+                   value={bomType}
+                   onChange={(e) => {
+                     setBomType(e.target.value);
+                     // Clear form when filter changes
+                     setSelectedBomId("");
+                     setSelectedBom(null);
+                     setBomSearch("");
+                     setShowBomResults(false);
+                     setPartName({
+                       compound_code: "",
+                       compound_name: "",
+                       est_qty: "",
+                       uom: "",
+                       prod_qty: "",
+                       remain_qty: "",
+                       category: "",
+                       comment: "",
+                     });
+                     setRawMaterials([]);
+                     setAccelerators([]);
+                     setProcesses([]);
+                   }}
+                 >
+                   <option value="">Select an option</option>
+                   <option value="compound">Compound</option>
+                   <option value="part-name">Part Name</option>
+                 </select>
               </div>
 
               <form onSubmit={handleSubmit}>
@@ -1128,11 +1166,8 @@ const Production_Start = () => {
                           <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
                             {boms
                               .filter((b) => {
-                                // Filter by BOM type
-                                if (
-                                  bomTypeFilter &&
-                                  b.bom_type !== bomTypeFilter
-                                ) {
+                                // Filter by BOM type (bomType state)
+                                if (bomType && b.bom_type !== bomType) {
                                   return false;
                                 }
                                 // Filter by search query
@@ -1189,7 +1224,7 @@ const Production_Start = () => {
                           </div>
                         )}
                       </div>
-                     
+                      
                       <input
                         type="number"
                         placeholder="Enter Quantity"
@@ -1282,11 +1317,8 @@ const Production_Start = () => {
                           <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
                             {boms
                               .filter((b) => {
-                                // Filter by BOM type
-                                if (
-                                  bomTypeFilter &&
-                                  b.bom_type !== bomTypeFilter
-                                ) {
+                                // Filter by BOM type (bomType state)
+                                if (bomType && b.bom_type !== bomType) {
                                   return false;
                                 }
                                 // Filter by search query
