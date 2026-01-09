@@ -62,12 +62,12 @@ const Sidebar = () => {
           icon: <Layers size={18} />,
         },
         {
-          name: "Part Name",
+          name: "Parts",
           path: "/part-name",
           icon: <PlayCircle size={18} />,
         },
         {
-          name: "Compound Name",
+          name: "Compounds",
           path: "/compound-name",
           icon: <PlayCircle size={18} />,
         },

@@ -140,12 +140,12 @@ const CompoundNameInv = () => {
     <div className="p-6 relative overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Compound Inventory</h1>
-        <Button
+        {/* <Button
           className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
           onClick={() => setShowModal(true)}
         >
           Add Inventory
-        </Button>
+        </Button> */}
       </div>
 
       {/* Search & Icons */}
@@ -230,11 +230,11 @@ const CompoundNameInv = () => {
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
-                "Product ID",
-                "Category",
+                "Compound ID",
+                "Compound Name",
                 "Name",
                 "Stock",
-                "Reject Qty",
+                // "Reject Qty",
                 "UOM",
                 "Actions",
               ].map((header, i) => (
@@ -288,9 +288,9 @@ const CompoundNameInv = () => {
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.current_stock}
                     </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                    {/* <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.reject_stock || 0}
-                    </td>
+                    </td> */}
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.uom}
                     </td>
