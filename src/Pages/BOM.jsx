@@ -650,19 +650,15 @@ const BOM = () => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Quantity
+                          Weight
                         </label>
-                        
-                          <input
-                            
-                            type="text"
-                            placeholder="Enter quantity"
-                            
-                           
-                            disabled={viewMode}
-                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                          />
-                        
+
+                        <input
+                          type="text"
+                          placeholder="Enter weight"
+                          disabled={viewMode}
+                          className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                        />
                       </div>
                     </div>
                   </section>
@@ -854,7 +850,7 @@ const BOM = () => {
                                   Raw Material Name
                                 </th>
                                 <th className="px-4 sm:px-6 py-3 font-medium text-center">
-                                  Total Quantity
+                                  Total Weight
                                 </th>
                                 <th className="px-4 sm:px-6 py-3 font-medium text-center">
                                   Tolerances
@@ -1055,7 +1051,7 @@ const BOM = () => {
                           {/* Quantity */}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Quantity
+                              Weight
                             </label>
                             <input
                               type="number"
@@ -1066,7 +1062,7 @@ const BOM = () => {
                                 setAccelerators(next);
                               }}
                               disabled={viewMode}
-                              placeholder="Enter quantity"
+                              placeholder="Enter Weight"
                               className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
                             />
                           </div>
@@ -1126,7 +1122,7 @@ const BOM = () => {
                                 Category
                               </th>
                               <th className="px-4 sm:px-6 py-3 font-medium text-center">
-                                Total Quantity
+                                Total Weight
                               </th>
                               <th className="px-4 sm:px-6 py-3 font-medium text-center">
                                 Details
@@ -1412,11 +1408,24 @@ const BOM = () => {
                           />
                         ))}
                       </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Weight
+                        </label>
+
+                        <input
+                          type="text"
+                          placeholder="Enter weight"
+                          disabled={viewMode}
+                          className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                        />
+                      </div>
                     </div>
                   </section>
 
                   {/* Part Name Section */}
-                  {/* <section className="mb-10">
+                  <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                       Part Name
@@ -1488,10 +1497,10 @@ const BOM = () => {
                         </div>
                       </div>
                     ))}
-                  </section> */}
+                  </section>
 
                   {/* Raw Materials Section */}
-                  {/* <section className="mb-10">
+                  <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
                       Raw Materials
@@ -1731,7 +1740,7 @@ const BOM = () => {
                           </table>
                         </div>
                       )}
-                  </section> */}
+                  </section>
 
                   {/* Accelerator Section */}
                   {/* <section className="mb-10">
@@ -2063,11 +2072,12 @@ const BOM = () => {
                 </>
               )}
 
-              {bomType === "" &&  (
-                <div className="text-center text-gray-500">No BOM Type Selected</div>
+              {bomType === "" && (
+                <div className="text-center text-gray-500">
+                  No BOM Type Selected
+                </div>
               )}
 
-             
               {/* Submit Button */}
               {!viewMode && (
                 <div className="flex justify-center mt-8">
