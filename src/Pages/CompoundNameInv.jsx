@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useInventory } from "@/Context/InventoryContext";
+import { useBomContext } from "@/Context/BomContext";
 import Pagination from "@/Components/Pagination/Pagination";
 import { toast } from "react-toastify";
 
@@ -37,6 +38,49 @@ const CompoundNameInv = () => {
     loading,
     getAllProducts,
   } = useInventory();
+
+  const { boms } = useBomContext();
+
+  // Helper function to get part names that use a specific compound
+  const getPartNamesForCompound = (compoundName) => {
+    if (!boms || !compoundName) return [];
+
+    const partNamesSet = new Set();
+
+    boms.forEach((bom) => {
+      // Check if this BOM uses the compound
+      if (
+        bom.compound_name &&
+        bom.compound_name.toLowerCase() === compoundName.toLowerCase()
+      ) {
+        // Add all part names from this BOM
+        if (bom.part_names && Array.isArray(bom.part_names)) {
+          bom.part_names.forEach((partName) => {
+            if (partName && partName.trim()) {
+              partNamesSet.add(partName.trim());
+            }
+          });
+        }
+        // Also check part_name_details
+        if (bom.part_name_details && Array.isArray(bom.part_name_details)) {
+          bom.part_name_details.forEach((detail) => {
+            if (detail.part_name_id_name) {
+              // Extract the name part from "id-name" format
+              const namePart = detail.part_name_id_name
+                .split("-")
+                .slice(1)
+                .join("-");
+              if (namePart && namePart.trim()) {
+                partNamesSet.add(namePart.trim());
+              }
+            }
+          });
+        }
+      }
+    });
+
+    return Array.from(partNamesSet);
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -235,8 +279,8 @@ const CompoundNameInv = () => {
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Compound ID",
-                "Part Name",
                 "Name",
+                "Part Names",
                 "Stock",
                 "Weight",
                 "UOM",
@@ -273,62 +317,82 @@ const CompoundNameInv = () => {
                     item.product_id.toLowerCase().includes(q)
                   );
                 })
-                .map((item, i) => (
-                  <tr
-                    key={item._id || i}
-                    className={`transition-all duration-200 ${
-                      i % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-blue-50`}
-                  >
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.product_id}
-                    </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.category}
-                    </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.name}
-                    </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.current_stock}
-                    </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.weight || "-"}
-                    </td>
-                    {/* <td className="py-3 px-4 text-center text-gray-800 border-b">
+                .map((item, i) => {
+                  const partNames = getPartNamesForCompound(item.name);
+
+                  return (
+                    <tr
+                      key={item._id || i}
+                      className={`transition-all duration-200 ${
+                        i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-blue-50`}
+                    >
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.product_id}
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.name}
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {partNames.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 justify-center">
+                            {partNames.map((partName, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                                title={partName}
+                              >
+                                {partName}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">
+                            Not used
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.current_stock}
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.weight || "-"}
+                      </td>
+                      {/* <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.reject_stock || 0}
                     </td> */}
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.uom}
-                    </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.uom}
+                      </td>
 
-                    <td className="py-3 px-4 text-center border-b">
-                      <div className="flex items-center justify-center space-x-3">
-                        <button
-                          className="h-4 w-4 text-blue-500 cursor-pointer"
-                          title="Edit"
-                          onClick={() => handleEdit(item._id)}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          className="h-4 w-4 text-red-500 cursor-pointer"
-                          title="Delete"
-                          onClick={() => handleDelete(item._id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                        <button
-                          className="h-4 w-4 text-gray-600 cursor-pointer"
-                          title="View"
-                          onClick={() => handleView(item._id)}
-                        >
-                          <Eye size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      <td className="py-3 px-4 text-center border-b">
+                        <div className="flex items-center justify-center space-x-3">
+                          <button
+                            className="h-4 w-4 text-blue-500 cursor-pointer"
+                            title="Edit"
+                            onClick={() => handleEdit(item._id)}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            className="h-4 w-4 text-red-500 cursor-pointer"
+                            title="Delete"
+                            onClick={() => handleDelete(item._id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button
+                            className="h-4 w-4 text-gray-600 cursor-pointer"
+                            title="View"
+                            onClick={() => handleView(item._id)}
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
             ) : (
               <tr>
                 <td
