@@ -56,6 +56,14 @@ const BOM = () => {
       comments: [""],
     },
   ]);
+  const [compounds, setCompounds] = useState([
+    {
+      compound_id: "",
+      compound_name: "",
+      compound_code: "",
+      hardness: "",
+    },
+  ]);
   const [processRows, setProcessRows] = useState([""]);
   const [accelerators, setAccelerators] = useState([
     { name: "", tolerance: "", quantity: "", comment: "" },
@@ -70,6 +78,9 @@ const BOM = () => {
     const category = (p?.category || "").toLowerCase();
     return category.includes("raw") || category === "raw material";
   });
+  const compoundOptions = (products || []).filter((p) => 
+    p?.category === "Compound Name"
+  );
 
   const formik = useFormik({
     initialValues: {
@@ -83,6 +94,12 @@ const BOM = () => {
           compound_codes: compoundCodes.filter((c) => c && c.trim() !== ""),
           compound_name: (compoundName || "").trim(),
           compound_weight: (compoundWeight || "").trim(),
+          compounds: bomType === "part-name" ? compounds.filter((c) => (c.compound_id || c.compound_name) && (c.compound_id.trim() !== "" || c.compound_name.trim() !== "")).map((c) => ({
+            compound_id: c.compound_id || "",
+            compound_name: c.compound_name || "",
+            compound_code: c.compound_code || "",
+            hardness: c.hardness || "",
+          })) : [],
           part_names: partNames.filter((p) => p && p.trim() !== ""),
           hardnesses: hardnesses.filter((h) => h && h.trim() !== ""),
           part_name_details: partNameDetails.map((pnd) => ({
@@ -160,6 +177,14 @@ const BOM = () => {
         comments: [""],
       },
     ]);
+    setCompounds([
+      {
+        compound_id: "",
+        compound_name: "",
+        compound_code: "",
+        hardness: "",
+      },
+    ]);
     setProcessRows([""]);
     setAccelerators([{ name: "", tolerance: "", quantity: "", comment: "" }]);
   };
@@ -230,6 +255,21 @@ const BOM = () => {
       );
       setCompoundName(bom.compound_name || "");
       setCompoundWeight(bom.compound_weight || "");
+      // Only load compounds array for part-name BOMs
+      if (bom.bom_type === "part-name") {
+        setCompounds(
+          bom.compounds && bom.compounds.length > 0
+            ? bom.compounds.map((c) => ({
+                compound_id: c.compound_id?._id || c.compound_id || "",
+                compound_name: c.compound_name || c.compound_id?.name || "",
+                compound_code: c.compound_code || (Array.isArray(c.compound_codes) && c.compound_codes.length > 0 ? c.compound_codes[0] : ""),
+                hardness: c.hardness || (Array.isArray(c.hardnesses) && c.hardnesses.length > 0 ? c.hardnesses[0] : ""),
+              }))
+            : [{ compound_id: "", compound_name: "", compound_code: "", hardness: "" }]
+        );
+      } else {
+        setCompounds([{ compound_id: "", compound_name: "", compound_code: "", hardness: "" }]);
+      }
       setPartNames(
         bom.part_names && bom.part_names.length > 0 ? bom.part_names : [""]
       );
@@ -396,15 +436,29 @@ const BOM = () => {
               (filteredBoms.length ? filteredBoms : boms)
                 .filter((item) => {
                   const q = searchQuery.toLowerCase();
-                  const compoundCodesStr = (item.compound_codes || [])
-                    .join(" ")
-                    .toLowerCase();
+                  // For part-name BOMs, search in compounds array
+                  let compoundCodesStr = "";
+                  let compoundNameStr = "";
+                  
+                  if (item.bom_type === "part-name" && item.compounds && item.compounds.length > 0) {
+                    compoundCodesStr = item.compounds
+                      .map((c) => c.compound_code || "")
+                      .join(" ")
+                      .toLowerCase();
+                    compoundNameStr = item.compounds
+                      .map((c) => c.compound_name || c.compound_id?.name || "")
+                      .join(" ")
+                      .toLowerCase();
+                  } else {
+                    compoundCodesStr = (item.compound_codes || [])
+                      .join(" ")
+                      .toLowerCase();
+                    compoundNameStr = (item.compound_name || "").toLowerCase();
+                  }
+                  
                   const partNamesStr = (item.part_names || [])
                     .join(" ")
                     .toLowerCase();
-                  const compoundNameStr = (
-                    item.compound_name || ""
-                  ).toLowerCase();
                   return (
                     compoundCodesStr.includes(q) ||
                     partNamesStr.includes(q) ||
@@ -436,10 +490,14 @@ const BOM = () => {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {(item.compound_codes || []).join(", ") || "-"}
+                      {item.bom_type === "part-name" && item.compounds && item.compounds.length > 0
+                        ? item.compounds.map((c) => c.compound_code || "-").filter((code) => code !== "-").join(", ") || "-"
+                        : (item.compound_codes || []).join(", ") || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {item.compound_name || "-"}
+                      {item.bom_type === "part-name" && item.compounds && item.compounds.length > 0
+                        ? item.compounds.map((c) => c.compound_name || c.compound_id?.name || "-").filter((name) => name !== "-").join(", ") || "-"
+                        : item.compound_name || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
                       {(() => {
@@ -606,7 +664,7 @@ const BOM = () => {
                       Compound Details
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      {/* Compound Name */}
+                      {/* Compound Name - Single manual input for compound BOM */}
                       <div className="md:col-span-3">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Compound Name
@@ -617,10 +675,12 @@ const BOM = () => {
                           value={compoundName}
                           onChange={(e) => setCompoundName(e.target.value)}
                           disabled={viewMode}
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
                         />
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
                       {/* Compound Codes */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -642,28 +702,6 @@ const BOM = () => {
                           />
                         ))}
                       </div>
-
-                      {/* Part Names */}
-                      {/* <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Part Name
-                    </label>
-                    {partNames.map((name, idx) => (
-                      <input
-                        key={idx}
-                        type="text"
-                        placeholder="Enter part name"
-                        value={name}
-                        onChange={(e) => {
-                          const next = [...partNames];
-                          next[idx] = e.target.value;
-                          setPartNames(next);
-                        }}
-                        disabled={viewMode}
-                        className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                      />
-                    ))}
-                  </div> */}
 
                       {/* Hardnesses */}
                       <div>
@@ -1443,101 +1481,124 @@ const BOM = () => {
                       <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                       Compound Details
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      {/* Compound Name */}
-                      <div className="md:col-span-3">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Compound Name
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Enter compound name"
-                          value={compoundName}
-                          onChange={(e) => setCompoundName(e.target.value)}
-                          disabled={viewMode}
-                          className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        />
-                      </div>
+                    {compounds.map((compound, compoundIdx) => (
+                      <div
+                        key={compoundIdx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Compound #{compoundIdx + 1}
+                          </h3>
+                          {!viewMode && compounds.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = compounds.filter((_, idx) => idx !== compoundIdx);
+                                setCompounds(next);
+                              }}
+                              className="text-red-600 hover:text-red-700 p-2 rounded border border-red-300 hover:border-red-400 hover:bg-red-50 transition"
+                              title="Delete Compound"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
 
-                      {/* Compound Codes */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Compound Code
-                        </label>
-                        {compoundCodes.map((code, idx) => (
-                          <input
-                            key={idx}
-                            type="text"
-                            placeholder="Enter compound code"
-                            value={code}
-                            onChange={(e) => {
-                              const next = [...compoundCodes];
-                              next[idx] = e.target.value;
-                              setCompoundCodes(next);
-                            }}
-                            disabled={viewMode}
-                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                          />
-                        ))}
-                      </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          {/* Compound Name - Dropdown for part-name */}
+                          <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Compound Name
+                            </label>
+                            <select
+                              value={compound.compound_id}
+                              onChange={(e) => {
+                                const next = [...compounds];
+                                const selected = compoundOptions.find(
+                                  (opt) => opt._id === e.target.value
+                                );
+                                next[compoundIdx].compound_id = e.target.value;
+                                next[compoundIdx].compound_name = selected
+                                  ? selected.name
+                                  : "";
+                                setCompounds(next);
+                              }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                              <option value="">Select Compound...</option>
+                              {compoundOptions.map((compoundOption) => (
+                                <option key={compoundOption._id} value={compoundOption._id}>
+                                  {compoundOption.name} ({compoundOption.product_id})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
 
-                      {/* Part Names */}
-                      {/* <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Part Name
-                    </label>
-                    {partNames.map((name, idx) => (
-                      <input
-                        key={idx}
-                        type="text"
-                        placeholder="Enter part name"
-                        value={name}
-                        onChange={(e) => {
-                          const next = [...partNames];
-                          next[idx] = e.target.value;
-                          setPartNames(next);
-                        }}
-                        disabled={viewMode}
-                        className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                      />
+                          {/* Compound Code - Single */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Compound Code
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Enter compound code"
+                              value={compound.compound_code || ""}
+                              onChange={(e) => {
+                                const next = [...compounds];
+                                next[compoundIdx].compound_code = e.target.value;
+                                setCompounds(next);
+                              }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                            />
+                          </div>
+
+                          {/* Hardness - Single */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Hardness
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Enter hardness"
+                              value={compound.hardness || ""}
+                              onChange={(e) => {
+                                const next = [...compounds];
+                                next[compoundIdx].hardness = e.target.value;
+                                setCompounds(next);
+                              }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Add Compound button below each compound's fields */}
+                        {!viewMode && compoundIdx === compounds.length - 1 && (
+                          <div className="mt-4">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCompounds([
+                                  ...compounds,
+                                  {
+                                    compound_id: "",
+                                    compound_name: "",
+                                    compound_code: "",
+                                    hardness: "",
+                                  },
+                                ])
+                              }
+                              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-5 py-2.5 shadow-md text-sm font-medium transition"
+                            >
+                              + Add Compound
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     ))}
-                  </div> */}
-
-                      {/* Hardnesses */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Hardness
-                        </label>
-                        {hardnesses.map((hardness, idx) => (
-                          <input
-                            key={idx}
-                            type="text"
-                            placeholder="Enter hardness"
-                            value={hardness}
-                            onChange={(e) => {
-                              const next = [...hardnesses];
-                              next[idx] = e.target.value;
-                              setHardnesses(next);
-                            }}
-                            disabled={viewMode}
-                            className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                          />
-                        ))}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Weight
-                        </label>
-
-                        <input
-                          type="text"
-                          placeholder="Enter weight"
-                          disabled={viewMode}
-                          className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                        />
-                      </div>
-                    </div>
                   </section>
                   {/* Raw Materials Section */}
                   <section className="mb-10">
