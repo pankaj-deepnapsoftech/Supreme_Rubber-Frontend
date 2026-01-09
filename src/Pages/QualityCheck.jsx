@@ -288,7 +288,8 @@ const QualityCheck = () => {
             onClick={() => setShowGtModal(true)}
             className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
-            Gateman
+            Raw Material QC
+            
           </Button>
           
           <Button
@@ -328,10 +329,6 @@ const QualityCheck = () => {
             className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
             Finished-Good QC
-          </Button>
-          <Button
-          className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
-Raw Material QC
           </Button>
            <Button
           className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">

@@ -419,15 +419,17 @@ const BOM = () => {
                     }`}
                   >
                     <td className="px-4 sm:px-6 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        item.bom_type === "compound" 
-                          ? "bg-blue-100 text-blue-800" 
-                          : item.bom_type === "part-name"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {item.bom_type === "compound" 
-                          ? "Compound" 
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          item.bom_type === "compound"
+                            ? "bg-blue-100 text-blue-800"
+                            : item.bom_type === "part-name"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {item.bom_type === "compound"
+                          ? "Compound"
                           : item.bom_type === "part-name"
                           ? "Part Name"
                           : "-"}
@@ -1361,6 +1363,81 @@ const BOM = () => {
 
               {bomType === "part-name" && (
                 <>
+                  {/* Part Name Section */}
+                  <section className="mb-10">
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Part Name
+                    </h2>
+                    {partNameDetails.map((pnd, pndIdx) => (
+                      <div
+                        key={pndIdx}
+                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
+                            Part Name #{pndIdx + 1}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                          <div className="md:col-span-3">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Part Name (ID + Name)
+                            </label>
+                            <select
+                              value={pnd.part_name_id_name}
+                              onChange={(e) => {
+                                const next = [...partNameDetails];
+                                next[pndIdx].part_name_id_name = e.target.value;
+                                setPartNameDetails(next);
+                              }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                            >
+                              <option value="">Select Part Name...</option>
+                              {partNameOptions.map((pndOption) => (
+                                <option
+                                  key={pndOption._id}
+                                  value={`${pndOption._id}-${pndOption.name}`}
+                                >
+                                  {pndOption.name} ({pndOption.product_id})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {["quantities", "tolerances", "comments"].map(
+                            (key) => (
+                              <div key={key}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
+                                  {key}
+                                </label>
+                                {pnd[key].map((value, idx2) => (
+                                  <input
+                                    key={idx2}
+                                    type={
+                                      key === "quantities" ? "number" : "text"
+                                    }
+                                    placeholder={key.slice(0, -1)}
+                                    value={value}
+                                    onChange={(e) => {
+                                      const next = [...partNameDetails];
+                                      next[pndIdx][key][idx2] = e.target.value;
+                                      setPartNameDetails(next);
+                                    }}
+                                    disabled={viewMode}
+                                    className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
+                                  />
+                                ))}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </section>
+
                   <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                       <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
@@ -1462,82 +1539,6 @@ const BOM = () => {
                       </div>
                     </div>
                   </section>
-
-                  {/* Part Name Section */}
-                  <section className="mb-10">
-                    <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      Part Name
-                    </h2>
-                    {partNameDetails.map((pnd, pndIdx) => (
-                      <div
-                        key={pndIdx}
-                        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-5 mb-5"
-                      >
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="font-medium text-gray-700 dark:text-gray-300">
-                            Part Name #{pndIdx + 1}
-                          </h3>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                          <div className="md:col-span-3">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Part Name (ID + Name)
-                            </label>
-                            <select
-                              value={pnd.part_name_id_name}
-                              onChange={(e) => {
-                                const next = [...partNameDetails];
-                                next[pndIdx].part_name_id_name = e.target.value;
-                                setPartNameDetails(next);
-                              }}
-                              disabled={viewMode}
-                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                            >
-                              <option value="">Select Part Name...</option>
-                              {partNameOptions.map((pndOption) => (
-                                <option
-                                  key={pndOption._id}
-                                  value={`${pndOption._id}-${pndOption.name}`}
-                                >
-                                  {pndOption.name} ({pndOption.product_id})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {["quantities", "tolerances", "comments"].map(
-                            (key) => (
-                              <div key={key}>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 capitalize">
-                                  {key}
-                                </label>
-                                {pnd[key].map((value, idx2) => (
-                                  <input
-                                    key={idx2}
-                                    type={
-                                      key === "quantities" ? "number" : "text"
-                                    }
-                                    placeholder={key.slice(0, -1)}
-                                    value={value}
-                                    onChange={(e) => {
-                                      const next = [...partNameDetails];
-                                      next[pndIdx][key][idx2] = e.target.value;
-                                      setPartNameDetails(next);
-                                    }}
-                                    disabled={viewMode}
-                                    className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-green-500 transition"
-                                  />
-                                ))}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </section>
-
                   {/* Raw Materials Section */}
                   <section className="mb-10">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
@@ -2144,3 +2145,4 @@ const BOM = () => {
 };
 
 export default BOM;
+
