@@ -235,11 +235,10 @@ const CompoundNameInv = () => {
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Compound ID",
-                "Compound Name",
+                "Part Name",
                 "Name",
                 "Stock",
                 "Weight",
-                // "Reject Qty",
                 "UOM",
                 "Actions",
               ].map((header, i) => (
