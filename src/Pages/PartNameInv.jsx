@@ -70,6 +70,8 @@ const PartNameInv = () => {
       resetForm();
       setShowModal(false);
       setEditMode(false);
+      setFilteredProducts([]); // Clear filtered products after update
+      setSelectedCategory(""); // Reset category filter
     },
   });
 
@@ -84,6 +86,8 @@ const PartNameInv = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       await deleteProduct(id, page);
+      setFilteredProducts([]); // Clear filtered products after delete
+      setSelectedCategory(""); // Reset category filter
     }
   };
 
