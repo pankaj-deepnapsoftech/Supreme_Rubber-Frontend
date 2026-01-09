@@ -62,12 +62,12 @@ const Sidebar = () => {
           icon: <Layers size={18} />,
         },
         {
-          name: "Parts",
+          name: "Part Name",
           path: "/part-name",
           icon: <PlayCircle size={18} />,
         },
         {
-          name: "Compounds",
+          name: "Compound Name",
           path: "/compound-name",
           icon: <PlayCircle size={18} />,
         },
@@ -110,26 +110,22 @@ const Sidebar = () => {
     ? allMenu.map((m) => m.name.toLowerCase())
     : user?.role?.permissions?.map((p) => p.toLowerCase()) || [];
 
-
-
-
   const allowedMenu = user?.isSuper
     ? allMenu
     : allMenu.filter((menu) => {
-      const menuName = menu.name.toLowerCase();
+        const menuName = menu.name.toLowerCase();
 
-      if (menu.submenus) {
+        if (menu.submenus) {
+          const allowedSubs = menu.submenus.filter((sub) =>
+            userPermissions.includes(sub.name.toLowerCase())
+          );
 
-        const allowedSubs = menu.submenus.filter((sub) =>
-          userPermissions.includes(sub.name.toLowerCase())
-        );
+          if (allowedSubs.length > 0) menu.submenus = allowedSubs;
+          return allowedSubs.length > 0;
+        }
 
-        if (allowedSubs.length > 0) menu.submenus = allowedSubs;
-        return allowedSubs.length > 0;
-      }
-      
-      return userPermissions.includes(menuName);
-    });
+        return userPermissions.includes(menuName);
+      });
 
   const routes = useMemo(() => {
     const paths = [];
@@ -142,15 +138,16 @@ const Sidebar = () => {
       }
     });
     return paths;
-  }, [allowedMenu])
+  }, [allowedMenu]);
 
   useEffect(() => {
     if (!routes.includes(location.pathname)) {
       const firstDirect = allowedMenu.find((m) => !!m.path)?.path;
-      const firstSub = allowedMenu.find((m) => m.submenus && m.submenus.length)?.submenus?.[0]?.path;
+      const firstSub = allowedMenu.find((m) => m.submenus && m.submenus.length)
+        ?.submenus?.[0]?.path;
       navigate(firstDirect || firstSub || "/");
     }
-  }, [location.pathname, routes, allowedMenu, navigate])
+  }, [location.pathname, routes, allowedMenu, navigate]);
 
   return (
     <>
@@ -167,14 +164,16 @@ const Sidebar = () => {
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex-col justify-between h-screen">
-      {/* --- Top section (Logo + menu) --- */}
-      <div>
+        {/* --- Top section (Logo + menu) --- */}
+        <div>
           <div className="flex justify-center items-center mb-4 mr-7">
-            <div className="text-lg font-semibold uppercase flex justify-center items-center
+            <div
+              className="text-lg font-semibold uppercase flex justify-center items-center
         bg-gradient-to-r from-blue-400 via-sky-500 to-indigo-600 
         text-transparent bg-clip-text 
         border border-blue-600 rounded-lg px-3 py-1 
-        transition-all duration-300 hover:scale-105">
+        transition-all duration-300 hover:scale-105"
+            >
               <span className="mr-1 text-center">Supreme</span>
               <span className="text-white text-center bg-blue-600 px-2 py-0.5 rounded-md text-sm">
                 Rubber
@@ -182,80 +181,83 @@ const Sidebar = () => {
             </div>
           </div>
 
-        <nav className="flex flex-col gap-1">
-          {allowedMenu.map((item) => (
-            <div key={item.name}>
-              {!item.submenus ? (
-                <NavLink
-                  to={item.path}
-                  end
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 p-2 rounded-lg transition ${isActive
-                      ? "bg-purple-100 text-[#155dfc]"
-                      : "text-gray-700 hover:bg-gray-100"
-                    }`
-                  }
-                >
-                  {item.icon}
-                  {item.name}
-                </NavLink>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleToggle(item.name)}
-                    className={`flex items-center justify-between w-full p-2 rounded-lg transition ${openDropdown === item.name
-                      ? "bg-purple-100 text-[#155dfc]"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`}
+          <nav className="flex flex-col gap-1">
+            {allowedMenu.map((item) => (
+              <div key={item.name}>
+                {!item.submenus ? (
+                  <NavLink
+                    to={item.path}
+                    end
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 p-2 rounded-lg transition ${
+                        isActive
+                          ? "bg-purple-100 text-[#155dfc]"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`
+                    }
                   >
-                    <div className="flex items-center gap-3">
-                      {item.icon}
-                      {item.name}
-                    </div>
-                    <ChevronDown
-                      size={18}
-                      className={`transition-transform ${openDropdown === item.name ? "rotate-180" : ""
+                    {item.icon}
+                    {item.name}
+                  </NavLink>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleToggle(item.name)}
+                      className={`flex items-center justify-between w-full p-2 rounded-lg transition ${
+                        openDropdown === item.name
+                          ? "bg-purple-100 text-[#155dfc]"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.icon}
+                        {item.name}
+                      </div>
+                      <ChevronDown
+                        size={18}
+                        className={`transition-transform ${
+                          openDropdown === item.name ? "rotate-180" : ""
                         }`}
-                    />
-                  </button>
+                      />
+                    </button>
 
-                  {openDropdown === item.name && (
-                    <div className="ml-8 mt-1 flex flex-col gap-1">
-                      {item.submenus.map((sub) => (
-                        <NavLink
-                          key={sub.name}
-                          to={sub.path}
-                          end
-                          className={({ isActive }) =>
-                            `flex items-center gap-2 p-2 rounded-md text-sm transition ${isActive
-                              ? "bg-purple-100 text-[#155dfc]"
-                              : "text-gray-600 hover:bg-gray-50"
-                            }`
-                          }
-                        >
-                          {sub.icon}
-                          {sub.name}
-                        </NavLink>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
-        </nav>
-      </div>
+                    {openDropdown === item.name && (
+                      <div className="ml-8 mt-1 flex flex-col gap-1">
+                        {item.submenus.map((sub) => (
+                          <NavLink
+                            key={sub.name}
+                            to={sub.path}
+                            end
+                            className={({ isActive }) =>
+                              `flex items-center gap-2 p-2 rounded-md text-sm transition ${
+                                isActive
+                                  ? "bg-purple-100 text-[#155dfc]"
+                                  : "text-gray-600 hover:bg-gray-50"
+                              }`
+                            }
+                          >
+                            {sub.icon}
+                            {sub.name}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
 
-
-      <div className="mt-auto pt-4 border-t border-gray-200">
-        <Button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white"
-        >
-          <LogOut size={18} />
-          Logout
-        </Button>
-      </div>
+        <div className="mt-auto pt-4 border-t border-gray-200">
+          <Button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            <LogOut size={18} />
+            Logout
+          </Button>
+        </div>
       </aside>
 
       {/* Mobile drawer + backdrop */}
@@ -267,34 +269,32 @@ const Sidebar = () => {
             onClick={closeMobile}
             aria-hidden
           />
-          
 
-        <aside className="relative w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex flex-col justify-between h-full transform transition-transform">
-          <div>
-            
-            <div className="flex items-center justify-between mb-6">
+          <aside className="relative w-64 bg-white shadow-lg p-4 border-r border-gray-200 flex flex-col justify-between h-full transform transition-transform">
+            <div>
+              <div className="flex items-center justify-between mb-6">
                 <div className="flex justify-center items-center  mr-7">
-                  <div className="text-lg font-semibold uppercase flex justify-center items-center
+                  <div
+                    className="text-lg font-semibold uppercase flex justify-center items-center
         bg-gradient-to-r from-blue-400 via-sky-500 to-indigo-600 
         text-transparent bg-clip-text 
         border border-blue-600 rounded-lg px-3 py-1 
-        transition-all duration-300 hover:scale-105">
+        transition-all duration-300 hover:scale-105"
+                  >
                     <span className="mr-1 text-center">Supreme</span>
                     <span className="text-white text-center bg-blue-600 px-2 py-0.5 rounded-md text-sm">
                       Rubber
                     </span>
                   </div>
                 </div>
-            <button
-            onClick={closeMobile}
-            aria-label="Close menu"
-            className="inline-flex items-center justify-center p-1  rounded-md bg-gray-100 text-gray-700"
-          >
-            <X size={18} />
-          </button>
-                    
-          </div>
-
+                <button
+                  onClick={closeMobile}
+                  aria-label="Close menu"
+                  className="inline-flex items-center justify-center p-1  rounded-md bg-gray-100 text-gray-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
 
               <nav className="flex flex-col gap-1">
                 {allowedMenu.map((item) => (
@@ -305,9 +305,10 @@ const Sidebar = () => {
                         end
                         onClick={closeMobile}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 p-2 rounded-lg transition ${isActive
-                            ? "bg-purple-100 text-purple-700"
-                            : "text-gray-700 hover:bg-gray-100"
+                          `flex items-center gap-3 p-2 rounded-lg transition ${
+                            isActive
+                              ? "bg-purple-100 text-purple-700"
+                              : "text-gray-700 hover:bg-gray-100"
                           }`
                         }
                       >
@@ -318,10 +319,11 @@ const Sidebar = () => {
                       <>
                         <button
                           onClick={() => handleToggle(item.name)}
-                          className={`flex items-center justify-between w-full p-2 rounded-lg transition ${openDropdown === item.name
+                          className={`flex items-center justify-between w-full p-2 rounded-lg transition ${
+                            openDropdown === item.name
                               ? "bg-purple-100 text-purple-700"
                               : "text-gray-700 hover:bg-gray-100"
-                            }`}
+                          }`}
                         >
                           <div className="flex items-center gap-3">
                             {item.icon}
@@ -329,7 +331,9 @@ const Sidebar = () => {
                           </div>
                           <ChevronDown
                             size={18}
-                            className={`transition-transform ${openDropdown === item.name ? "rotate-180" : ""}`}
+                            className={`transition-transform ${
+                              openDropdown === item.name ? "rotate-180" : ""
+                            }`}
                           />
                         </button>
 
@@ -342,9 +346,10 @@ const Sidebar = () => {
                                 end
                                 onClick={closeMobile}
                                 className={({ isActive }) =>
-                                  `flex items-center gap-2 p-2 rounded-md text-sm transition ${isActive
-                                    ? "bg-purple-100 text-purple-700"
-                                    : "text-gray-600 hover:bg-gray-50"
+                                  `flex items-center gap-2 p-2 rounded-md text-sm transition ${
+                                    isActive
+                                      ? "bg-purple-100 text-purple-700"
+                                      : "text-gray-600 hover:bg-gray-50"
                                   }`
                                 }
                               >
@@ -375,8 +380,6 @@ const Sidebar = () => {
           </aside>
         </div>
       )}
-
-
     </>
   );
 };

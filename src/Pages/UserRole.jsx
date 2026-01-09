@@ -8,10 +8,8 @@
 // export default function UserRolesManagement() {
 //   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 //   const [editRoleId, setEditRoleId] = useState(null);
- 
+
 //   const { roles, createRole, editRole, deleteRole, loading,page,setPage } = useUserRole();
-
-
 
 //   const permissionOptions = [
 //     "dashboard",
@@ -56,7 +54,6 @@
 //     setIsDrawerOpen(true);
 //   };
 
-
 //   const handleDelete = async (_id) => {
 //     if (window.confirm("Are you sure you want to delete this role?")) {
 //       await deleteRole(_id);
@@ -83,7 +80,6 @@
 //         </button>
 //       </div>
 
-     
 //       <div className="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
 //         <table className="min-w-full border-collapse text-sm text-left text-gray-700">
 //           <thead>
@@ -147,7 +143,6 @@
 //           </tbody>
 //         </table>
 //       </div>
-
 
 //       {isDrawerOpen && (
 //         <>
@@ -248,14 +243,6 @@
 //   );
 // }
 
-
-
-
-
-
-
-
-
 // src/components/UserRolesManagement.jsx
 import { useUserRole } from "@/Context/UserRoleContext";
 import { useState, useMemo } from "react";
@@ -269,8 +256,17 @@ export default function UserRolesManagement() {
   const [editRoleId, setEditRoleId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPermission, setFilterPermission] = useState("");
-  
-  const { roles, createRole, editRole, deleteRole, loading, page, setPage, fetchRoles } = useUserRole();
+
+  const {
+    roles,
+    createRole,
+    editRole,
+    deleteRole,
+    loading,
+    page,
+    setPage,
+    fetchRoles,
+  } = useUserRole();
 
   const permissionOptions = [
     "dashboard",
@@ -284,7 +280,7 @@ export default function UserRolesManagement() {
     "gateman",
     "supplier",
     "purchase order",
-    "production start"
+    "production start",
   ];
 
   // Filtered + searched roles
@@ -397,56 +393,56 @@ export default function UserRolesManagement() {
 
       {/* Search, Filter, Refresh, Download */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-  {/* Left Section: Search + Filter */}
-  <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-    {/* Search box */}
-    <div className="relative w-full sm:w-64">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-      <input
-        type="text"
-        placeholder="Search roles..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg w-full text-sm 
+        {/* Left Section: Search + Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+          {/* Search box */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search roles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg w-full text-sm 
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      />
-    </div>
+            />
+          </div>
 
-    {/* Filter dropdown */}
+          {/* Filter dropdown */}
 
-    <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
-  {/* Filter Dropdown */}
-  <select
-    value={filterPermission}
-    onChange={(e) => setFilterPermission(e.target.value)}
-    className="border cursor-pointer border-gray-300 rounded-lg py-2 px-3 w-[60%] text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-  >
-    <option value="">All Permissions</option>
-    {permissionOptions.map((perm) => (
-      <option key={perm} value={perm}>
-        {perm}
-      </option>
-    ))}
-  </select>
+          <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
+            {/* Filter Dropdown */}
+            <select
+              value={filterPermission}
+              onChange={(e) => setFilterPermission(e.target.value)}
+              className="border cursor-pointer border-gray-300 rounded-lg py-2 px-3 w-[60%] text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">All Permissions</option>
+              {permissionOptions.map((perm) => (
+                <option key={perm} value={perm}>
+                  {perm}
+                </option>
+              ))}
+            </select>
 
-  {/* Refresh */}
-  <button
-    onClick={handleRefresh}
-    className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
-  >
-    <RefreshCw size={16} />
-  </button>
+            {/* Refresh */}
+            <button
+              onClick={handleRefresh}
+              className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
+            >
+              <RefreshCw size={16} />
+            </button>
 
-  {/* Download */}
-  <button
-    onClick={handleDownload}
-    className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
-  >
-    <Download size={16} />
-  </button>
-</div>
-</div>
-</div>
+            {/* Download */}
+            <button
+              onClick={handleDownload}
+              className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
+            >
+              <Download size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Table */}
       <div className="overflow-x-auto bg-white rounded-2xl mt-10 shadow-md border border-gray-100">
@@ -492,7 +488,7 @@ export default function UserRolesManagement() {
                   <td className="py-3 px-4 border-b text-center">
                     <div className="flex justify-center space-x-3">
                       <button
-                       className="h-4 w-4 text-blue-500 cursor-pointer"
+                        className="h-4 w-4 text-blue-500 cursor-pointer"
                         title="Edit"
                         onClick={() => handleEdit(r)}
                       >
@@ -575,30 +571,70 @@ export default function UserRolesManagement() {
                   Permissions
                 </label>
                 <div className="grid grid-cols-2 gap-2 border border-gray-200 rounded-md p-2 max-h-48 overflow-y-auto">
-                  {permissionOptions.map((perm) => (
-                    <label key={perm} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        value={perm}
-                        checked={formik.values.permissions.includes(perm)}
-                        onChange={(e) => {
-                          const { checked, value } = e.target;
-                          if (checked) {
-                            formik.setFieldValue("permissions", [
-                              ...formik.values.permissions,
-                              value,
-                            ]);
-                          } else {
-                            formik.setFieldValue(
-                              "permissions",
-                              formik.values.permissions.filter((p) => p !== value)
-                            );
-                          }
-                        }}
-                      />
-                      <span className="text-sm text-gray-700">{perm}</span>
-                    </label>
-                  ))}
+                  {permissionOptions.map((perm) => {
+                    const inventorySubModules = [
+                      "raw material",
+                      "part name",
+                      "compound name",
+                    ];
+                    const isInventorySubModule =
+                      inventorySubModules.includes(perm);
+                    const isInventorySelected =
+                      formik.values.permissions.includes("inventory");
+
+                    return (
+                      <label key={perm} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          value={perm}
+                          checked={formik.values.permissions.includes(perm)}
+                          disabled={isInventorySubModule && isInventorySelected}
+                          onChange={(e) => {
+                            const { checked, value } = e.target;
+                            let newPermissions = [...formik.values.permissions];
+
+                            if (value === "inventory") {
+                              if (checked) {
+                                // Add inventory and all sub-modules
+                                newPermissions.push(value);
+                                inventorySubModules.forEach((module) => {
+                                  if (!newPermissions.includes(module)) {
+                                    newPermissions.push(module);
+                                  }
+                                });
+                              } else {
+                                // Remove inventory and all sub-modules
+                                newPermissions = newPermissions.filter(
+                                  (p) =>
+                                    p !== value &&
+                                    !inventorySubModules.includes(p)
+                                );
+                              }
+                            } else {
+                              if (checked) {
+                                newPermissions.push(value);
+                              } else {
+                                newPermissions = newPermissions.filter(
+                                  (p) => p !== value
+                                );
+                              }
+                            }
+
+                            formik.setFieldValue("permissions", newPermissions);
+                          }}
+                        />
+                        <span
+                          className={`text-sm ${
+                            isInventorySubModule && isInventorySelected
+                              ? "text-gray-400"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {perm}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -617,7 +653,6 @@ export default function UserRolesManagement() {
           </div>
         </>
       )}
-
 
       <Pagination
         page={page}
