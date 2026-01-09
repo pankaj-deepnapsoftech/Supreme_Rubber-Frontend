@@ -10,10 +10,10 @@ export const InventoryProvider = ({ children }) => {
 
   // ==================== 📦 PRODUCT API CALLS ====================
 
-  const createProduct = async (data) => {
+  const createProduct = async (data, currentPage = 1) => {
     try {
       const res = await axiosHandler.post("/product", data);
-      await getAllProducts(); // Refresh list
+      await getAllProducts(currentPage); // Refresh list with current page
       toast.success("Product created successfully");
       return res.data;
     } catch (error) {
@@ -23,10 +23,10 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  const updateProduct = async (data) => {
+  const updateProduct = async (data, currentPage = 1) => {
     try {
       const res = await axiosHandler.put("/product", data);
-      await getAllProducts();
+      await getAllProducts(currentPage); // Refresh list with current page
       toast.success("Product updated successfully");
       return res.data;
     } catch (error) {
@@ -36,10 +36,10 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  const deleteProduct = async (id) => {
+  const deleteProduct = async (id, currentPage = 1) => {
     try {
       const res = await axiosHandler.delete("/product", { data: { id } });
-      await getAllProducts();
+      await getAllProducts(currentPage); // Refresh list with current page
       toast.success("Product deleted successfully");
       return res.data;
     } catch (error) {
