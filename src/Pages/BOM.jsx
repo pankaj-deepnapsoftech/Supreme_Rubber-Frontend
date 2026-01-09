@@ -36,6 +36,7 @@ const BOM = () => {
   // New state for arrays
   const [compoundCodes, setCompoundCodes] = useState([""]);
   const [compoundName, setCompoundName] = useState("");
+  const [compoundWeight, setCompoundWeight] = useState("");
   const [partNames, setPartNames] = useState([""]);
   const [hardnesses, setHardnesses] = useState([""]);
   const [partNameDetails, setPartNameDetails] = useState([
@@ -65,9 +66,10 @@ const BOM = () => {
   const partNameOptions = (products || []).filter((p) =>
     (p?.category || "").toLowerCase().includes("part") || (p?.category || "").toLowerCase().includes("finished")
   );
-  const rawMaterialsOptions = (products || []).filter((p) =>
-    (p?.category || "").toLowerCase().includes("raw")
-  );
+  const rawMaterialsOptions = (products || []).filter((p) => {
+    const category = (p?.category || "").toLowerCase();
+    return category.includes("raw") || category === "raw material";
+  });
 
   const formik = useFormik({
     initialValues: {
@@ -77,8 +79,10 @@ const BOM = () => {
       try {
         const payload = {
           ...values,
+          bom_type: bomType,
           compound_codes: compoundCodes.filter((c) => c && c.trim() !== ""),
           compound_name: (compoundName || "").trim(),
+          compound_weight: (compoundWeight || "").trim(),
           part_names: partNames.filter((p) => p && p.trim() !== ""),
           hardnesses: hardnesses.filter((h) => h && h.trim() !== ""),
           part_name_details: partNameDetails.map((pnd) => ({
@@ -117,6 +121,8 @@ const BOM = () => {
           toast.success("BOM created successfully");
         }
         await fetchBoms();
+        // Refresh products to ensure raw materials remain visible in inventory
+        await getAllProducts();
         resetForm();
         setShowModal(false);
         setEditMode(false);
@@ -131,8 +137,10 @@ const BOM = () => {
   });
 
   const resetAllFields = () => {
+    setBomType("");
     setCompoundCodes([""]);
     setCompoundName("");
+    setCompoundWeight("");
     setPartNames([""]);
     setHardnesses([""]);
     setPartNameDetails([
@@ -177,6 +185,14 @@ const BOM = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  // Refresh products when modal opens to ensure dropdowns are populated
+  useEffect(() => {
+    if (showModal) {
+      getAllProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModal]);
+
   const handleDownload = () => {
     const headers = ["Compound Codes", "Compound Name", "Part Names", "Created Date"];
     const source = filteredBoms.length ? filteredBoms : boms;
@@ -206,12 +222,14 @@ const BOM = () => {
         _id: bom._id || "",
       });
 
+      setBomType(bom.bom_type || "");
       setCompoundCodes(
         bom.compound_codes && bom.compound_codes.length > 0
           ? bom.compound_codes
           : [""]
       );
       setCompoundName(bom.compound_name || "");
+      setCompoundWeight(bom.compound_weight || "");
       setPartNames(
         bom.part_names && bom.part_names.length > 0 ? bom.part_names : [""]
       );
@@ -299,11 +317,13 @@ const BOM = () => {
         <h1 className="text-xl sm:text-2xl font-semibold">Bill of Material</h1>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto cursor-pointer"
-          onClick={() => {
+          onClick={async () => {
             setEditMode(false);
             setViewMode(false);
             formik.resetForm();
             resetAllFields();
+            // Refresh products when opening modal to ensure dropdowns are populated
+            await getAllProducts();
             setShowModal(true);
           }}
         >
@@ -355,9 +375,9 @@ const BOM = () => {
         <table className="w-full min-w-[900px] text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r text-center from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
+              <th className="px-4 sm:px-6 py-3 font-medium">BOM Type</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Codes</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Compound Name</th>
-
               <th className="px-4 sm:px-6 py-3 font-medium">Part Names</th>
               <th className="px-4 sm:px-6 py-3 font-medium">Created Date</th>
               <th className="px-4 sm:px-6 py-3 font-medium text-center">
@@ -368,7 +388,7 @@ const BOM = () => {
           <tbody>
             {bomsLoading ? (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
+                <td colSpan="6" className="text-center py-6 text-gray-500">
                   Loading BOMs...
                 </td>
               </tr>
@@ -398,6 +418,21 @@ const BOM = () => {
                       index % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
+                    <td className="px-4 sm:px-6 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        item.bom_type === "compound" 
+                          ? "bg-blue-100 text-blue-800" 
+                          : item.bom_type === "part-name"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}>
+                        {item.bom_type === "compound" 
+                          ? "Compound" 
+                          : item.bom_type === "part-name"
+                          ? "Part Name"
+                          : "-"}
+                      </span>
+                    </td>
                     <td className="px-4 sm:px-6 py-3">
                       {(item.compound_codes || []).join(", ") || "-"}
                     </td>
@@ -497,7 +532,7 @@ const BOM = () => {
                 ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center py-6 text-gray-500">
+                <td colSpan="6" className="text-center py-6 text-gray-500">
                   No BOM found.
                 </td>
               </tr>
@@ -524,12 +559,14 @@ const BOM = () => {
             >
               {/* Close Button */}
               <button
-                onClick={() => {
+                onClick={async () => {
                   setShowModal(false);
                   setEditMode(false);
                   setViewMode(false);
                   formik.resetForm();
                   resetAllFields();
+                  // Refresh products when closing modal
+                  await getAllProducts();
                 }}
                 className="absolute top-4 right-5 text-gray-600 dark:text-gray-300 hover:text-red-500 transition-all duration-200 text-2xl"
               >
@@ -656,6 +693,8 @@ const BOM = () => {
                         <input
                           type="text"
                           placeholder="Enter weight"
+                          value={compoundWeight}
+                          onChange={(e) => setCompoundWeight(e.target.value)}
                           disabled={viewMode}
                           className="w-full mb-2 border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
                         />

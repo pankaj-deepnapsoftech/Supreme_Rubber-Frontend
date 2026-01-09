@@ -33,6 +33,7 @@ const Production_Start = () => {
   // Searchable BOM selector state
   const [bomSearch, setBomSearch] = useState("");
   const [showBomResults, setShowBomResults] = useState(false);
+  const [bomTypeFilter, setBomTypeFilter] = useState(""); // Filter: "", "compound", "part-name"
   // Part Name data
   const [partName, setPartName] = useState({
     compound_code: "",
@@ -71,9 +72,12 @@ const Production_Start = () => {
   };
 
   // Fetch all BOMs
-  const fetchBoms = async () => {
+  const fetchBoms = async (typeFilter = "") => {
     try {
-      const res = await axiosHandler.get(`/bom/all`);
+      const url = typeFilter 
+        ? `/bom/all?bom_type=${typeFilter}` 
+        : `/bom/all`;
+      const res = await axiosHandler.get(url);
       setBoms(res?.data?.boms || []);
     } catch (e) {
       console.error("Error fetching BOMs", e);
@@ -136,13 +140,17 @@ const Production_Start = () => {
       const firstEstQty = firstPartNameDetail && Array.isArray(firstPartNameDetail.quantities) && firstPartNameDetail.quantities.length > 0
         ? String(firstPartNameDetail.quantities[0])
         : "";
+      // Use weight from BOM if available, otherwise use firstEstQty
+      const estQtyValue = bom.compound_weight && bom.compound_weight.trim() !== "" 
+        ? bom.compound_weight 
+        : firstEstQty;
       setPartName({
         compound_code: firstCode || "",
         compound_name: bom.compound_name || "",
-        est_qty: firstEstQty,
+        est_qty: estQtyValue,
         uom: pndSnap?.uom || productById?.uom || productMatch?.uom || "",
         prod_qty: "",
-        remain_qty: firstEstQty || "",
+        remain_qty: estQtyValue || "",
         category: pndSnap?.category || productById?.category || productMatch?.category || "",
         comment: "",
       });
@@ -158,7 +166,11 @@ const Production_Start = () => {
           // Get first quantity from quantities array
           const firstQtyStr = Array.isArray(rm.quantities) && rm.quantities.length > 0 ? String(rm.quantities[0]) : "0";
           const firstQtyNum = parseFloat(firstQtyStr) || 0;
-          const fgBase = parseFloat(firstEstQty) || 1; // initial FG qty from BOM (fallback 1)
+          // Use weight from BOM if available for scaling, otherwise use firstEstQty
+          const fgBaseForRM = bom.compound_weight && bom.compound_weight.trim() !== "" 
+            ? parseFloat(bom.compound_weight) || 1 
+            : (parseFloat(firstEstQty) || 1);
+          const fgBase = fgBaseForRM; // initial FG qty from BOM (fallback 1)
           const perUnitBase = fgBase ? firstQtyNum / fgBase : 0; // RM per 1 FG unit
           const initialEst = firstQtyStr; // show exactly BOM value on first load
           return {
@@ -213,7 +225,11 @@ const Production_Start = () => {
         ? bom.accelerators.map((acc) => {
           const accQtyStr = acc.quantity || "0";
           const accQtyNum = parseFloat(accQtyStr) || 0;
-          const fgBase = parseFloat(firstEstQty) || 1; // initial FG qty from BOM (fallback 1)
+          // Use weight from BOM if available for scaling, otherwise use firstEstQty
+          const fgBaseForAcc = bom.compound_weight && bom.compound_weight.trim() !== "" 
+            ? parseFloat(bom.compound_weight) || 1 
+            : (parseFloat(firstEstQty) || 1);
+          const fgBase = fgBaseForAcc; // initial FG qty from BOM (fallback 1)
           const perUnitBase = fgBase ? accQtyNum / fgBase : 0; // Accelerator per 1 FG unit
           const initialEst = accQtyStr; // show exactly BOM value on first load
           return {
@@ -972,6 +988,25 @@ const Production_Start = () => {
                     <h2 className="text-lg font-semibold text-gray-900">
                       Compound Details
                     </h2>
+                    {/* BOM Type Filter */}
+                    <select
+                      value={bomTypeFilter}
+                      onChange={async (e) => {
+                        const selectedType = e.target.value;
+                        setBomTypeFilter(selectedType);
+                        setBomSearch("");
+                        setSelectedBomId("");
+                        setSelectedBom(null);
+                        setShowBomResults(false);
+                        // Fetch BOMs with filter
+                        await fetchBoms(selectedType);
+                      }}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-400"
+                    >
+                      <option value="">All BOMs</option>
+                      <option value="compound">Compound</option>
+                      <option value="part-name">Part Name</option>
+                    </select>
                   </div>
 
                   <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
@@ -1008,6 +1043,11 @@ const Production_Start = () => {
                         <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
                           {boms
                             .filter((b) => {
+                              // Filter by BOM type
+                              if (bomTypeFilter && b.bom_type !== bomTypeFilter) {
+                                return false;
+                              }
+                              // Filter by search query
                               const q = (bomSearch || "").toLowerCase();
                               const name = (b.compound_name || "").toLowerCase();
                               const code = ((Array.isArray(b.compound_codes) && b.compound_codes[0]) ? b.compound_codes[0] : "").toLowerCase();
@@ -1088,7 +1128,7 @@ const Production_Start = () => {
                         }
                         return "";
                       })()}
-                      readOnly
+                     
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
                     <input
@@ -1102,7 +1142,7 @@ const Production_Start = () => {
                       type="text"
                       placeholder="Enter UOM"
                       value={partName.uom}
-                      readOnly
+                     
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
                     <input
@@ -1116,7 +1156,7 @@ const Production_Start = () => {
                       type="number"
                       placeholder="Remain QTY"
                       value={partName.remain_qty}
-                      readOnly
+                      
                       className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                     />
                     <input

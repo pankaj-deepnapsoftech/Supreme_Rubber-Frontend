@@ -234,6 +234,7 @@ const CompoundNameInv = () => {
                 "Compound Name",
                 "Name",
                 "Stock",
+                "Weight",
                 // "Reject Qty",
                 "UOM",
                 "Actions",
@@ -249,7 +250,7 @@ const CompoundNameInv = () => {
             {loading ? (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="8"
                   className="text-center py-6 text-gray-500 italic bg-gray-50 rounded-b-2xl"
                 >
                   Loading products...
@@ -288,6 +289,9 @@ const CompoundNameInv = () => {
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.current_stock}
                     </td>
+                    <td className="py-3 px-4 text-center text-gray-800 border-b">
+                      {item.weight || "-"}
+                    </td>
                     {/* <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.reject_stock || 0}
                     </td> */}
@@ -325,7 +329,7 @@ const CompoundNameInv = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="8"
                   className="text-center py-6 text-gray-400 italic bg-gray-50 rounded-b-2xl"
                 >
                   No products found.
