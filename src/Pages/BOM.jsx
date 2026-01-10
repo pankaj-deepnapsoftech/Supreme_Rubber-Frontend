@@ -439,8 +439,12 @@ const BOM = () => {
                   // For part-name BOMs, search in compounds array
                   let compoundCodesStr = "";
                   let compoundNameStr = "";
-                  
-                  if (item.bom_type === "part-name" && item.compounds && item.compounds.length > 0) {
+
+                  if (
+                    item.bom_type === "part-name" &&
+                    item.compounds &&
+                    item.compounds.length > 0
+                  ) {
                     compoundCodesStr = item.compounds
                       .map((c) => c.compound_code || "")
                       .join(" ")
@@ -455,7 +459,7 @@ const BOM = () => {
                       .toLowerCase();
                     compoundNameStr = (item.compound_name || "").toLowerCase();
                   }
-                  
+
                   const partNamesStr = (item.part_names || [])
                     .join(" ")
                     .toLowerCase();
@@ -490,13 +494,26 @@ const BOM = () => {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {item.bom_type === "part-name" && item.compounds && item.compounds.length > 0
-                        ? item.compounds.map((c) => c.compound_code || "-").filter((code) => code !== "-").join(", ") || "-"
+                      {item.bom_type === "part-name" &&
+                      item.compounds &&
+                      item.compounds.length > 0
+                        ? item.compounds
+                            .map((c) => c.compound_code || "-")
+                            .filter((code) => code !== "-")
+                            .join(", ") || "-"
                         : (item.compound_codes || []).join(", ") || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {item.bom_type === "part-name" && item.compounds && item.compounds.length > 0
-                        ? item.compounds.map((c) => c.compound_name || c.compound_id?.name || "-").filter((name) => name !== "-").join(", ") || "-"
+                      {item.bom_type === "part-name" &&
+                      item.compounds &&
+                      item.compounds.length > 0
+                        ? item.compounds
+                            .map(
+                              (c) =>
+                                c.compound_name || c.compound_id?.name || "-"
+                            )
+                            .filter((name) => name !== "-")
+                            .join(", ") || "-"
                         : item.compound_name || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
@@ -1494,7 +1511,9 @@ const BOM = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const next = compounds.filter((_, idx) => idx !== compoundIdx);
+                                const next = compounds.filter(
+                                  (_, idx) => idx !== compoundIdx
+                                );
                                 setCompounds(next);
                               }}
                               className="text-red-600 hover:text-red-700 p-2 rounded border border-red-300 hover:border-red-400 hover:bg-red-50 transition"
@@ -1529,8 +1548,12 @@ const BOM = () => {
                             >
                               <option value="">Select Compound...</option>
                               {compoundOptions.map((compoundOption) => (
-                                <option key={compoundOption._id} value={compoundOption._id}>
-                                  {compoundOption.name} ({compoundOption.product_id})
+                                <option
+                                  key={compoundOption._id}
+                                  value={compoundOption._id}
+                                >
+                                  {compoundOption.name} (
+                                  {compoundOption.product_id})
                                 </option>
                               ))}
                             </select>
@@ -1547,7 +1570,8 @@ const BOM = () => {
                               value={compound.compound_code || ""}
                               onChange={(e) => {
                                 const next = [...compounds];
-                                next[compoundIdx].compound_code = e.target.value;
+                                next[compoundIdx].compound_code =
+                                  e.target.value;
                                 setCompounds(next);
                               }}
                               disabled={viewMode}
@@ -1569,6 +1593,19 @@ const BOM = () => {
                                 next[compoundIdx].hardness = e.target.value;
                                 setCompounds(next);
                               }}
+                              disabled={viewMode}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Weight
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Enter weight"
+                              
                               disabled={viewMode}
                               className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
                             />
