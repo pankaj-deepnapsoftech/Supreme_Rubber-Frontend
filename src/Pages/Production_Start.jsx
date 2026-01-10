@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Search,
   Filter,
@@ -14,6 +14,7 @@ import { useInventory } from "@/Context/InventoryContext";
 import axiosHandler from "@/config/axiosconfig";
 import { toast } from "react-toastify";
 import Pagination from "@/Components/Pagination/Pagination";
+import EditProduction from "@/Components/EditProduction";
 
 const Production_Start = () => {
   const [showModal, setShowModal] = useState(false);
@@ -25,6 +26,8 @@ const Production_Start = () => {
   const [currentProductionId, setCurrentProductionId] = useState("");
   const [viewDetails, setViewDetails] = useState(null);
   const [bomTypeFilter, setBomTypeFilter] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProductionId, setEditingProductionId] = useState("");
 
 
   // BOM and form data
@@ -35,7 +38,13 @@ const Production_Start = () => {
   // Searchable BOM selector state
   const [bomSearch, setBomSearch] = useState("");
   const [showBomResults, setShowBomResults] = useState(false);
- const [bomType, setBomType] = useState("");
+  const [bomType, setBomType] = useState("");
+  // Part Names list for dropdown
+  const [partNamesList, setPartNamesList] = useState([]);
+  const [selectedPartName, setSelectedPartName] = useState("");
+  const [partNameSearch, setPartNameSearch] = useState("");
+  const [showPartNameResults, setShowPartNameResults] = useState(false);
+  const partNameDropdownRef = useRef(null);
   // Part Name data
   const [partName, setPartName] = useState({
     compound_code: "",
@@ -56,6 +65,9 @@ const Production_Start = () => {
 
   // Processes data
   const [processes, setProcesses] = useState([]);
+
+  // Compound Details data (for part-name BOMs)
+  const [compoundDetails, setCompoundDetails] = useState([]);
 
   const { getAllProducts, products } = useInventory();
 
@@ -87,6 +99,206 @@ const Production_Start = () => {
     }
   };
 
+  // Fetch all part names from BOM table
+  const fetchPartNames = async () => {
+    try {
+      const res = await axiosHandler.get("/bom/part-names");
+      setPartNamesList(res?.data?.partNames || []);
+    } catch (e) {
+      console.error("Error fetching part names", e);
+      setPartNamesList([]);
+      toast.error("Failed to fetch part names");
+    }
+  };
+
+  // Handle part name selection and auto-fill form
+  const handlePartNameSelect = async (partNameValue) => {
+    if (!partNameValue) {
+      setSelectedPartName("");
+      setPartNameSearch("");
+      setSelectedBomId("");
+      setSelectedBom(null);
+      setRawMaterials([]);
+      setAccelerators([]);
+      setProcesses([]);
+      setPartName({
+        compound_code: "",
+        compound_name: "",
+        est_qty: "",
+        uom: "",
+        prod_qty: "",
+        remain_qty: "",
+        category: "",
+        comment: "",
+      });
+      return;
+    }
+
+    setSelectedPartName(partNameValue);
+    setPartNameSearch(partNameValue);
+    setShowPartNameResults(false);
+
+    try {
+      // Fetch BOM details by part name
+      const res = await axiosHandler.get(`/bom/by-part-name?part_name=${encodeURIComponent(partNameValue)}`);
+      const { bom, partDetail } = res.data;
+
+      if (!bom) {
+        toast.error("BOM not found for this part name");
+        return;
+      }
+
+      setSelectedBomId(bom._id);
+      setSelectedBom(bom);
+
+      // Auto-fill Part Name fields
+      const partNameFromDetail = partDetail?.product_snapshot?.name || 
+        (partDetail?.part_name_id_name ? 
+          (partDetail.part_name_id_name.includes("-") ? 
+            partDetail.part_name_id_name.split("-").slice(1).join("-") : 
+            partDetail.part_name_id_name) : 
+          partNameValue);
+      
+      // Get first quantity from part detail
+      const firstEstQty = partDetail && Array.isArray(partDetail.quantities) && partDetail.quantities.length > 0
+        ? String(partDetail.quantities[0])
+        : "";
+
+      // Get UOM and category from product snapshot or BOM
+      const productSnap = partDetail?.product_snapshot || null;
+      const resolvedUom = productSnap?.uom || bom.compound_weight ? "Kg" : "";
+      const resolvedCategory = productSnap?.category || "";
+
+      // Get compound code
+      const firstCode = Array.isArray(bom.compound_codes) && bom.compound_codes.length > 0 
+        ? bom.compound_codes[0] 
+        : "";
+
+      setPartName({
+        compound_code: firstCode,
+        compound_name: partNameFromDetail,
+        est_qty: firstEstQty,
+        uom: resolvedUom,
+        prod_qty: "",
+        remain_qty: firstEstQty,
+        category: resolvedCategory,
+        comment: "",
+      });
+
+      // Auto-fill Raw Materials from BOM
+      let rms = [];
+      if (bom.raw_materials && Array.isArray(bom.raw_materials) && bom.raw_materials.length > 0) {
+        rms = bom.raw_materials.map((rm) => {
+          const rawPop = rm.raw_material_id && typeof rm.raw_material_id === 'object' ? rm.raw_material_id : null;
+          const snap = rm.product_snapshot || null;
+          const firstQtyStr = Array.isArray(rm.quantities) && rm.quantities.length > 0 ? String(rm.quantities[0]) : "0";
+          const firstQtyNum = parseFloat(firstQtyStr) || 0;
+          const fgBaseForRM = parseFloat(firstEstQty) || 1;
+          const perUnitBase = fgBaseForRM ? firstQtyNum / fgBaseForRM : 0;
+          const initialEst = firstQtyStr;
+          return {
+            raw_material_id: rawPop?._id || rm.raw_material_id || null,
+            raw_material_name: rm.raw_material_name || rawPop?.name || snap?.name || "",
+            raw_material_code: rawPop?.product_id || snap?.product_id || "",
+            est_qty: initialEst,
+            base_qty: perUnitBase,
+            uom: rawPop?.uom || snap?.uom || "",
+            used_qty: "",
+            remain_qty: initialEst,
+            category: rawPop?.category || snap?.category || "",
+            comment: "",
+            weight: "",
+            tolerance: (Array.isArray(rm.tolerances) && rm.tolerances[0]) || "",
+            code_no: "",
+          };
+        });
+      }
+      setRawMaterials(rms);
+
+      // Auto-fill Accelerators from BOM
+      const accs = Array.isArray(bom.accelerators) && bom.accelerators.length > 0
+        ? bom.accelerators.map((acc) => {
+          const accQtyStr = acc.quantity || "0";
+          const accQtyNum = parseFloat(accQtyStr) || 0;
+          const fgBaseForAcc = parseFloat(firstEstQty) || 1;
+          const perUnitBase = fgBaseForAcc ? accQtyNum / fgBaseForAcc : 0;
+          const initialEst = accQtyStr;
+          return {
+            name: acc.name || "",
+            tolerance: acc.tolerance || "",
+            quantity: acc.quantity || "",
+            est_qty: initialEst,
+            base_qty: perUnitBase,
+            used_qty: "",
+            remain_qty: initialEst,
+            comment: acc.comment || "",
+          };
+        })
+        : [];
+      setAccelerators(accs);
+
+      // Auto-fill Processes from BOM
+      const procList = (bom.processes || [])
+        .map((proc, idx) => ({
+          process_name: proc || bom[`process${idx + 1}`] || "",
+          work_done: "",
+          start: false,
+          done: false,
+          status: "pending",
+        }))
+        .filter((p) => p.process_name);
+
+      if (!procList.length) {
+        for (let i = 1; i <= 4; i++) {
+          const procName = bom[`process${i}`];
+          if (procName) {
+            procList.push({
+              process_name: procName,
+              work_done: "",
+              start: false,
+              done: false,
+              status: "pending",
+            });
+          }
+        }
+      }
+
+      setProcesses(procList);
+
+      // Extract Compound Details from BOM
+      if (bom.compounds && Array.isArray(bom.compounds) && bom.compounds.length > 0) {
+        const compounds = bom.compounds.map((comp) => {
+          const compPopulated = comp.compound_id && typeof comp.compound_id === 'object' ? comp.compound_id : null;
+          return {
+            compound_id: compPopulated?._id || comp.compound_id || "",
+            compound_name: comp.compound_name || compPopulated?.name || "",
+            compound_code: comp.compound_code || compPopulated?.product_id || "",
+            hardness: comp.hardness || "",
+            weight: comp.weight || "",
+          };
+        });
+        setCompoundDetails(compounds);
+      } else {
+        // If no compounds array, check for single compound fields
+        const singleCompound = [];
+        if (bom.compound_name || bom.compound_codes?.length > 0) {
+          singleCompound.push({
+            compound_id: "",
+            compound_name: bom.compound_name || "",
+            compound_code: Array.isArray(bom.compound_codes) && bom.compound_codes.length > 0 ? bom.compound_codes[0] : "",
+            hardness: Array.isArray(bom.hardnesses) && bom.hardnesses.length > 0 ? bom.hardnesses[0] : "",
+            weight: bom.compound_weight || "",
+          });
+        }
+        setCompoundDetails(singleCompound);
+      }
+    } catch (error) {
+      console.error("Error fetching BOM by part name:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch BOM details for this part name");
+      setCompoundDetails([]);
+    }
+  };
+
 
 
   useEffect(() => {
@@ -110,6 +322,38 @@ const Production_Start = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bomType]);
+
+  // Fetch part names when bomType is "part-name"
+  useEffect(() => {
+    if (bomType === "part-name") {
+      fetchPartNames();
+      // Clear selected part name when filter changes
+      setSelectedPartName("");
+      setPartNameSearch("");
+      setShowPartNameResults(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bomType]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        partNameDropdownRef.current &&
+        !partNameDropdownRef.current.contains(event.target)
+      ) {
+        setShowPartNameResults(false);
+      }
+    };
+
+    if (showPartNameResults) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPartNameResults]);
 
   // Handle BOM selection
   const handleBomSelect = async (bomId) => {
@@ -524,6 +768,10 @@ const Production_Start = () => {
     setSelectedBom(null);
     setBomSearch("");
     setShowBomResults(false);
+    setSelectedPartName("");
+    setPartNameSearch("");
+    setShowPartNameResults(false);
+    setCompoundDetails([]);
     setEditMode(false);
     setCurrentProductionId("");
     setPartName({
@@ -866,109 +1114,9 @@ const Production_Start = () => {
                       <div className="flex justify-center items-center pb-4 space-x-3">
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"
-                          onClick={async () => {
-                            try {
-                              const res = await axiosHandler.get(
-                                `/production/${prod._id}`
-                              );
-                              const data = res?.data?.production;
-                              if (!data) return;
-                              setEditMode(true);
-                              setCurrentProductionId(data._id);
-                              setShowModal(true);
-                              // Prefill BOM selection
-                              const bomId = data?.bom?._id || data?.bom;
-                              await handleBomSelect(bomId);
-                              // Prefill Part Name
-                              const pn = (data.part_names || [])[0] || {};
-                              setPartName({
-                                compound_code: pn.compound_code || "",
-                                compound_name: pn.compound_name || "",
-                                est_qty: String(pn.est_qty ?? ""),
-                                uom: pn.uom || "",
-                                prod_qty: String(pn.prod_qty ?? ""),
-                                remain_qty: String(pn.remain_qty ?? ""),
-                                category: pn.category || "",
-                                total_cost: String(pn.total_cost ?? ""),
-                              });
-                              // Prefill RMs
-                              const currentEstQtyForRM =
-                                parseFloat(partName.est_qty) || 1;
-                              setRawMaterials(
-                                (data.raw_materials || []).map((rm) => {
-                                  const estQty = parseFloat(rm.est_qty) || 0;
-                                  // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
-                                  const baseQty = currentEstQtyForRM
-                                    ? estQty / currentEstQtyForRM
-                                    : 0;
-                                  return {
-                                    raw_material_id: rm.raw_material_id || null,
-                                    raw_material_name:
-                                      rm.raw_material_name || "",
-                                    raw_material_code:
-                                      rm.raw_material_code || "",
-                                    est_qty: String(rm.est_qty ?? ""),
-                                    base_qty: baseQty,
-                                    uom: rm.uom || "",
-                                    used_qty: String(rm.used_qty ?? ""),
-                                    remain_qty: String(rm.remain_qty ?? ""),
-                                    category: rm.category || "",
-                                    total_cost: String(rm.total_cost ?? ""),
-                                    weight: rm.weight || "",
-                                    tolerance: rm.tolerance || "",
-                                    code_no: rm.code_no || "",
-                                  };
-                                })
-                              );
-                              // Prefill accelerators
-                              const currentEstQty =
-                                parseFloat(partName.est_qty) || 1;
-                              setAccelerators(
-                                (data.accelerators || []).map((acc) => {
-                                  const estQty =
-                                    parseFloat(acc.est_qty || acc.quantity) ||
-                                    0;
-                                  const usedQty = parseFloat(acc.used_qty) || 0;
-                                  // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
-                                  const baseQty = currentEstQty
-                                    ? estQty / currentEstQty
-                                    : estQty;
-                                  return {
-                                    name: acc.name || "",
-                                    tolerance: acc.tolerance || "",
-                                    quantity: acc.quantity || "",
-                                    est_qty: String(estQty),
-                                    base_qty: baseQty,
-                                    used_qty: String(usedQty),
-                                    remain_qty: String(
-                                      (estQty - usedQty).toFixed(2)
-                                    ),
-                                    comment: acc.comment || "",
-                                  };
-                                })
-                              );
-                              // Prefill processes
-                              setProcesses(
-                                (data.processes || []).map((p) => ({
-                                  process_name: p.process_name || "",
-                                  work_done: String(p.work_done ?? ""),
-                                  start: !!p.start,
-                                  done: !!p.done,
-                                  status:
-                                    p.status ||
-                                    (p.done
-                                      ? "completed"
-                                      : p.start
-                                      ? "in_progress"
-                                      : "pending"),
-                                }))
-                              );
-                            } catch (e) {
-                              console.error(e);
-                              toast.error(
-                                "Failed to load production details for edit"
-                              );
-                            }
+                          onClick={() => {
+                            setEditingProductionId(prod._id);
+                            setShowEditModal(true);
                           }}
                         />
                         <Trash2
@@ -1144,13 +1292,17 @@ const Production_Start = () => {
                  <select
                    className="h-12 w-50 border rounded-xl border-gray-300"
                    value={bomType}
-                   onChange={(e) => {
+                     onChange={(e) => {
                      setBomType(e.target.value);
                      // Clear form when filter changes
                      setSelectedBomId("");
                      setSelectedBom(null);
                      setBomSearch("");
                      setShowBomResults(false);
+                     setSelectedPartName("");
+                     setPartNameSearch("");
+                     setShowPartNameResults(false);
+                     setCompoundDetails([]);
                      setPartName({
                        compound_code: "",
                        compound_name: "",
@@ -1336,7 +1488,7 @@ const Production_Start = () => {
 
                     <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
                       {[
-                        "Part Details",
+                        "Select Part",
                         "Part Name",
                         "EST. QTY",
                         "UOM",
@@ -1352,75 +1504,53 @@ const Production_Start = () => {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-8 gap-3 mt-3">
-                      <div className="relative">
+                      <div className="relative" ref={partNameDropdownRef}>
                         <input
                           type="text"
-                          placeholder="Search Part"
-                          value={bomSearch}
+                          placeholder="Select Part Name"
+                          value={partNameSearch}
                           onChange={(e) => {
-                            setBomSearch(e.target.value);
-                            setShowBomResults(true);
+                            setPartNameSearch(e.target.value);
+                            setShowPartNameResults(true);
                           }}
-                          onFocus={() => setShowBomResults(true)}
+                          onFocus={() => {
+                            setShowPartNameResults(true);
+                            if (partNamesList.length === 0) {
+                              fetchPartNames();
+                            }
+                          }}
                           className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full focus:ring-1 focus:ring-blue-400"
                         />
-                        {showBomResults && (
+                        {showPartNameResults && (
                           <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-sm max-h-56 overflow-auto">
-                            {boms
-                              .filter((b) => {
-                                // Filter by BOM type (bomType state)
-                                if (bomType && b.bom_type !== bomType) {
-                                  return false;
-                                }
-                                // Filter by search query
-                                const q = (bomSearch || "").toLowerCase();
-                                const name = (
-                                  b.compound_name || ""
-                                ).toLowerCase();
-                                const code = (
-                                  Array.isArray(b.compound_codes) &&
-                                  b.compound_codes[0]
-                                    ? b.compound_codes[0]
-                                    : ""
-                                ).toLowerCase();
-                                return (
-                                  !q || name.includes(q) || code.includes(q)
-                                );
+                            {partNamesList
+                              .filter((pn) => {
+                                const q = (partNameSearch || "").toLowerCase();
+                                const name = (pn || "").toLowerCase();
+                                return !q || name.includes(q);
                               })
                               .slice(0, 50)
-                              .map((b) => {
-                                const label = `${b.compound_name || "Unnamed"}${
-                                  Array.isArray(b.compound_codes) &&
-                                  b.compound_codes[0]
-                                    ? ` (${b.compound_codes[0]})`
-                                    : ""
-                                }`;
-                                return (
-                                  <div
-                                    key={b._id}
-                                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                                      selectedBomId === b._id
-                                        ? "bg-gray-50"
-                                        : ""
-                                    }`}
-                                    onMouseDown={(e) => {
-                                      // prevent input blur before click handler
-                                      e.preventDefault();
-                                    }}
-                                    onClick={() => {
-                                      setSelectedBomId(b._id);
-                                      setBomSearch(label);
-                                      setShowBomResults(false);
-                                      handleBomSelect(b._id);
-                                    }}
-                                  >
-                                    {label}
-                                  </div>
-                                );
-                              })}
-                            {boms.length === 0 && (
+                              .map((pn, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
+                                    selectedPartName === pn
+                                      ? "bg-blue-50 text-blue-600 font-medium"
+                                      : ""
+                                  }`}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                  }}
+                                  onClick={() => {
+                                    handlePartNameSelect(pn);
+                                  }}
+                                >
+                                  {pn}
+                                </div>
+                              ))}
+                            {partNamesList.length === 0 && (
                               <div className="px-3 py-2 text-sm text-gray-500">
-                                No BOMs
+                                No part names found
                               </div>
                             )}
                           </div>
@@ -1429,78 +1559,8 @@ const Production_Start = () => {
                       <input
                         type="text"
                         placeholder="Part Name"
-                        value={(() => {
-                          // First try to get from _selectedBom (has full details from API)
-                          if (_selectedBom) {
-                            if (
-                              _selectedBom.part_name_details &&
-                              _selectedBom.part_name_details.length > 0
-                            ) {
-                              const firstPartName =
-                                _selectedBom.part_name_details[0];
-                              if (
-                                firstPartName.product_snapshot &&
-                                firstPartName.product_snapshot.name
-                              ) {
-                                return firstPartName.product_snapshot.name;
-                              }
-                              if (firstPartName.part_name_id_name) {
-                                const parts =
-                                  firstPartName.part_name_id_name.split("-");
-                                if (parts.length > 1) {
-                                  return parts.slice(1).join("-");
-                                }
-                                return firstPartName.part_name_id_name;
-                              }
-                            }
-                            if (
-                              _selectedBom.part_names &&
-                              _selectedBom.part_names.length > 0
-                            ) {
-                              return _selectedBom.part_names
-                                .filter((p) => p && p.trim() !== "")
-                                .join(", ");
-                            }
-                          }
-                          // Fallback to boms array
-                          if (selectedBomId) {
-                            const selectedBom = boms.find(
-                              (b) => b._id === selectedBomId
-                            );
-                            if (selectedBom) {
-                              if (
-                                selectedBom.part_name_details &&
-                                selectedBom.part_name_details.length > 0
-                              ) {
-                                const firstPartName =
-                                  selectedBom.part_name_details[0];
-                                if (
-                                  firstPartName.product_snapshot &&
-                                  firstPartName.product_snapshot.name
-                                ) {
-                                  return firstPartName.product_snapshot.name;
-                                }
-                                if (firstPartName.part_name_id_name) {
-                                  const parts =
-                                    firstPartName.part_name_id_name.split("-");
-                                  if (parts.length > 1) {
-                                    return parts.slice(1).join("-");
-                                  }
-                                  return firstPartName.part_name_id_name;
-                                }
-                              }
-                              if (
-                                selectedBom.part_names &&
-                                selectedBom.part_names.length > 0
-                              ) {
-                                return selectedBom.part_names
-                                  .filter((p) => p && p.trim() !== "")
-                                  .join(", ");
-                              }
-                            }
-                          }
-                          return "";
-                        })()}
+                        value={partName.compound_name || selectedPartName}
+                        readOnly
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
                       />
                       <input
@@ -1550,6 +1610,78 @@ const Production_Start = () => {
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full"
                       />
                     </div>
+                  </section>
+                )}
+
+                {/* ---------- Compound Details Section (for part-name BOMs) ---------- */}
+                {bomType === "part-name" && compoundDetails.length > 0 && (
+                  <section className="mb-10">
+                    <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        Compound Details
+                      </h2>
+                    </div>
+
+                    <div className="hidden sm:grid grid-cols-5 bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
+                      {[
+                        "Compound Name",
+                        "Compound Code",
+                        "Hardness",
+                        "Weight",
+                        "Details",
+                      ].map((head) => (
+                        <div key={head} className="p-2 text-center truncate">
+                          {head}
+                        </div>
+                      ))}
+                    </div>
+
+                    {compoundDetails.map((comp, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-1 sm:grid-cols-5 gap-3 mt-3"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Compound Name"
+                          value={comp.compound_name || ""}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Compound Code"
+                          value={comp.compound_code || ""}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Hardness"
+                          value={comp.hardness || ""}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Weight"
+                          value={comp.weight || ""}
+                          readOnly
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm w-full bg-gray-50"
+                        />
+                        <div className="flex items-center justify-center text-sm text-gray-600">
+                          {comp.compound_id ? (
+                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                              Linked Product
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                              Manual Entry
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </section>
                 )}
 
@@ -2068,6 +2200,20 @@ const Production_Start = () => {
         setPage={setPage}
         hasNextPage={productions?.length === 10}
       />
+
+      {/* Edit Production Modal */}
+      {showEditModal && (
+        <EditProduction
+          productionId={editingProductionId}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingProductionId("");
+          }}
+          onUpdate={() => {
+            fetchProductions();
+          }}
+        />
+      )}
     </div>
   );
 };

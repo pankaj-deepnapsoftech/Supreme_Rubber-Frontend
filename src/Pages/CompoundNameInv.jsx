@@ -14,9 +14,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useInventory } from "@/Context/InventoryContext";
-import { useBomContext } from "@/Context/BomContext";
 import Pagination from "@/Components/Pagination/Pagination";
 import { toast } from "react-toastify";
+import axiosHandler from "@/config/axiosconfig";
 
 const CompoundNameInv = () => {
   const [page, setPage] = useState(1);
@@ -28,6 +28,7 @@ const CompoundNameInv = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [compoundPartNamesMap, setCompoundPartNamesMap] = useState({});
 
   const {
     products,
@@ -39,42 +40,42 @@ const CompoundNameInv = () => {
     getAllProducts,
   } = useInventory();
 
-  const { boms } = useBomContext();
-
-  const getPartNamesForCompound = (compoundName) => {
-    if (!boms || !compoundName) return [];
-
-    const partNamesSet = new Set();
-
-    boms.forEach((bom) => {
-      if (
-        bom.compound_name &&
-        bom.compound_name.toLowerCase() === compoundName.toLowerCase()
-      ) {
-        if (bom.part_names && Array.isArray(bom.part_names)) {
-          bom.part_names.forEach((partName) => {
-            if (partName && partName.trim()) {
-              partNamesSet.add(partName.trim());
-            }
-          });
-        }
-        if (bom.part_name_details && Array.isArray(bom.part_name_details)) {
-          bom.part_name_details.forEach((detail) => {
-            if (detail.part_name_id_name) {
-              const namePart = detail.part_name_id_name
-                .split("-")
-                .slice(1)
-                .join("-");
-              if (namePart && namePart.trim()) {
-                partNamesSet.add(namePart.trim());
-              }
-            }
-          });
-        }
+  // Fetch compound-wise part names from API
+  const fetchCompoundPartNames = async () => {
+    try {
+      const res = await axiosHandler.get("/bom/compound-part-names", {
+        withCredentials: true,
+      });
+      if (res.data?.success && res.data?.normalizedMap) {
+        // Use normalized map for case-insensitive matching
+        setCompoundPartNamesMap(res.data.normalizedMap);
+      } else if (res.data?.success && res.data?.map) {
+        // Fallback to original map if normalizedMap is not available
+        const normalizedMap = {};
+        Object.keys(res.data.map).forEach((key) => {
+          normalizedMap[key.toLowerCase()] = res.data.map[key];
+        });
+        setCompoundPartNamesMap(normalizedMap);
       }
-    });
+    } catch (error) {
+      console.error("Error fetching compound part names:", error);
+    }
+  };
 
-    return Array.from(partNamesSet);
+  // Helper function to get part names that use a specific compound (case-insensitive)
+  const getPartNamesForCompound = (compoundName) => {
+    if (!compoundName) {
+      return { count: 0, partNames: [] };
+    }
+    const normalizedName = compoundName.toLowerCase();
+    const data = compoundPartNamesMap[normalizedName];
+    if (!data) {
+      return { count: 0, partNames: [] };
+    }
+    return {
+      count: data.count || 0,
+      partNames: data.partNames || [],
+    };
   };
 
   const formik = useFormik({
@@ -149,6 +150,7 @@ const CompoundNameInv = () => {
 
   const handleRefresh = () => {
     getAllProducts(page);
+    fetchCompoundPartNames();
   };
   const handleFilter = (category) => {
     setSelectedCategory(category);
@@ -178,6 +180,7 @@ const CompoundNameInv = () => {
 
   useEffect(() => {
     getAllProducts(page);
+    fetchCompoundPartNames();
   }, [page]);
   return (
     <div className="p-6 relative overflow-hidden">
@@ -205,10 +208,9 @@ const CompoundNameInv = () => {
           />
         </div>
 
-        {/* ⚙️ Filter + Refresh + Download */}
+        {/*  Filter + Refresh + Download */}
         <div className="flex items-center space-x-3 text-gray-600">
-          {/* Filter Dropdown */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => setShowFilter((prev) => !prev)}
               className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
@@ -248,7 +250,7 @@ const CompoundNameInv = () => {
                   ))}
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Refresh Button */}
           <button
@@ -274,10 +276,11 @@ const CompoundNameInv = () => {
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Compound ID",
-                "Name",
-                "Part Names",
+                "Compound Name",
+                "Part Name",
                 "Stock",
                 "Weight",
+                "Hardness",
                 "UOM",
                 "Actions",
               ].map((header, i) => (
@@ -313,7 +316,7 @@ const CompoundNameInv = () => {
                   );
                 })
                 .map((item, i) => {
-                  const partNames = getPartNamesForCompound(item.name);
+                  const partNamesData = getPartNamesForCompound(item.name);
 
                   return (
                     <tr
@@ -329,17 +332,22 @@ const CompoundNameInv = () => {
                         {item.name}
                       </td>
                       <td className="py-3 px-4 text-center text-gray-800 border-b">
-                        {partNames.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 justify-center">
-                            {partNames.map((partName, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
-                                title={partName}
-                              >
-                                {partName}
-                              </span>
-                            ))}
+                        {partNamesData.count > 0 ? (
+                          <div className="flex flex-col gap-1 items-center">
+                            <span className="text-sm font-semibold text-blue-600">
+                              {partNamesData.count} Part Name{partNamesData.count > 1 ? "s" : ""}
+                            </span>
+                            <div className="flex flex-wrap gap-1 justify-center max-w-md">
+                              {partNamesData.partNames.map((partName, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                                  title={partName}
+                                >
+                                  {partName}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         ) : (
                           <span className="text-gray-400 text-xs">
@@ -352,6 +360,9 @@ const CompoundNameInv = () => {
                       </td>
                       <td className="py-3 px-4 text-center text-gray-800 border-b">
                         {item.weight || "-"}
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.hardness || "-"}
                       </td>
                       {/* <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.reject_stock || 0}

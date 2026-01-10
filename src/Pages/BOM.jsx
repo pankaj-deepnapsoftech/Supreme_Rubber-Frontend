@@ -62,6 +62,7 @@ const BOM = () => {
       compound_name: "",
       compound_code: "",
       hardness: "",
+      weight: "",
     },
   ]);
   const [processRows, setProcessRows] = useState([""]);
@@ -99,6 +100,7 @@ const BOM = () => {
             compound_name: c.compound_name || "",
             compound_code: c.compound_code || "",
             hardness: c.hardness || "",
+            weight: c.weight || "",
           })) : [],
           part_names: partNames.filter((p) => p && p.trim() !== ""),
           hardnesses: hardnesses.filter((h) => h && h.trim() !== ""),
@@ -183,6 +185,7 @@ const BOM = () => {
         compound_name: "",
         compound_code: "",
         hardness: "",
+        weight: "",
       },
     ]);
     setProcessRows([""]);
@@ -262,13 +265,14 @@ const BOM = () => {
             ? bom.compounds.map((c) => ({
                 compound_id: c.compound_id?._id || c.compound_id || "",
                 compound_name: c.compound_name || c.compound_id?.name || "",
-                compound_code: c.compound_code || (Array.isArray(c.compound_codes) && c.compound_codes.length > 0 ? c.compound_codes[0] : ""),
-                hardness: c.hardness || (Array.isArray(c.hardnesses) && c.hardnesses.length > 0 ? c.hardnesses[0] : ""),
+                compound_code: c.compound_code || c.compound_id?.product_id || (Array.isArray(c.compound_codes) && c.compound_codes.length > 0 ? c.compound_codes[0] : ""),
+                hardness: c.hardness || c.compound_id?.hardness || (Array.isArray(c.hardnesses) && c.hardnesses.length > 0 ? c.hardnesses[0] : ""),
+                weight: c.weight || c.compound_id?.weight || "",
               }))
-            : [{ compound_id: "", compound_name: "", compound_code: "", hardness: "" }]
+            : [{ compound_id: "", compound_name: "", compound_code: "", hardness: "", weight: "" }]
         );
       } else {
-        setCompounds([{ compound_id: "", compound_name: "", compound_code: "", hardness: "" }]);
+        setCompounds([{ compound_id: "", compound_name: "", compound_code: "", hardness: "", weight: "" }]);
       }
       setPartNames(
         bom.part_names && bom.part_names.length > 0 ? bom.part_names : [""]
@@ -439,8 +443,12 @@ const BOM = () => {
                   // For part-name BOMs, search in compounds array
                   let compoundCodesStr = "";
                   let compoundNameStr = "";
-                  
-                  if (item.bom_type === "part-name" && item.compounds && item.compounds.length > 0) {
+
+                  if (
+                    item.bom_type === "part-name" &&
+                    item.compounds &&
+                    item.compounds.length > 0
+                  ) {
                     compoundCodesStr = item.compounds
                       .map((c) => c.compound_code || "")
                       .join(" ")
@@ -455,7 +463,7 @@ const BOM = () => {
                       .toLowerCase();
                     compoundNameStr = (item.compound_name || "").toLowerCase();
                   }
-                  
+
                   const partNamesStr = (item.part_names || [])
                     .join(" ")
                     .toLowerCase();
@@ -490,13 +498,26 @@ const BOM = () => {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {item.bom_type === "part-name" && item.compounds && item.compounds.length > 0
-                        ? item.compounds.map((c) => c.compound_code || "-").filter((code) => code !== "-").join(", ") || "-"
+                      {item.bom_type === "part-name" &&
+                      item.compounds &&
+                      item.compounds.length > 0
+                        ? item.compounds
+                            .map((c) => c.compound_code || "-")
+                            .filter((code) => code !== "-")
+                            .join(", ") || "-"
                         : (item.compound_codes || []).join(", ") || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
-                      {item.bom_type === "part-name" && item.compounds && item.compounds.length > 0
-                        ? item.compounds.map((c) => c.compound_name || c.compound_id?.name || "-").filter((name) => name !== "-").join(", ") || "-"
+                      {item.bom_type === "part-name" &&
+                      item.compounds &&
+                      item.compounds.length > 0
+                        ? item.compounds
+                            .map(
+                              (c) =>
+                                c.compound_name || c.compound_id?.name || "-"
+                            )
+                            .filter((name) => name !== "-")
+                            .join(", ") || "-"
                         : item.compound_name || "-"}
                     </td>
                     <td className="px-4 sm:px-6 py-3">
@@ -1494,7 +1515,9 @@ const BOM = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const next = compounds.filter((_, idx) => idx !== compoundIdx);
+                                const next = compounds.filter(
+                                  (_, idx) => idx !== compoundIdx
+                                );
                                 setCompounds(next);
                               }}
                               className="text-red-600 hover:text-red-700 p-2 rounded border border-red-300 hover:border-red-400 hover:bg-red-50 transition"
@@ -1522,6 +1545,10 @@ const BOM = () => {
                                 next[compoundIdx].compound_name = selected
                                   ? selected.name
                                   : "";
+                                // Auto-fill compound code, hardness, and weight from selected compound
+                                next[compoundIdx].compound_code = selected?.product_id || "";
+                                next[compoundIdx].hardness = selected?.hardness || "";
+                                next[compoundIdx].weight = selected?.weight || "";
                                 setCompounds(next);
                               }}
                               disabled={viewMode}
@@ -1529,8 +1556,12 @@ const BOM = () => {
                             >
                               <option value="">Select Compound...</option>
                               {compoundOptions.map((compoundOption) => (
-                                <option key={compoundOption._id} value={compoundOption._id}>
-                                  {compoundOption.name} ({compoundOption.product_id})
+                                <option
+                                  key={compoundOption._id}
+                                  value={compoundOption._id}
+                                >
+                                  {compoundOption.name} (
+                                  {compoundOption.product_id})
                                 </option>
                               ))}
                             </select>
@@ -1543,15 +1574,11 @@ const BOM = () => {
                             </label>
                             <input
                               type="text"
-                              placeholder="Enter compound code"
+                              placeholder="Select compound to auto-fill"
                               value={compound.compound_code || ""}
-                              onChange={(e) => {
-                                const next = [...compounds];
-                                next[compoundIdx].compound_code = e.target.value;
-                                setCompounds(next);
-                              }}
-                              disabled={viewMode}
-                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                              readOnly
+                              disabled={viewMode || !compound.compound_id}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 cursor-not-allowed rounded-lg px-4 py-2.5 text-sm opacity-75"
                             />
                           </div>
 
@@ -1562,15 +1589,25 @@ const BOM = () => {
                             </label>
                             <input
                               type="text"
-                              placeholder="Enter hardness"
+                              placeholder="Select compound to auto-fill"
                               value={compound.hardness || ""}
-                              onChange={(e) => {
-                                const next = [...compounds];
-                                next[compoundIdx].hardness = e.target.value;
-                                setCompounds(next);
-                              }}
-                              disabled={viewMode}
-                              className="w-full border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-800/60 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition"
+                              readOnly
+                              disabled={viewMode || !compound.compound_id}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 cursor-not-allowed rounded-lg px-4 py-2.5 text-sm opacity-75"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              Weight
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Select compound to auto-fill"
+                              value={compound.weight || ""}
+                              readOnly
+                              disabled={viewMode || !compound.compound_id}
+                              className="w-full border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 cursor-not-allowed rounded-lg px-4 py-2.5 text-sm opacity-75"
                             />
                           </div>
                         </div>
@@ -1588,6 +1625,7 @@ const BOM = () => {
                                     compound_name: "",
                                     compound_code: "",
                                     hardness: "",
+                                    weight: "",
                                   },
                                 ])
                               }

@@ -169,7 +169,7 @@ const RawMaterialInv = () => {
         {/* ⚙️ Filter + Refresh + Download */}
         <div className="flex items-center space-x-3 text-gray-600">
           {/* Filter Dropdown */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => setShowFilter((prev) => !prev)}
               className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
@@ -209,7 +209,7 @@ const RawMaterialInv = () => {
                   ))}
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Refresh Button */}
           <button
