@@ -145,9 +145,19 @@ export default function DashboardTable() {
                     {r.description || "—"}
                   </td>
                   <td className="py-3 px-4 text-gray-700 border-b">
-                    {r.permissions && r.permissions.length > 0
-                      ? r.permissions.join(", ")
-                      : "No permissions"}
+                    {(() => {
+                      if (!r.permissions || r.permissions.length === 0) {
+                        return "No permissions";
+                      }
+                      // Filter out inventory sub-modules for display (raw material, part name, compound name)
+                      const inventorySubModules = ["raw material", "part name", "compound name"];
+                      const displayPermissions = r.permissions.filter(
+                        (perm) => !inventorySubModules.includes(perm.toLowerCase())
+                      );
+                      return displayPermissions.length > 0
+                        ? displayPermissions.join(", ")
+                        : "No permissions";
+                    })()}
                   </td>
                       {user && user.isSuper === true && (
                   <td className="py-3 px-4 border-b text-center">
