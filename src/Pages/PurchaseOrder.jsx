@@ -40,28 +40,38 @@ const PurchaseOrder = () => {
 
   const [supplierData, setSupplierData] = useState([]);
   const [Inventorydata, setInventoryData] = useState([]);
-  
+//  console.log("Inventorydata", Inventorydata);
   // Filter inventory data to show only raw materials (exclude part names)
   // For purchase orders, we want items that can be bought and are not part names
   const rawMaterialsOnly = Inventorydata.filter((item) => {
     const category = (item.category || "").toLowerCase().trim();
-    const itemType = (item.item_type || "").toLowerCase();
-    
-    // Exclude part names explicitly
-    if (category && (category.includes("finished") || category.includes("part"))) {
+    const itemType = (item.item_type || "").toLowerCase().trim();
+
+    // Debug: Log item details
+    // console.log("Item:", item.name, "Category:", category, "Type:", itemType);
+
+    // Exclude part names and finished goods explicitly
+    if (
+      category &&
+      (category.includes("finished") || category.includes("part"))
+    ) {
       return false;
     }
-    
+
     // Include items that can be bought (item_type = "Buy" or "both")
     // This is the primary criteria for purchase orders
     const canBeBought = itemType === "buy" || itemType === "both";
-    
+
     // Also include items with "raw" in category (case-insensitive)
     const isRawMaterial = category && category.includes("raw");
-    
+
+
+
     // Show items that can be bought OR are raw materials
     return canBeBought || isRawMaterial;
   });
+
+
   const [products, setProducts] = useState([
     {
       item_name: "",
@@ -103,8 +113,12 @@ const PurchaseOrder = () => {
     const fetchData = async () => {
       const sup = await getAllSupplier();
       const inv = await getAllProducts();
+      const rmItem = inv?.data?.find((i) => i?.category === "Raw Material");
+      console.log("rmItem", rmItem);
+
+     setInventoryData(rmItem?.products || []);
+       
       setSupplierData(sup || []);
-      setInventoryData(inv?.products || []);
       const data = await GetAllPurchaseOrders(page);
       setPOData(data);
     };
@@ -136,7 +150,9 @@ const PurchaseOrder = () => {
     updated[index][name] = value;
     if (name === "item_name") {
       // Search in rawMaterialsOnly first, fallback to Inventorydata if needed
-      const selected = rawMaterialsOnly.find((p) => p._id === value) || Inventorydata.find((p) => p._id === value);
+      const selected =
+        rawMaterialsOnly.find((p) => p._id === value) ||
+        Inventorydata.find((p) => p._id === value);
       if (selected) {
         updated[index].category = selected.category || "";
         updated[index].uom = selected.uom || "";
@@ -267,8 +283,6 @@ const PurchaseOrder = () => {
         <h2 className="text-2xl font-semibold">Purchase Order</h2>
 
         <div className="flex items-center gap-3">
-          
-
           <button
             onClick={() => {
               setShowModal(true);
@@ -385,7 +399,7 @@ const PurchaseOrder = () => {
                       />
                       <Eye
                         onClick={() => handleView(order._id)}
-                         className="h-4 w-4 text-gray-600 cursor-pointer"
+                        className="h-4 w-4 text-gray-600 cursor-pointer"
                       />
                     </div>
                   </td>
@@ -543,24 +557,21 @@ const PurchaseOrder = () => {
                         )
                       )} */}
 
-                       { ["quantity"].map(
-                        (field) => (
-                          <div key={field}>
-                            <label className="block text-gray-700 font-medium mb-1 capitalize">
-                              {field.replace("_", " ")}
-                            </label>
-                            <input
-                              type="number"
-                              name={field}
-                              value={item[field]}
-                              onChange={(e) => handleItemChange(index, e)}
-                              disabled={viewMode}
-                              className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            />
-                          </div>
-                        )
-                      ) }
-
+                      {["quantity"].map((field) => (
+                        <div key={field}>
+                          <label className="block text-gray-700 font-medium mb-1 capitalize">
+                            {field.replace("_", " ")}
+                          </label>
+                          <input
+                            type="number"
+                            name={field}
+                            value={item[field]}
+                            onChange={(e) => handleItemChange(index, e)}
+                            disabled={viewMode}
+                            className="border w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
