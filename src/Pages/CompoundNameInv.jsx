@@ -283,6 +283,7 @@ const CompoundNameInv = () => {
                 "Part Names",
                 "Stock",
                 "Weight",
+                "Hardness",
                 "UOM",
                 "Actions",
               ].map((header, i) => (
@@ -357,6 +358,9 @@ const CompoundNameInv = () => {
                       </td>
                       <td className="py-3 px-4 text-center text-gray-800 border-b">
                         {item.weight || "-"}
+                      </td>
+                      <td className="py-3 px-4 text-center text-gray-800 border-b">
+                        {item.hardness || "-"}
                       </td>
                       {/* <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.reject_stock || 0}
