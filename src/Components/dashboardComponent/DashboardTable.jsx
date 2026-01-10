@@ -114,7 +114,9 @@ export default function DashboardTable() {
               <th className="px-3 py-2">Role</th>
               <th className="px-3 py-2">Description</th>
               <th className="px-3 py-2">Permissions</th>
+              {user && user.isSuper === true && (
               <th className="px-3 py-2 text-center">Actions</th>
+              )}
             </tr>
           </thead>
 
@@ -147,9 +149,9 @@ export default function DashboardTable() {
                       ? r.permissions.join(", ")
                       : "No permissions"}
                   </td>
+                      {user && user.isSuper === true && (
                   <td className="py-3 px-4 border-b text-center">
                     <div className="flex justify-center space-x-3">
-                      {user && user.isSuper === true && (
                         <button
                           className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition"
                           title="Delete"
@@ -157,9 +159,9 @@ export default function DashboardTable() {
                         >
                           <Trash2 size={16} />
                         </button>
-                      )}
                     </div>
                   </td>
+                      )}
                 </tr>
               ))
             )}
