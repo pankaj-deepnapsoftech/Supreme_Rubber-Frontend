@@ -210,10 +210,9 @@ const CompoundNameInv = () => {
           />
         </div>
 
-        {/* ⚙️ Filter + Refresh + Download */}
+        {/*  Filter + Refresh + Download */}
         <div className="flex items-center space-x-3 text-gray-600">
-          {/* Filter Dropdown */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => setShowFilter((prev) => !prev)}
               className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 transition"
@@ -253,7 +252,7 @@ const CompoundNameInv = () => {
                   ))}
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Refresh Button */}
           <button
@@ -279,8 +278,8 @@ const CompoundNameInv = () => {
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Compound ID",
-                "Name",
-                "Part Names",
+                "Compound Name",
+                "Part Name",
                 "Stock",
                 "Weight",
                 "Hardness",

@@ -16,10 +16,16 @@ import {
   Menu,
   X,
   History,
+  Cog,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
+
+import { SquaresExclude } from "lucide-react";
+import { AlignVerticalDistributeCenter } from "lucide-react";
+
+
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -59,17 +65,17 @@ const Sidebar = () => {
         {
           name: "Raw Material",
           path: "/raw-material",
-          icon: <Layers size={18} />,
+          icon: <SquaresExclude size={18} />,
         },
         {
           name: "Parts",
           path: "/part-name",
-          icon: <PlayCircle size={18} />,
+          icon: <Cog size={18} />,
         },
         {
-          name: "Compound",
+          name: "Compounds",
           path: "/compound-name",
-          icon: <PlayCircle size={18} />,
+          icon: <AlignVerticalDistributeCenter size={18} />,
         },
       ],
     },
