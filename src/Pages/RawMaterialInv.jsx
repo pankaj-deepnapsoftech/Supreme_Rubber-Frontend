@@ -235,7 +235,6 @@ const RawMaterialInv = () => {
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Product ID",
-                "Category",
                 "Name",
                 "Stock",
                 "Reject Qty",
@@ -285,9 +284,7 @@ const RawMaterialInv = () => {
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.product_id}
                     </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.category}
-                    </td>
+                    
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.name}
                     </td>
@@ -385,9 +382,9 @@ const RawMaterialInv = () => {
                     // Dropdown options for specific fields
                     const dropdownOptions = {
                       category: [
-                        "Part Name",
+                        // "Part Name",
                         "Raw Material",
-                        "Compound Name",
+                        // "Compound Name",
                         "FMB",
                         "CMB",
                       ],

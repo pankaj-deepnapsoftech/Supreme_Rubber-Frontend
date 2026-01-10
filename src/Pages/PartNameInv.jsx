@@ -235,7 +235,7 @@ const PartNameInv = () => {
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 whitespace-nowrap text-white uppercase text-xs tracking-wide">
               {[
                 "Product ID",
-                "Category",
+              
                 "Name",
                 "Stock",
                 "Reject Qty",
@@ -284,9 +284,7 @@ const PartNameInv = () => {
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.product_id}
                     </td>
-                    <td className="py-3 px-4 text-center text-gray-800 border-b">
-                      {item.category}
-                    </td>
+                   
                     <td className="py-3 px-4 text-center text-gray-800 border-b">
                       {item.name}
                     </td>
@@ -385,8 +383,8 @@ const PartNameInv = () => {
                     const dropdownOptions = {
                       category: [
                         "Part Name",
-                        "Raw Material",
-                        "Compound Name",
+                        // "Raw Material",
+                        // "Compound Name",
                         "FMB",
                         "CMB",
                       ],
