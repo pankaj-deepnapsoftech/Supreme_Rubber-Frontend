@@ -1,5 +1,5 @@
 import axiosHandler from "@/config/axiosconfig";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 
 const AuthContext = createContext();
@@ -9,18 +9,70 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState([]); 
  const [token,settoken] = useState(null)
-  // Load user/token from localStorage
+  
+  // Function to refresh current user data from server
+  const refreshUserData = useCallback(async () => {
+    try {
+      const res = await axiosHandler.get("/auth/user");
+      const updatedUser = res?.data?.user;
+      if (updatedUser) {
+        delete updatedUser.password;
+        // Always update with fresh data from server
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        return updatedUser;
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      // If refresh fails (e.g., 401/403), user might have been logged out or permissions changed
+      // Keep the localStorage data and let the user continue with cached data
+      return null;
+    }
+  }, []);
+
+  // Load user/token from localStorage and refresh from server
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
     settoken(storedToken)
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
       axiosHandler.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+      
+      // Refresh user data from server to get latest role/permissions after setting token
+      refreshUserData().finally(() => {
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
     }
+  }, [refreshUserData]);
 
-    setLoading(false);
-  }, []);
+  // Refresh user data when tab/window becomes visible (user switches back to app)
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Refresh user data when user comes back to the tab
+        refreshUserData();
+      }
+    };
+
+    const handleFocus = () => {
+      // Also refresh when window regains focus
+      refreshUserData();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [token, user, refreshUserData]);
 
   // ========================= AUTH METHODS =========================
 
@@ -141,6 +193,19 @@ const updateUserRole = async (id, role) => {
   try {
     const res = await axiosHandler.put(`/auth/user`, { id, role });
     toast.success(res?.data?.message || "User role updated successfully!");
+    
+    // Check if the updated user is the current logged-in user
+    const updatedUser = res?.data?.user;
+    const currentUserId = user?._id?.toString();
+    const updatedUserId = updatedUser?._id?.toString();
+    const requestUserId = id?.toString();
+    
+    if (currentUserId && (currentUserId === requestUserId || currentUserId === updatedUserId)) {
+      // Refresh current user's data from server to get latest role with populated permissions
+      await refreshUserData();
+      toast.info("Your permissions have been updated. Changes will be visible after page refresh.");
+    }
+    
     await getAllUsers();
     return res.data;
   } catch (error) {
@@ -213,6 +278,7 @@ const checkAdminExists = async () => {
         deleteUser,
         createEmployee,
         checkAdminExists,
+        refreshUserData,
         token
       }}
     >
