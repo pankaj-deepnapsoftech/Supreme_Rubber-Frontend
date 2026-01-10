@@ -66,7 +66,7 @@ export const SupplierProvider = ({ children }) => {
             return res.data?.suppliers;
         } catch (error) {
             console.error("❌ Error fetching all suppliers:", error);
-            toast.error(error?.response?.data?.message || "Failed to fetch suppliers");
+            // toast.error(error?.response?.data?.message || "Failed to fetch suppliers");
             throw error;
         } finally {
             setLoading(false);

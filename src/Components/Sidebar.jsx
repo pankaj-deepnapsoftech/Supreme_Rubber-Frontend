@@ -66,16 +66,19 @@ const Sidebar = () => {
           name: "Raw Material",
           path: "/raw-material",
           icon: <SquaresExclude size={18} />,
+          permission: "raw material",
         },
         {
           name: "Parts",
           path: "/part-name",
           icon: <Cog size={18} />,
+          permission: "part name",
         },
         {
           name: "Compounds",
           path: "/compound-name",
           icon: <AlignVerticalDistributeCenter size={18} />,
+          permission: "compound name",
         },
       ],
     },
@@ -122,9 +125,11 @@ const Sidebar = () => {
         const menuName = menu.name.toLowerCase();
 
         if (menu.submenus) {
-          const allowedSubs = menu.submenus.filter((sub) =>
-            userPermissions.includes(sub.name.toLowerCase())
-          );
+          const allowedSubs = menu.submenus.filter((sub) => {
+            // Use permission property if available, otherwise fallback to menu name
+            const permissionName = sub.permission || sub.name.toLowerCase();
+            return userPermissions.includes(permissionName);
+          });
 
           if (allowedSubs.length > 0) menu.submenus = allowedSubs;
           return allowedSubs.length > 0;
