@@ -76,6 +76,16 @@ export default function DashboardSupplier() {
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">
               <tr className="bg-gray-200 text-gray-800 text-center uppercase text-xs tracking-wide">
+                <th className="py-3 px-4 text-center font-semibold">ID</th>
+                <th className="py-3 px-4 text-center font-semibold">Name</th>
+                <th className="py-3 px-4 text-center font-semibold">Phone</th>
+                {user && user.isSuper === true && (
+                  <th className="py-3 px-4 font-semibold text-center">
+                    Actions
+                  </th>
+                )}
+              </tr>
+              {/* <tr className="bg-gray-200 text-gray-800 text-center uppercase text-xs tracking-wide">
                 {["ID", "Name", "Phone", "Actions"].map((header, i) => (
                   <th
                     key={i}
@@ -86,7 +96,7 @@ export default function DashboardSupplier() {
                     {header}
                   </th>
                 ))}
-              </tr>
+              </tr> */}
             </thead>
 
             <tbody>
@@ -113,10 +123,11 @@ export default function DashboardSupplier() {
 
                     <td className="py-3 px-4 text-gray-700 border-b truncate max-w-[200px]">
                       {s.address || "—"}
-                    </td> */}
-                    <td className="py-3 px-4 text-center border-b">
-                      <div className="flex items-center justify-center space-x-3">
-                        {/* <button
+                      </td> */}
+                    {user && user.isSuper === true && (
+                      <td className="py-3 px-4 text-center border-b">
+                        <div className="flex items-center justify-center space-x-3">
+                          {/* <button
                           className="p-1.5 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200"
                           title="View"
                           onClick={() => handleView(s)}
@@ -130,7 +141,6 @@ export default function DashboardSupplier() {
                         >
                           <Edit2 size={16} />
                         </button> */}
-                        {user && user.isSuper === true && (
                           <button
                             className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
                             title="Delete"
@@ -138,9 +148,9 @@ export default function DashboardSupplier() {
                           >
                             <Trash2 size={16} />
                           </button>
-                        )}
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               ) : (

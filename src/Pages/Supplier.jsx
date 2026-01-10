@@ -191,11 +191,11 @@ const Supplier = () => {
             placeholder="Search suppliers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-1 focus:ring-gray-300"
+            className="pl-8 pr-4 py-2 border rounded-md w-55 focus:outline-none focus:ring-1 focus:ring-gray-300"
           />
         </div>
         <div className="flex items-center space-x-4 text-gray-800">
-          <button className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+          <button className="p-2 ml-1 rounded-lg cursor-pointer hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
           onClick={fetchSuppliers}>
             <RefreshCw size={16}/>
           </button>

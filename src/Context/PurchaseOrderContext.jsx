@@ -34,7 +34,7 @@ export const PurchanseOrderProvider = ({ children }) => {
             return res?.data;
         } catch (error) {
             console.error(error);
-            toast.error(error?.response?.data?.message || "Failed to fetch purchase orders");
+            // toast.error(error?.response?.data?.message || "Failed to fetch purchase orders");
         } finally {
             setLoading(false);
         }
