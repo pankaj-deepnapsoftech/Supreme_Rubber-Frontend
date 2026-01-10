@@ -48,7 +48,7 @@ export default function DashboardSupplier() {
       console.error("Error deleting supplier:", err);
     }
   };
-  const {user} = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 w-full">
@@ -76,18 +76,16 @@ export default function DashboardSupplier() {
           <table className="min-w-max w-full text-sm text-left text-gray-600">
             <thead className="sticky top-0 z-10">
               <tr className="bg-gray-200 text-gray-800 text-center uppercase text-xs tracking-wide">
-                {["ID", "Name", "Phone", "Actions"].map(
-                  (header, i) => (
-                    <th
-                      key={i}
-                      className={`py-3 px-4 text-center font-semibold ${
-                        i === 0 ? "rounded-tl-2xl" : ""
-                      } ${i === 7 ? "rounded-tr-2xl" : ""}`}
-                    >
-                      {header}
-                    </th>
-                  )
-                )}
+                {["ID", "Name", "Phone", "Actions"].map((header, i) => (
+                  <th
+                    key={i}
+                    className={`py-3 px-4 text-center font-semibold ${
+                      i === 0 ? "rounded-tl-2xl" : ""
+                    } ${i === 7 ? "rounded-tr-2xl" : ""}`}
+                  >
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
 
@@ -132,14 +130,14 @@ export default function DashboardSupplier() {
                         >
                           <Edit2 size={16} />
                         </button> */}
-                        {user.isSuper === "true" && (
-                        <button
-                          className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
-                          title="Delete"
-                          onClick={() => handleDelete(s._id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {user && user.isSuper === true && (
+                          <button
+                            className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
+                            title="Delete"
+                            onClick={() => handleDelete(s._id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         )}
                       </div>
                     </td>
