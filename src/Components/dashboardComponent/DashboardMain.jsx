@@ -32,6 +32,7 @@ import { useSupplierContext } from "@/Context/SuplierContext";
 import { useProductionContext } from "@/Context/ProductionContext";
 import axiosHandler from "@/config/axiosconfig";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/Context/AuthContext";
 
 export default function DashboardMain() {
   const { GetAllPurchaseOrders } = usePurchanse_Order();
@@ -231,6 +232,9 @@ export default function DashboardMain() {
     getAllProducts();
   }, []);
 
+  const {user} = useAuth();
+  console.log(user)
+
   // gate man entry
   const { GetAllPOData } = useGatemenContext();
   const [gateChartData, setGateChartData] = useState([]);
@@ -376,6 +380,9 @@ export default function DashboardMain() {
   }, [statusPeriod]);
 
   // demo donut removed
+
+  // const role = localStorage.getItem("user");
+  // console.log(">>>>", role)
 
   return (
     <>
@@ -770,10 +777,16 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#e0fbfd] transition-all duration-
             </div>
 
             {/* TABLE */}
-            <DashboardTable />
+            {user?.role?.permissions.includes("user role") ||
+            user.isSuper === true ? (
+              <DashboardTable />
+            ) : null}
 
             {/* Supplier Table */}
-            <DashboardSupplier />
+            {user?.role?.permissions.includes("supplier") ||
+            user.isSuper === true ? (
+              <DashboardSupplier />
+            ) : null}
 
             {/* Production */}
 
