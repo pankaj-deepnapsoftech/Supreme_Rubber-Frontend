@@ -288,7 +288,7 @@ const QualityCheck = () => {
             onClick={() => setShowGtModal(true)}
             className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto"
           >
-           Gateman
+            Raw Material QC
           </Button>
 
           <Button
@@ -329,12 +329,12 @@ const QualityCheck = () => {
           >
             Finished-Good QC
           </Button>
-          <Button className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
+          {/* <Button className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
             Raw Material QC
           </Button>
           <Button className="bg-blue-600 cursor-pointer mt-3 hover:bg-blue-700 text-white text-sm px-3 py-2.5 rounded-lg shadow-sm w-full sm:w-auto">
             Compound QC{" "}
-          </Button>
+          </Button> */}
         </div>
 
         <div className="flex mt-3 justify-end items-center gap-4 text-gray-600 w-full">
@@ -1062,13 +1062,15 @@ const QualityCheck = () => {
                                       prod.part_names?.[0]?.est_qty ||
                                       0
                                   );
-                                  
+
                                   // Validation: Approved QTY should not exceed production quantity
                                   if (approvedQty > totalQty) {
-                                    toast.error(`Approved quantity cannot exceed production quantity (${totalQty})`);
+                                    toast.error(
+                                      `Approved quantity cannot exceed production quantity (${totalQty})`
+                                    );
                                     return; // Don't update if validation fails
                                   }
-                                  
+
                                   const rejectedQty = Math.max(
                                     0,
                                     totalQty - approvedQty
@@ -1159,7 +1161,8 @@ const QualityCheck = () => {
                                     }
 
                                     // Validation: Approved QTY + Rejected QTY should not exceed production quantity
-                                    const totalApprovedRejected = approvedQty + rejectedQty;
+                                    const totalApprovedRejected =
+                                      approvedQty + rejectedQty;
                                     if (totalApprovedRejected > totalQty) {
                                       toast.error(
                                         `Total approved and rejected quantity (${totalApprovedRejected}) cannot exceed production quantity (${totalQty})`

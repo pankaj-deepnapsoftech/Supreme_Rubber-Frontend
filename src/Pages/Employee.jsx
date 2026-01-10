@@ -172,7 +172,15 @@ const Employee = () => {
 
   return (
     <div className="p-6 relative overflow-hidden">
-      <h1 className="text-2xl font-semibold">Employee</h1>
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-semibold">Employee</h1>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          <span className="text-sm font-medium">Add Employee</span>
+        </button>
+      </div>
       {/* Search + Actions */}
       <div className="flex justify-between items-center mb-4 mt-6">
         <div className="flex items-center border rounded-lg px-3 py-2 w-64">
@@ -187,46 +195,39 @@ const Employee = () => {
         </div>
 
         <div className="flex items-center space-x-4 text-gray-500">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            <Plus size={16} />
-            <span className="text-sm font-medium">Add Employee</span>
-          </button>
-
           <div className="relative group ml-3">
             <button
-             onClick={() => setFilterOpen(!filterOpen)}
-             className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 text-gray-800 border border-gray-300 hover:bg-gray-100 transition">
-            <Filter
-              size={16}
-              className="cursor-pointer hover:text-gray-800"
-            />
-            {filterOpen && (
-              <div className="absolute right-0 top-6 bg-white border shadow-md rounded-md w-32 z-10">
-                {["All", "Yes", "No"].map((option) => (
-                  <p
-                    key={option}
-                    onClick={() => {
-                      setFilterVerified(option);
-                      setFilterOpen(false);
-                    }}
-                    className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                      filterVerified === option
-                        ? "bg-blue-100 text-blue-600 font-medium"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {option === "All"
-                      ? "All Employees"
-                      : option === "Yes"
-                      ? "Verified"
-                      : "Not Verified"}
-                  </p>
-                ))}
-              </div>
-            )}
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="p-2 rounded-lg cursor-pointer hover:bg-gray-200 text-gray-800 border border-gray-300 hover:bg-gray-100 transition"
+            >
+              <Filter
+                size={16}
+                className="cursor-pointer hover:text-gray-800"
+              />
+              {filterOpen && (
+                <div className="absolute right-0 top-6 bg-white border shadow-md rounded-md w-32 z-10">
+                  {["All", "Yes", "No"].map((option) => (
+                    <p
+                      key={option}
+                      onClick={() => {
+                        setFilterVerified(option);
+                        setFilterOpen(false);
+                      }}
+                      className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${
+                        filterVerified === option
+                          ? "bg-blue-100 text-blue-600 font-medium"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {option === "All"
+                        ? "All Employees"
+                        : option === "Yes"
+                        ? "Verified"
+                        : "Not Verified"}
+                    </p>
+                  ))}
+                </div>
+              )}
             </button>
           </div>
 
