@@ -14,6 +14,7 @@ import { useInventory } from "@/Context/InventoryContext";
 import axiosHandler from "@/config/axiosconfig";
 import { toast } from "react-toastify";
 import Pagination from "@/Components/Pagination/Pagination";
+import EditProduction from "@/Components/EditProduction";
 
 const Production_Start = () => {
   const [showModal, setShowModal] = useState(false);
@@ -25,6 +26,8 @@ const Production_Start = () => {
   const [currentProductionId, setCurrentProductionId] = useState("");
   const [viewDetails, setViewDetails] = useState(null);
   const [bomTypeFilter, setBomTypeFilter] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProductionId, setEditingProductionId] = useState("");
 
 
   // BOM and form data
@@ -1111,109 +1114,9 @@ const Production_Start = () => {
                       <div className="flex justify-center items-center pb-4 space-x-3">
                         <Edit
                           className="h-4 w-4 text-blue-500 cursor-pointer"
-                          onClick={async () => {
-                            try {
-                              const res = await axiosHandler.get(
-                                `/production/${prod._id}`
-                              );
-                              const data = res?.data?.production;
-                              if (!data) return;
-                              setEditMode(true);
-                              setCurrentProductionId(data._id);
-                              setShowModal(true);
-                              // Prefill BOM selection
-                              const bomId = data?.bom?._id || data?.bom;
-                              await handleBomSelect(bomId);
-                              // Prefill Part Name
-                              const pn = (data.part_names || [])[0] || {};
-                              setPartName({
-                                compound_code: pn.compound_code || "",
-                                compound_name: pn.compound_name || "",
-                                est_qty: String(pn.est_qty ?? ""),
-                                uom: pn.uom || "",
-                                prod_qty: String(pn.prod_qty ?? ""),
-                                remain_qty: String(pn.remain_qty ?? ""),
-                                category: pn.category || "",
-                                total_cost: String(pn.total_cost ?? ""),
-                              });
-                              // Prefill RMs
-                              const currentEstQtyForRM =
-                                parseFloat(partName.est_qty) || 1;
-                              setRawMaterials(
-                                (data.raw_materials || []).map((rm) => {
-                                  const estQty = parseFloat(rm.est_qty) || 0;
-                                  // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
-                                  const baseQty = currentEstQtyForRM
-                                    ? estQty / currentEstQtyForRM
-                                    : 0;
-                                  return {
-                                    raw_material_id: rm.raw_material_id || null,
-                                    raw_material_name:
-                                      rm.raw_material_name || "",
-                                    raw_material_code:
-                                      rm.raw_material_code || "",
-                                    est_qty: String(rm.est_qty ?? ""),
-                                    base_qty: baseQty,
-                                    uom: rm.uom || "",
-                                    used_qty: String(rm.used_qty ?? ""),
-                                    remain_qty: String(rm.remain_qty ?? ""),
-                                    category: rm.category || "",
-                                    total_cost: String(rm.total_cost ?? ""),
-                                    weight: rm.weight || "",
-                                    tolerance: rm.tolerance || "",
-                                    code_no: rm.code_no || "",
-                                  };
-                                })
-                              );
-                              // Prefill accelerators
-                              const currentEstQty =
-                                parseFloat(partName.est_qty) || 1;
-                              setAccelerators(
-                                (data.accelerators || []).map((acc) => {
-                                  const estQty =
-                                    parseFloat(acc.est_qty || acc.quantity) ||
-                                    0;
-                                  const usedQty = parseFloat(acc.used_qty) || 0;
-                                  // Calculate base_qty for scaling: base_qty = est_qty / currentEstQty
-                                  const baseQty = currentEstQty
-                                    ? estQty / currentEstQty
-                                    : estQty;
-                                  return {
-                                    name: acc.name || "",
-                                    tolerance: acc.tolerance || "",
-                                    quantity: acc.quantity || "",
-                                    est_qty: String(estQty),
-                                    base_qty: baseQty,
-                                    used_qty: String(usedQty),
-                                    remain_qty: String(
-                                      (estQty - usedQty).toFixed(2)
-                                    ),
-                                    comment: acc.comment || "",
-                                  };
-                                })
-                              );
-                              // Prefill processes
-                              setProcesses(
-                                (data.processes || []).map((p) => ({
-                                  process_name: p.process_name || "",
-                                  work_done: String(p.work_done ?? ""),
-                                  start: !!p.start,
-                                  done: !!p.done,
-                                  status:
-                                    p.status ||
-                                    (p.done
-                                      ? "completed"
-                                      : p.start
-                                      ? "in_progress"
-                                      : "pending"),
-                                }))
-                              );
-                            } catch (e) {
-                              console.error(e);
-                              toast.error(
-                                "Failed to load production details for edit"
-                              );
-                            }
+                          onClick={() => {
+                            setEditingProductionId(prod._id);
+                            setShowEditModal(true);
                           }}
                         />
                         <Trash2
@@ -2286,6 +2189,20 @@ const Production_Start = () => {
         setPage={setPage}
         hasNextPage={productions?.length === 10}
       />
+
+      {/* Edit Production Modal */}
+      {showEditModal && (
+        <EditProduction
+          productionId={editingProductionId}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingProductionId("");
+          }}
+          onUpdate={() => {
+            fetchProductions();
+          }}
+        />
+      )}
     </div>
   );
 };
