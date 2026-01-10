@@ -124,14 +124,14 @@ const Login = () => {
               <p className="text-xs text-red-400 mt-1">{formik.errors.password}</p>
             )}
 
-            <p className="text-right text-sm mt-2">
+            {/* <p className="text-right text-sm mt-2">
               <Link
                 to="/forgot-password"
                 className="text-cyan-400 hover:text-blue-300 hover:underline transition"
               >
                 Forgot Password?
               </Link>
-            </p>
+            </p> */}
           </div>
 
           {/* Submit Button */}

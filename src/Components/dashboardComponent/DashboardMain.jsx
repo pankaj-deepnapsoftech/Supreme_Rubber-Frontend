@@ -402,7 +402,7 @@ hover:shadow-lg hover:-translate-y-1 hover:bg-[#fce5e5] transition-all duration-
               <div className="flex flex-col">
                 <p className="text-[16px] text-gray-700">Purchase Order</p>
                 <p className="text-[24px] text-gray-700 font-semibold">
-                  {productCount}
+                  {productCount || 0}
                 </p>
                 <p className="text-[13px] text-gray-600">
                   <span className="text-[12px] text-green-400 flex items-center">
