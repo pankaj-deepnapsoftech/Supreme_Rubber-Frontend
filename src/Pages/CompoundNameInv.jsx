@@ -334,9 +334,9 @@ const CompoundNameInv = () => {
                       <td className="py-3 px-4 text-center text-gray-800 border-b">
                         {partNamesData.count > 0 ? (
                           <div className="flex flex-col gap-1 items-center">
-                            <span className="text-sm font-semibold text-blue-600">
+                            {/* <span className="text-sm font-semibold text-blue-600">
                               {partNamesData.count} Part Name{partNamesData.count > 1 ? "s" : ""}
-                            </span>
+                            </span> */}
                             <div className="flex flex-wrap gap-1 justify-center max-w-md">
                               {partNamesData.partNames.map((partName, idx) => (
                                 <span
