@@ -114,7 +114,6 @@ const PurchaseOrder = () => {
       const sup = await getAllSupplier();
       const inv = await getAllProducts();
       const rmItem = inv?.data?.find((i) => i?.category === "Raw Material");
-      console.log("rmItem", rmItem);
 
      setInventoryData(rmItem?.products || []);
        
@@ -342,7 +341,7 @@ const PurchaseOrder = () => {
         <table className="min-w-full border-collapse text-sm text-left">
           <thead>
             <tr className="bg-linear-to-r from-blue-600 to-sky-500 text-white uppercase text-xs tracking-wide">
-              {["PO No", "Supplier", "Product Count", "Status", "Actions"].map(
+              {["PO No", "Supplier", "Product Name", "Status", "Actions"].map(
                 (h, i) => (
                   <th key={i} className="py-3 px-4 text-center font-semibold">
                     {h}
@@ -376,7 +375,10 @@ const PurchaseOrder = () => {
                     {order.supplier?.name || "N/A"}
                   </td>
                   <td className="py-3 px-4 text-center">
-                    {order.products?.length || 0}
+                    {/* {order.products?.length || 0} */}
+                    {order.products.map((item) => (
+                      <p>{item?.item_name}</p>
+                    ))}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span className="bg-green-100 px-3 py-1 text-green-700 rounded-full text-[10px] sm:text-xs font-semibold whitespace-nowrap">

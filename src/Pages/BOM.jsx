@@ -405,12 +405,12 @@ const BOM = () => {
             <RefreshCcw size={16} />
           </button>
 
-          <button
+          {/* <button
             onClick={handleDownload}
             className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
           >
             <Download size={16} />
-          </button>
+          </button> */}
         </div>
       </div>
 

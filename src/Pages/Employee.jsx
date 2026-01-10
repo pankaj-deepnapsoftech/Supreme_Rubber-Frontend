@@ -231,18 +231,27 @@ const Employee = () => {
             </button>
           </div>
 
-          <button className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+          <button
+            onClick={fetchEmployees}
+            disabled={loading}
+            className="
+    relative overflow-hidden
+    p-2 rounded-lg border border-gray-300
+    hover:bg-gray-100
+    active:after:absolute active:after:inset-0
+    active:after:bg-gray-300/30
+    active:after:rounded-lg
+  "
+          >
             <RefreshCw
               size={16}
-              className={`cursor-pointer ${
-                loading ? "animate-spin text-blue-500" : ""
-              }`}
-              onClick={fetchEmployees}
+              className={loading ? "animate-spin text-blue-500" : ""}
             />
           </button>
-          <button className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
+
+          {/* <button className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition">
             <Download size={16} className="cursor-pointer" />
-          </button>
+          </button> */}
         </div>
       </div>
 

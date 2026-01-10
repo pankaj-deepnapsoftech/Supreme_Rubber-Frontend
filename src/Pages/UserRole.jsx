@@ -437,13 +437,25 @@ export default function UserRolesManagement() {
               ))}
             </select>
 
-            {/* Refresh */}
             <button
               onClick={handleRefresh}
-              className="p-2 rounded-lg border cursor-pointer border-gray-300 hover:bg-gray-100 transition"
+              disabled={loading}
+              className="
+                relative overflow-hidden
+                p-2 rounded-lg border border-gray-300
+                hover:bg-gray-100
+                active:after:absolute active:after:inset-0
+                active:after:bg-gray-300/30
+                active:after:rounded-lg
+              "
             >
-              <RefreshCw size={16} />
+              <RefreshCw
+                size={16}
+                className={loading ? "animate-spin text-blue-500" : ""}
+              />
             </button>
+
+           
 
             {/* Download */}
             <button
@@ -498,9 +510,14 @@ export default function UserRolesManagement() {
                         return "No permissions";
                       }
                       // Filter out inventory sub-modules for display (raw material, part name, compound name)
-                      const inventorySubModules = ["raw material", "part name", "compound name"];
+                      const inventorySubModules = [
+                        "raw material",
+                        "part name",
+                        "compound name",
+                      ];
                       const displayPermissions = r.permissions.filter(
-                        (perm) => !inventorySubModules.includes(perm.toLowerCase())
+                        (perm) =>
+                          !inventorySubModules.includes(perm.toLowerCase())
                       );
                       return displayPermissions.length > 0
                         ? displayPermissions.join(", ")

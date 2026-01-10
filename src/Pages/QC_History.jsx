@@ -154,13 +154,13 @@ const QC_History = () => {
           <History size={24} className="text-blue-600" />
           <h1 className="text-2xl font-semibold">QC History</h1>
         </div>
-        <Button
+        {/* <Button
           className="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white"
           onClick={handleRefresh}
         >
           <RefreshCcw size={16} className="mr-2" />
           Refresh
-        </Button>
+        </Button> */}
       </div>
 
       {/* Search & Download */}
@@ -215,7 +215,14 @@ const QC_History = () => {
         </div>
 
         {/* Right section: Download button */}
-        <div className="flex justify-end sm:justify-start">
+        <div className="flex justify-end gap-2 sm:justify-start">
+          <button
+            onClick={handleRefresh}
+            className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 hover:bg-gray-100 transition"
+          >
+            <RefreshCcw size={16} />
+          </button>
+
           <button
             onClick={handleDownload}
             className="p-2 rounded-lg cursor-pointer text-gray-800 hover:bg-gray-200 border border-gray-300 transition"
@@ -240,10 +247,7 @@ const QC_History = () => {
                 "Date",
                 "Actions",
               ].map((header, i) => (
-                <th
-                  key={i}
-                  className="py-3 px-4 text-center font-semibold"
-                >
+                <th key={i} className="py-3 px-4 text-center font-semibold">
                   {header}
                 </th>
               ))}
@@ -265,7 +269,7 @@ const QC_History = () => {
                 const isProduction = item.qc_type === "production";
                 const isApproved = item.qc_status === "approved";
                 const isRejected = item.qc_status === "rejected";
-                
+
                 return (
                   <tr
                     key={item._id || item.id || i}
@@ -290,10 +294,14 @@ const QC_History = () => {
                           {item.production_id || "-"}
                         </td>
                         <td className="py-3 px-4 text-center text-gray-800 border-b">
-                          {item.part_names?.[0]?.compound_code || item?.bom?.compound_code || "-"}
+                          {item.part_names?.[0]?.compound_code ||
+                            item?.bom?.compound_code ||
+                            "-"}
                         </td>
                         <td className="py-3 px-4 text-center text-gray-800 border-b">
-                          {item.part_names?.[0]?.compound_name || item?.bom?.compound_name || "-"}
+                          {item.part_names?.[0]?.compound_name ||
+                            item?.bom?.compound_name ||
+                            "-"}
                         </td>
                       </>
                     ) : (
@@ -341,7 +349,9 @@ const QC_History = () => {
                       <button
                         className="h-4 w-4 text-red-500 cursor-pointer hover:text-red-700"
                         title="Delete"
-                        onClick={() => handleDelete(item._id || item.id, item.qc_type)}
+                        onClick={() =>
+                          handleDelete(item._id || item.id, item.qc_type)
+                        }
                       >
                         <Trash2 size={16} />
                       </button>
