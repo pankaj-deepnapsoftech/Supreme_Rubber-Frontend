@@ -1336,7 +1336,7 @@ const Production_Start = () => {
 
                     <div className="hidden sm:grid grid-cols-8 bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md overflow-hidden">
                       {[
-                        "Part Details",
+                        "Select Part",
                         "Part Name",
                         "EST. QTY",
                         "UOM",
@@ -1355,7 +1355,7 @@ const Production_Start = () => {
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="Search Part"
+                          placeholder="Select Part"
                           value={bomSearch}
                           onChange={(e) => {
                             setBomSearch(e.target.value);
