@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Eye, Edit2, Trash2 } from "lucide-react";
 import { useSupplierContext } from "@/Context/SuplierContext";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/Context/AuthContext";
 
 export default function DashboardSupplier() {
   const { getAllSupplier, deleteSupplier } = useSupplierContext();
@@ -47,6 +48,7 @@ export default function DashboardSupplier() {
       console.error("Error deleting supplier:", err);
     }
   };
+  const {user} = useAuth();
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 w-full">
@@ -130,6 +132,7 @@ export default function DashboardSupplier() {
                         >
                           <Edit2 size={16} />
                         </button> */}
+                        {user.isSuper === "true" && (
                         <button
                           className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200"
                           title="Delete"
@@ -137,6 +140,7 @@ export default function DashboardSupplier() {
                         >
                           <Trash2 size={16} />
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>

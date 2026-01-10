@@ -41,19 +41,16 @@ const CompoundNameInv = () => {
 
   const { boms } = useBomContext();
 
-  // Helper function to get part names that use a specific compound
   const getPartNamesForCompound = (compoundName) => {
     if (!boms || !compoundName) return [];
 
     const partNamesSet = new Set();
 
     boms.forEach((bom) => {
-      // Check if this BOM uses the compound
       if (
         bom.compound_name &&
         bom.compound_name.toLowerCase() === compoundName.toLowerCase()
       ) {
-        // Add all part names from this BOM
         if (bom.part_names && Array.isArray(bom.part_names)) {
           bom.part_names.forEach((partName) => {
             if (partName && partName.trim()) {
@@ -61,11 +58,9 @@ const CompoundNameInv = () => {
             }
           });
         }
-        // Also check part_name_details
         if (bom.part_name_details && Array.isArray(bom.part_name_details)) {
           bom.part_name_details.forEach((detail) => {
             if (detail.part_name_id_name) {
-              // Extract the name part from "id-name" format
               const namePart = detail.part_name_id_name
                 .split("-")
                 .slice(1)

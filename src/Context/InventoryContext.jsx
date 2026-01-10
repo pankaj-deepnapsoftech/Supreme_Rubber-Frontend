@@ -53,7 +53,24 @@ export const InventoryProvider = ({ children }) => {
     try {
       setLoading(true);
       const res = await axiosHandler.get(`/product/all?page=${page}&limit=10`);
-      setProducts(res?.data?.products || []);
+
+      // Handle new nested API response structure
+      let allProducts = [];
+      if (res?.data?.data && Array.isArray(res.data.data)) {
+        // Flatten the nested structure: data[].products[] -> single array
+        allProducts = res.data.data.reduce((acc, categoryGroup) => {
+          if (categoryGroup.products && Array.isArray(categoryGroup.products)) {
+            return [...acc, ...categoryGroup.products];
+          }
+          return acc;
+        }, []);
+      } else if (res?.data?.products) {
+        // Fallback for old API structure
+        allProducts = res.data.products;
+      }
+
+      setProducts(allProducts);
+      console.log("Fetched products:", allProducts);
       return res.data;
     } catch (error) {
       console.error("❌ Error fetching all products:", error);

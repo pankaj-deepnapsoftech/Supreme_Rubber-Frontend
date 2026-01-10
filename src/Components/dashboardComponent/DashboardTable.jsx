@@ -6,6 +6,7 @@ import { useInventory } from "@/Context/InventoryContext";
 import { useNavigate } from "react-router-dom";
 
 import axiosHandler from "@/config/axiosconfig";
+import { useAuth } from "@/Context/AuthContext";
 
 export default function DashboardTable() {
   const { products, getAllProducts } = useInventory();
@@ -44,6 +45,8 @@ export default function DashboardTable() {
     }
   };
 
+  const {user} = useAuth();
+console.log(user);
 
    const [qcChartData, setQcChartData] = useState([]);
   const [qcPeriod, setQcPeriod] = useState("Weekly");
@@ -140,6 +143,7 @@ export default function DashboardTable() {
                 </td>
                 <td className="py-3 px-4 border-b text-center">
                   <div className="flex justify-center space-x-3">
+                    {user.isSuper === "true" && (
                     <button
                       className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition"
                       title="Delete"
@@ -147,6 +151,7 @@ export default function DashboardTable() {
                     >
                       <Trash2 size={16} />
                     </button>
+                    )}
                   </div>
                 </td>
               </tr>
